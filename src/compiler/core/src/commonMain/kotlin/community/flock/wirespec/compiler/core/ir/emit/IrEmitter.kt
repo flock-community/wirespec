@@ -7,6 +7,7 @@ import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.withoutRpcFields
 import community.flock.wirespec.compiler.core.exceptions.NothingToEmitException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.ir.File
@@ -37,8 +38,11 @@ public interface IrEmitter : Emitter {
     /** Extensions applied to the complete IR before code generation, starting with the [ValidateExtension] every model needs. */
     public val extensions: List<IrExtension> get() = listOf(ValidateExtension(extension))
 
-    /** Parts are already flattened into the shapes that spread them, so they are left out before anything is emitted. */
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.withoutParts()
+    /**
+     * Parts are already flattened into the shapes that spread them, so they are left out before anything is emitted. So
+     * are the fields that refer to an rpc: a model only holds data.
+     */
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.withoutRpcFields().withoutParts()
         ?.let { emitDefinitions(it, logger) }
         ?: error("Nothing to emit: every module only contains parts")
 

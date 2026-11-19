@@ -47,6 +47,12 @@ internal class InvalidEnumDefaultError(fieldName: String, value: String, referen
         message = "Invalid default value $value for field $fieldName of type ${reference.value}${if (reference.isNullable) "?" else ""}",
     )
 
+internal class RpcReferenceError(definition: String, rpc: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "$definition cannot refer to rpc $rpc here: an rpc can only be the type of a field of a type or part, as in `name: $rpc`",
+    )
+
 internal class DuplicateRpcError(typeName: String) :
     ValidationError(
         coordinates = Token.Coordinates(),

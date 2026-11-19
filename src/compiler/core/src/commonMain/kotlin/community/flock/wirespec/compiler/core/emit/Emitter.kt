@@ -20,6 +20,12 @@ public interface Emitter : HasExtension {
      */
     public val supportsDefaults: Boolean get() = false
 
+    /**
+     * Whether this emitter writes a field whose type is an rpc, a function of its type. Any other emitter writes models
+     * that only hold data, so it gets the spec without those fields.
+     */
+    public val emitsRpcFields: Boolean get() = false
+
     /** What keeps this emitter from emitting [ast], such as an annotation that names something the spec does not declare. */
     public fun validate(ast: AST): List<EmitterException> = emptyList()
 }

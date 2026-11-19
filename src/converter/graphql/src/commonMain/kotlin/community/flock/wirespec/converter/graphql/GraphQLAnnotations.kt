@@ -21,7 +21,6 @@ internal object GraphQLAnnotations {
     const val IMPLEMENTS = "GraphQLImplements"
     const val DIRECTIVE = "GraphQLDirective"
     const val DIRECTIVE_DEFINITION = "GraphQLDirectiveDefinition"
-    const val FIELD = "GraphQLField"
     const val DEFAULT = "GraphQLDefault"
     const val ENUM_VALUE = "GraphQLEnumValue"
     const val TYPE = "GraphQLType"
@@ -36,12 +35,8 @@ internal object GraphQLAnnotations {
     /** Marks an rpc as a field of a root operation type: `@GraphQLQuery`, `@GraphQLMutation` or `@GraphQLSubscription`. */
     val GraphQLModel.Operation.annotationName: String get() = "GraphQL$defaultTypeName"
 
-    /**
-     * The field an rpc is named after. An rpc of a type, marked `@GraphQLField`, is named after that [type] and the field:
-     * `UserFriends` is the field `friends` of `User`. Any other rpc is named after the field alone.
-     */
-    fun fieldName(rpc: String, type: String?): String = (type?.let { rpc.removePrefix(it) }?.takeIf { it.firstOrNull()?.isUpperCase() == true } ?: rpc)
-        .replaceFirstChar(Char::lowercase)
+    /** The field an operation is named after: `AddTodo` is the field `addTodo`. */
+    fun fieldName(rpc: String): String = rpc.replaceFirstChar(Char::lowercase)
 
     fun annotation(name: String, vararg parameters: Annotation.Parameter?): Annotation = Annotation(name, parameters.filterNotNull())
 

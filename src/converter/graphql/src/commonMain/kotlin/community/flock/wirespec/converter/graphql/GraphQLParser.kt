@@ -34,7 +34,6 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_D
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
@@ -73,8 +72,9 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  * Objects and input objects become types, scalars become refined types, and enums and unions map onto their Wirespec
  * counterparts. A field is a function when it takes arguments, and a function is an `rpc`: every field of a root
  * operation type (`Query`, `Mutation`, `Subscription`), every field of a type that only nests operations in one, and
- * every other field with arguments. An annotation of the rpc says which type it is a field of. For a type nested in a
- * root operation type, a `@file:` annotation names the fields that lead to the type, and its rpcs name the type.
+ * every other field with arguments. An rpc of a root operation type says so in an annotation. For a type nested in a
+ * root operation type, a `@file:` annotation names the fields that lead to the type, and its rpcs name the type. Any
+ * other field with arguments stays a field of its type, and refers to its rpc.
  * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
  * Wirespec cannot express natively —
  * descriptions, directives, default values, extensions — is kept in annotations, so the schema can
@@ -226,7 +226,7 @@ private class GraphQLConverter(private val document: Document) {
         }
         in nested -> listOfNotNull(holder()) + operations(annotation(nestedOperation().annotationName, name))
         else -> implementation().takeUnless { bringsNothing(it) }
-            ?.let { identifier().let { identifier -> listOf(type(identifier, commonAnnotations(it.listed), it.entries)) + functions(identifier) } }
+            ?.let { listOf(type(identifier(), commonAnnotations(it.listed), it.entries)) + functions(it) }
             .orEmpty()
     }
 
@@ -320,27 +320,18 @@ private class GraphQLConverter(private val document: Document) {
         .flatMap { it.fields }
         .any { field -> field.arguments.isNotEmpty() || (field.isNesting() && nestedIn[field.type.leaf()] == this && field.type.leaf().hasOperations()) }
 
-    /**
-     * A field with arguments is an rpc of its type, named after both. `before` names the field that follows it, so
-     * the field comes back in its place.
-     */
-    private fun ImplementingTypeDefinition.functions(identifier: String): List<Rpc> = (names[name] ?: name.sanitize()).let { prefix ->
-        fields.mapIndexedNotNull { index, field ->
-            field.takeIf { it.arguments.isNotEmpty() }?.let {
-                claim(prefix + field.name.capitalized()).let { rpc ->
-                    field.toRpc(
-                        identifier = rpc,
-                        annotation = annotation(
-                            FIELD,
-                            parameter(DEFAULT_PARAMETER, identifier),
-                            fields.drop(index + 1).firstOrNull { it.arguments.isEmpty() }?.let { parameter(BEFORE_PARAMETER, it.name) },
-                        ),
-                        named = fieldName(rpc, name),
-                    )
-                }
-            }
-        }
+    /** The rpc of each field with arguments, by the definition and the name of the field. */
+    private val functionNames = mutableMapOf<Pair<ImplementingTypeDefinition, String>, String>()
+
+    /** A field with arguments is a function: an rpc, named after the type and the field, that the field refers to. */
+    private fun ImplementingTypeDefinition.functionName(field: FieldDefinition): String = functionNames.getOrPut(this to field.name) {
+        claim((names[name] ?: name.sanitize()) + field.name.capitalized())
     }
+
+    /** The rpcs of the fields with arguments that this definition holds itself: not those that the part of an interface brings. */
+    private fun ImplementingTypeDefinition.functions(implementation: Implementation): List<Rpc> = fields
+        .filter { field -> field.arguments.isNotEmpty() && implementation.entries.any { it is Field && it.identifier.value == field.name } }
+        .map { it.toRpc(functionName(it), it.type.toAnnotations()) }
 
     /**
      * An interface that anything implements is the union of the types implementing it, `@GraphQLInterface` naming the
@@ -357,7 +348,7 @@ private class GraphQLConverter(private val document: Document) {
                         )
                     }
                     .let { it ?: listOf(type(identifier, listOf(annotation(INTERFACE)) + commonAnnotations(implementation.listed), implementation.entries)) } +
-                    functions(identifier)
+                    functions(implementation)
             }
         }
         .orEmpty()
@@ -403,7 +394,7 @@ private class GraphQLConverter(private val document: Document) {
     // An interface that another of them implements comes after that one, which brings it along when spread.
     private fun ImplementingTypeDefinition.implement(interfaces: List<String>): Implementation = interfaces.distinct()
         .sortedBy { candidate -> interfaces.count { candidate in reachable(it) } }
-        .fold(fields.filter { it.arguments.isEmpty() }.map { it.toField() }.let { Implementation(it, it) }) { implementation, candidate ->
+        .fold(fields.map { it.toField(this) }.let { Implementation(it, it) }) { implementation, candidate ->
             when (candidate) {
                 in implementation.covered -> implementation
                 else -> spread(implementation, candidate) ?: implementation.copy(listed = implementation.listed + candidate)
@@ -433,7 +424,7 @@ private class GraphQLConverter(private val document: Document) {
     private fun ImplementingTypeDefinition.extensions(): List<ImplementingTypeDefinition> = implementations.keys.filter { it.extension && it.name == name && it::class == this::class }
 
     /** An extension that brings nothing but interfaces its type now implements is left out. */
-    private fun ImplementingTypeDefinition.bringsNothing(implementation: Implementation): Boolean = extension && directives.isEmpty() && fields.isEmpty() && implementation.listed.isEmpty()
+    private fun ImplementingTypeDefinition.bringsNothing(implementation: Implementation): Boolean = extension && directives.isEmpty() && implementation.entries.isEmpty() && implementation.listed.isEmpty()
 
     private fun reachable(name: String): Set<String> = generateSequence(declaredInterfaces[name].orEmpty().toSet()) { found ->
         (found + found.flatMap { declaredInterfaces[it].orEmpty() }).takeIf { it.size > found.size }
@@ -475,11 +466,19 @@ private class GraphQLConverter(private val document: Document) {
         entries = fields.map { it.toField() },
     )
 
-    private fun FieldDefinition.toField(): Field = Field(
-        annotations = description.toAnnotations() + directives.toAnnotations() + type.toAnnotations(),
-        identifier = FieldIdentifier(name),
-        reference = type.toReference(),
-    )
+    /** A field with arguments refers to the rpc that takes them and gives the type of the field. */
+    private fun FieldDefinition.toField(owner: ImplementingTypeDefinition): Field = when {
+        arguments.isEmpty() -> Field(
+            annotations = description.toAnnotations() + directives.toAnnotations() + type.toAnnotations(),
+            identifier = FieldIdentifier(name),
+            reference = type.toReference(),
+        )
+        else -> Field(
+            annotations = description.toAnnotations() + directives.toAnnotations(),
+            identifier = FieldIdentifier(name),
+            reference = Reference.Custom(owner.functionName(this), isNullable = false),
+        )
+    }
 
     /**
      * A root operation type is rebuilt from the rpcs of its fields, so it only needs a type of its own for what an rpc
@@ -501,20 +500,18 @@ private class GraphQLConverter(private val document: Document) {
 
     /**
      * An operation is named after its field, `addTodo` becomes `AddTodo`, and only takes the type it is a field of as
-     * prefix when that name is taken.
+     * prefix when that name is taken. `@GraphQLName` keeps the field name when the rpc is not named after it.
      */
     private fun FieldDefinition.toOperation(prefix: String, annotation: Annotation): Rpc = name.capitalized()
         .let { claim(if (it.isValidTypeName() && it !in taken) it else prefix + it) }
-        .let { rpc -> toRpc(identifier = rpc, annotation = annotation, named = fieldName(rpc, type = null)) }
+        .let { rpc ->
+            toRpc(rpc, listOf(annotation) + listOfNotNull(annotation(NAME, name).takeIf { fieldName(rpc) != name }) + description.toAnnotations() + directives.toAnnotations() + type.toAnnotations())
+        }
 
-    /** `@GraphQLName` keeps the field name when it is not the one the rpc is [named] after. */
-    private fun FieldDefinition.toRpc(identifier: String, annotation: Annotation, named: String): Rpc = Rpc(
+    /** The arguments of a field as the parameters of an rpc, and its type as the result. */
+    private fun FieldDefinition.toRpc(identifier: String, annotations: List<Annotation>): Rpc = Rpc(
         comment = null,
-        annotations = listOf(annotation) +
-            listOfNotNull(annotation(NAME, name).takeIf { named != name }) +
-            description.toAnnotations() +
-            directives.toAnnotations() +
-            type.toAnnotations(),
+        annotations = annotations,
         identifier = DefinitionIdentifier(identifier),
         shape = Shape(arguments.map { it.toField() }),
         result = type.toReference(),

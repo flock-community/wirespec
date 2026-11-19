@@ -13,6 +13,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -287,7 +289,7 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun convertsAFieldWithArgumentsToAnRpcOfItsType() {
+    fun convertsAFieldWithArgumentsToAFieldThatRefersToAnRpc() {
         val source = """
             |interface Node {
             |  id: ID!
@@ -297,6 +299,7 @@ class GraphQLParserTest {
             |type Todo implements Node {
             |  id: ID!
             |  related(first: Int): [Node!]
+            |  "The comments on the todo"
             |  comments("How many to return" first: Int = 10): [String!]! @deprecated
             |  title: String!
             |  history(since: String!): [String!]
@@ -313,45 +316,40 @@ class GraphQLParserTest {
 
         source.toWirespec() shouldBe """
             |part NodeInterface {
-            |  id: ID
+            |  id: ID,
+            |  related: NodeRelated
             |}
             |
             |@GraphQLInterface("NodeInterface")
             |type Node = Todo
             |
-            |@GraphQLField("Node")
             |rpc NodeRelated {
             |  first: Integer32?
             |} -> Node[]?
             |
             |type Todo {
             |  ...NodeInterface,
-            |  title: String
+            |  @Description("The comments on the todo")
+            |  @GraphQLDirective("@deprecated")
+            |  comments: TodoComments,
+            |  title: String,
+            |  history: TodoHistory
             |}
             |
-            |@GraphQLField("Todo", before: "title")
-            |rpc TodoRelated {
-            |  first: Integer32?
-            |} -> Node[]?
-            |
-            |@GraphQLField("Todo", before: "title")
-            |@GraphQLDirective("@deprecated")
             |rpc TodoComments {
             |  @Description("How many to return")
             |  first: Integer32? = 10
             |} -> String[]
             |
-            |@GraphQLField("Todo")
             |rpc TodoHistory {
             |  since: String
             |} -> String[]?
             |
             |@GraphQLExtend("Todo")
             |type TodoExtension {
-            |
+            |  tags: TodoTags
             |}
             |
-            |@GraphQLField("TodoExtension")
             |rpc TodoTags {
             |  prefix: String?
             |} -> String[]?
@@ -370,15 +368,17 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun namesAnRpcOfATypeAfterTheTypeAndTheField() {
-        val rpcs = convert("type User { name(short: Boolean): String, userName(short: Boolean): String, _id(raw: Boolean): ID } type UserName { a: Int } type Query { user: User, users: [User] }")
-            .filterIsInstance<Rpc>()
-        rpcs.map { rpc -> rpc.identifier.value to rpc.annotations.map { it.name } } shouldContainExactly listOf(
-            "UserName2" to listOf("GraphQLField", "GraphQLName"),
-            "UserUserName" to listOf("GraphQLField"),
-            "UserId" to listOf("GraphQLField", "GraphQLName"),
+    fun namesTheRpcOfAFieldAfterTheTypeAndTheField() {
+        val definitions = convert("type User { name(short: Boolean): String, _id(raw: Boolean): ID } type UserName { a: Int } type Query { user: User, users: [User] }")
+        definitions.filterIsInstance<Rpc>().map { rpc -> rpc.identifier.value to rpc.annotations.map { it.name } } shouldContainExactly listOf(
+            "UserName2" to emptyList(),
+            "UserId" to emptyList(),
             "QueryUser" to listOf("GraphQLQuery", "GraphQLName"),
             "Users" to listOf("GraphQLQuery"),
+        )
+        definitions.definition<Type>("User").shape.value shouldContainExactly listOf(
+            Field(emptyList(), FieldIdentifier("name"), Reference.Custom("UserName2", false)),
+            Field(emptyList(), FieldIdentifier("_id"), Reference.Custom("UserId", false)),
         )
     }
 
@@ -510,7 +510,7 @@ class GraphQLParserTest {
                 .takeIf { it.annotations.isNotEmpty() }
                 ?.statements.orEmpty()
                 .filterIsInstance<Rpc>()
-                .filter { it.annotations.first().parameters.isNotEmpty() }
+                .filter { it.annotations.firstOrNull()?.parameters.orEmpty().isNotEmpty() }
                 .map { it.identifier.value }
         }
         nested("type Query { a: A! } type A { f(x: Int): Int }") shouldContainExactly listOf("F")
@@ -575,7 +575,7 @@ class GraphQLParserTest {
             val module = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true).modules.single()
             val namespaces = module.annotations.map { it.namespace() }
             module.statements.filterIsInstance<Rpc>()
-                .filter { rpc -> rpc.annotations.first().parameters.any { it.name == "default" && (it.value as Annotation.Value.Single).value in namespaces } }
+                .filter { rpc -> rpc.annotations.firstOrNull()?.parameters.orEmpty().any { it.name == "default" && (it.value as Annotation.Value.Single).value in namespaces } }
                 .map { it.identifier.value } shouldContainExactly nested
             source.convertedBack().definitions shouldContainExactlyInAnyOrder GraphQLDocumentParser(source).parseDocument().definitions
         }

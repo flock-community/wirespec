@@ -22,7 +22,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_DEFINITION
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLDocumentPrinter.print
 
@@ -35,6 +34,9 @@ public object GraphQLEmitter : Emitter {
     override val extension: FileExtension = FileExtension.GraphQL
 
     override val supportsDefaults: Boolean = true
+
+    /** A field that refers to an rpc is a field with the arguments of that rpc. */
+    override val emitsRpcFields: Boolean = true
 
     /** The annotations that only the schema as a whole has, so only the file header holds them. */
     private val schemaOnly = setOf(SCHEMA, DIRECTIVE_DEFINITION)
@@ -71,8 +73,8 @@ public object GraphQLEmitter : Emitter {
                 .map { field ->
                     EmitterException(
                         fileUri,
-                        "@$ARGUMENT on ${field.identifier.value} of ${definition.identifier.value}: a field that takes arguments is an rpc, " +
-                            "so write it as an rpc marked @$FIELD(\"${definition.identifier.value}\") that takes the arguments as its parameters",
+                        "@$ARGUMENT on ${field.identifier.value} of ${definition.identifier.value}: a field that takes arguments refers to an rpc, " +
+                            "so write an rpc that takes the arguments as its parameters, and make it the type of the field",
                     )
                 }
         }

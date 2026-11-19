@@ -27,7 +27,6 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_D
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
@@ -61,10 +60,11 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
 /**
  * The inverse of [GraphQLParser]: rebuilds the GraphQL document from the Wirespec definitions and their annotations,
  * which gives back the schema it was converted from, but for the fields an implementation declares differently from
- * its interface. A type that spreads the part of an interface implements that interface. An rpc is a field of the type
- * its annotation names: a root operation type, or the type of `@GraphQLField`. An operation can also name a type that
- * a `path` in the header of its file leads to, `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`,
- * which nests that type in the root type. Wirespec that does not come from GraphQL gets the closest GraphQL counterpart.
+ * its interface. A type that spreads the part of an interface implements that interface. A field that refers to an rpc
+ * is a field with the arguments of that rpc. Any other rpc is a field of the root operation type its annotation names,
+ * or of a type that a `path` in the header of its file leads to,
+ * `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`, which nests that type in the root type.
+ * Wirespec that does not come from GraphQL gets the closest GraphQL counterpart.
  *
  * The schema and directive definitions are `@spec:` annotations of the [ast], so they come first, in the order of the
  * file header.
@@ -98,6 +98,21 @@ internal class WirespecToGraphQL(ast: AST) {
         .flatMap { union -> union.entries.filterIsInstance<Reference.Custom>().map { it.value to listOf(union.graphQLName()) + union.annotations.implements() } }
         .groupBy({ it.first }, { it.second })
         .mapValues { (_, interfaces) -> interfaces.flatten() }
+
+    private val rpcs: Map<String, Rpc> = definitions.filterIsInstance<Rpc>().associateBy { it.identifier.value }
+
+    /** The rpcs that a field refers to: the functions of a type, which are no operations of their own. */
+    private val functions: Set<String> = definitions
+        .flatMap { definition ->
+            when (definition) {
+                is Type -> definition.shape.value
+                is Part -> definition.shape.value
+                is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined -> emptyList()
+            }
+        }
+        .filterIsInstance<Field>()
+        .mapNotNull { field -> (field.reference as? Reference.Custom)?.value?.takeIf { it in rpcs } }
+        .toSet()
 
     private val types: Map<String, Type> = definitions.filterIsInstance<Type>().associateBy { it.identifier.value }
 
@@ -156,8 +171,11 @@ internal class WirespecToGraphQL(ast: AST) {
 
     fun fieldDefinition(rpc: Rpc): FieldDefinition = rpc.toFieldDefinition()
 
-    /** Whether an rpc is a field with arguments of a type, which is no operation of its own. */
-    fun isFieldOfType(rpc: Rpc): Boolean = rpc.annotations.single(FIELD) != null
+    /** Whether an rpc is a function of a type: a field refers to it, and it is no operation of its own. */
+    fun isFunction(rpc: Rpc): Boolean = rpc.identifier.value in functions && Operation.entries.none { rpc.annotations.has(it.annotationName) }
+
+    /** Whether a field is a function: it refers to an rpc. */
+    fun isFunction(field: Field): Boolean = field.function() != null
 
     /** The GraphQL name of the root type an operation is a field of or nested in. */
     fun rootType(rpc: Rpc): String = rpc.rootType().first.let { fieldHolders[it]?.graphQLName() ?: it }
@@ -310,17 +328,19 @@ internal class WirespecToGraphQL(ast: AST) {
     }
 
     /**
-     * An rpc is a field of the type its annotation names. An operation of a nested type also adds the fields of the path
-     * that leads there: each to the type the field before it returns, starting at the root type.
+     * An operation is a field of the type its annotation names. An operation of a nested type also adds the fields of
+     * the path that leads there: each to the type the field before it returns, starting at the root type. A function is
+     * a field of the types that refer to it.
      */
-    private fun Rpc.members(): List<Member> = annotations.firstOrNull { it.name == FIELD }
-        ?.let { field -> field.single(DEFAULT_PARAMETER)?.let { listOf(Member(it to null, toFieldDefinition(), field.single(BEFORE_PARAMETER), nests = false, this)) } }
-        ?: pathFields().let { path ->
+    private fun Rpc.members(): List<Member> = when {
+        isFunction(this) -> emptyList()
+        else -> pathFields().let { path ->
             path.runningFold(rootType()) { _, field -> field.leaf()!! to null }.let { owners ->
                 path.mapIndexed { index, field -> Member(owners[index], field.toPathField(), field.single(BEFORE_PARAMETER), nests = true, this) } +
                     Member(owners.last(), toFieldDefinition(), null, nests = false, this)
             }
         }
+    }
 
     /**
      * What says where the type an operation names is nested: the annotation of its file, for the same kind of operation,
@@ -384,13 +404,20 @@ internal class WirespecToGraphQL(ast: AST) {
 
     private fun List<Reference>.plainTypeNames(): Set<String> = mapNotNull { it.customName() }.filter { it in plainTypes }.toSet()
 
-    private fun Field.toFieldDefinition(): FieldDefinition = FieldDefinition(
-        description = annotations.description(),
-        name = identifier.value,
-        arguments = emptyList(),
-        type = typeRef(input = false),
-        directives = annotations.directives(),
-    )
+    /** A field that refers to an rpc takes the parameters of that rpc as arguments, and gives its result. */
+    private fun Field.toFieldDefinition(): FieldDefinition = function().let { function ->
+        FieldDefinition(
+            description = annotations.description(),
+            name = identifier.value,
+            arguments = function?.shape?.fields.orEmpty().map { it.toInputValue() },
+            type = function?.resultType() ?: typeRef(input = false),
+            directives = annotations.directives(),
+        )
+    }
+
+    private fun Field.function(): Rpc? = (reference as? Reference.Custom)?.let { rpcs[it.value] }
+
+    private fun Rpc.resultType(): TypeRef = annotations.single(TYPE)?.let(::parseType) ?: result.toTypeRef(input = false)
 
     /** An argument as `@GraphQLDirectiveDefinition` holds the one called [name]. */
     private fun Annotation.toInputValue(name: String): InputValueDefinition = InputValueDefinition(
@@ -403,9 +430,9 @@ internal class WirespecToGraphQL(ast: AST) {
 
     private fun Rpc.toFieldDefinition(): FieldDefinition = FieldDefinition(
         description = description(),
-        name = annotations.single(NAME) ?: fieldName(identifier.value, annotations.single(FIELD)?.let { fieldHolders[it]?.graphQLName() ?: it }),
+        name = annotations.single(NAME) ?: fieldName(identifier.value),
         arguments = shape.fields.map { it.toInputValue() },
-        type = annotations.single(TYPE)?.let(::parseType) ?: result.toTypeRef(input = false),
+        type = resultType(),
         directives = annotations.directives(),
     )
 

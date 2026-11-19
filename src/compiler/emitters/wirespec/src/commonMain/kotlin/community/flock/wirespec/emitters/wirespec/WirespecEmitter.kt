@@ -31,6 +31,8 @@ public open class WirespecEmitter : LanguageEmitter(), WirespecEmitters {
 
     override val supportsDefaults: Boolean = true
 
+    override val emitsRpcFields: Boolean = true
+
     override val shared: Shared? = null
 
     override val singleLineComment: String = "\n"
