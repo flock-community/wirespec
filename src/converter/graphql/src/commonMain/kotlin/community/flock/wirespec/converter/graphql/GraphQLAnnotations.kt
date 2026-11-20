@@ -29,7 +29,6 @@ internal object GraphQLAnnotations {
 
     const val DEFAULT_PARAMETER = "default"
     const val PATH_PARAMETER = "path"
-    const val BEFORE_PARAMETER = "before"
     const val TYPE_PARAMETER = "type"
 
     /** Marks an rpc as a field of a root operation type: `@GraphQLQuery`, `@GraphQLMutation` or `@GraphQLSubscription`. */

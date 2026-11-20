@@ -151,9 +151,9 @@ rpc MarkRead {
 
 - A path can go through several types, as the one to `ArchiveQuery` does. Each nested type with operations has an
   annotation of its own, with the whole path to it.
-- A field of the path that has more than a type holds it next to its type: its `description`, its `directives`, and
-  `before`, the field that follows it, so the field comes back in its place:
-  `path: { notifications: { type: "NotificationsQuery!", description: "...", before: "todos" } }`.
+- A field of the path that has more than a type holds it next to its type, its `description` and its `directives`:
+  `path: { notifications: { type: "NotificationsQuery!", description: "...", directives: ["@deprecated"] } }`.
+- A field of the path comes back after the other fields of its type.
 - The annotation takes the root type when it is not the default, and the `extend` block the first field of the path is
   in, as `@GraphQLQuery` on an rpc of a root type does: `@file:GraphQLQuery("QueryRoot", extend: "1", path: { ... })`.
 - A nested type with a description or directives keeps them on an empty `type`, like a root type does.
@@ -187,7 +187,7 @@ type User {
   email: String
 }
 
-@GraphQLQuery("User", before: "email")
+@GraphQLQuery("User")
 rpc UserFriends {
   first: Integer32? = 10
 } -> User[]
@@ -195,8 +195,7 @@ rpc UserFriends {
 
 - The annotation names the Wirespec definition the field belongs to: a type, the union of an
   [interface](#interfaces), or the `...Extension` of an `extend` block.
-- `before` names the field that follows it, so the field comes back in its place. Without it, the field comes after the
-  others.
+- The field comes back after the other fields of the type: `name`, `email`, `friends`.
 - The rpc is named after the type and the field, `UserFriends`, and reads back as the field `friends`. `@GraphQLName`
   keeps a field name that does not read back that way.
 
@@ -449,9 +448,9 @@ Wirespec converted by earlier versions has them, on a `type Schema` or `type ...
 | `@GraphQLImplements(["Node"])`                                                 | types, unions       | the interfaces an object or interface implements without spreading them (see above)                                                                                                         |
 | `@GraphQLDefault("MEDIUM")`                                                    | fields              | a default value that cannot be a Wirespec default (see above), in GraphQL syntax                                                                                                            |
 | `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                    | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
-| `@GraphQLQuery(path: { notifications: "NotificationsQuery!" })`                | `@file:`            | a [type nested](#nested-types) in a root operation type: the fields that lead to it, each with its type, or with its `type`, `description`, `directives` and `before`; also for `@GraphQLMutation` and `@GraphQLSubscription`                    |
+| `@GraphQLQuery(path: { notifications: "NotificationsQuery!" })`                | `@file:`            | a [type nested](#nested-types) in a root operation type: the fields that lead to it, each with its type, or with its `type`, `description` and `directives`; also for `@GraphQLMutation` and `@GraphQLSubscription`                               |
 | `@GraphQLQuery("NotificationsQuery")`                                          | rpcs                | an `rpc` that is a field of the nested type that a path in the header of its file leads to                                                                                                  |
-| `@GraphQLQuery("User", before: "email")`                                       | rpcs                | an `rpc` that is a [field with arguments](#fields-with-arguments) of the named type that holds data, and the field it comes before                                                          |
+| `@GraphQLQuery("User")`                                                        | rpcs                | an `rpc` that is a [field with arguments](#fields-with-arguments) of the named type that holds data                                                                                         |
 | `@GraphQLName("todo")`                                                         | rpcs                | the field name of an `rpc` whose name does not read back as that field name                                                                                                                 |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`     | enums               | the description and directives of an enum value; one for every such value                                                                                                                   |
 | `@GraphQLInterface("NodeInterface")`                                           | unions, types       | an interface, with the fields of the named part, implemented by the types that spread it; without a part, the fields of the type itself, or those all members of the union share            |
@@ -574,7 +573,9 @@ extension can generate a typed Kotlin, Java or Scala client that calls them.
 - **Order**: the schema and directive definitions are in the file header, so they come back first, in the order they
   were written, whatever their place among the types. A type without a Wirespec definition of its own, a root type or
   a [nested type](#nested-types), comes back at the first rpc that adds a field to it, so a root type with nothing but
-  nested types comes back right before the first of them. The order of the fields in a type is kept.
+  nested types comes back right before the first of them. In a type, the fields that are rpcs come back after the
+  other fields, in their own order: a field with arguments after the fields without, and a field that leads to a
+  nested type after the other fields of its type.
 - **Types**: Wirespec needs at least one definition next to the file header, so a document with only a schema and
   directive definitions cannot be converted.
 - **Interfaces**: a type that implements an interface takes the interface fields as the interface declares them, so a

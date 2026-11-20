@@ -28,7 +28,6 @@ import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -296,9 +295,9 @@ class GraphQLParserTest {
             |
             |type Todo implements Node {
             |  id: ID!
+            |  title: String!
             |  related(first: Int): [Node!]
             |  comments("How many to return" first: Int = 10): [String!]! @deprecated
-            |  title: String!
             |  history(since: String!): [String!]
             |}
             |
@@ -329,12 +328,12 @@ class GraphQLParserTest {
             |  title: String
             |}
             |
-            |@GraphQLQuery("Todo", before: "title")
+            |@GraphQLQuery("Todo")
             |rpc TodoRelated {
             |  first: Integer32?
             |} -> Node[]?
             |
-            |@GraphQLQuery("Todo", before: "title")
+            |@GraphQLQuery("Todo")
             |@GraphQLDirective("@deprecated")
             |rpc TodoComments {
             |  @Description("How many to return")
@@ -423,8 +422,8 @@ class GraphQLParserTest {
 
         source.toWirespecFiles() shouldBe mapOf(
             "schema.ws" to """
-                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" } })
-                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"], before: "todos" }, archive: { type: "ArchiveQuery", before: "inbox" } })
+                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] } })
+                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] }, archive: "ArchiveQuery" })
                 |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
                 |@file:GraphQLQuery(path: { type: "TypeQuery" })
                 |
@@ -472,8 +471,8 @@ class GraphQLParserTest {
                 |
             """.trimMargin(),
         )
-        // A type without a Wirespec definition comes back at the first rpc that adds a field to it.
-        source.convertedBack().definitions shouldContainExactlyInAnyOrder GraphQLDocumentParser(source).parseDocument().definitions
+        // A type without a Wirespec definition comes back at the first rpc that adds a field to it, and a field that nests a type after the others.
+        source.convertedBack().unordered() shouldBe GraphQLDocumentParser(source).parseDocument().unordered()
     }
 
     @Test
@@ -484,8 +483,8 @@ class GraphQLParserTest {
             |}
             |
             |type Commands {
-            |  todos: TodoMutations
             |  ping: Boolean
+            |  todos: TodoMutations
             |}
             |
             |type TodoMutations {
@@ -531,7 +530,7 @@ class GraphQLParserTest {
         nested("type Query { u: [User] } type User { a: A! } type A { f(x: Int): Int }") shouldBe emptyList()
         listOf(
             "type Query { a: A!, b: A } type A { f(x: Int): Int }",
-            "type Query { a: A! } type A { f(x: Int): Int, self: A }",
+            "type Query { a: A! } type A { self: A, f(x: Int): Int }",
             "type Query { a(id: ID!): A! } type A { f(x: Int): Int }",
             "type Query { a: A! } type A { f(x: Int): Int } extend type A { g: Int }",
             "type Query { u: [User] } type User { a: A! } type A { f(x: Int): Int }",
@@ -577,7 +576,7 @@ class GraphQLParserTest {
             module.statements.filterIsInstance<Rpc>()
                 .filter { rpc -> rpc.annotations.first().parameters.any { it.name == "default" && (it.value as Annotation.Value.Single).value in namespaces } }
                 .map { it.identifier.value } shouldContainExactly nested
-            source.convertedBack().definitions shouldContainExactlyInAnyOrder GraphQLDocumentParser(source).parseDocument().definitions
+            source.convertedBack().unordered() shouldBe GraphQLDocumentParser(source).parseDocument().unordered()
         }
     }
 
@@ -782,6 +781,17 @@ class GraphQLParserTest {
     private fun Annotation.namespace(): String = (parameters.single { it.name == "path" }.value as Annotation.Value.Dict).value.last().value
         .let { field -> (field as? Annotation.Value.Dict)?.value?.single { it.name == "type" }?.value ?: field }
         .let { (it as Annotation.Value.Single).value.trimEnd('!') }
+
+    /** The definitions in any order, with the fields of each type in any order: what a schema with functions among its other fields comes back as. */
+    private fun GraphQLModel.Document.unordered(): Set<GraphQLModel.Definition> = definitions
+        .map { definition ->
+            when (definition) {
+                is GraphQLModel.ObjectTypeDefinition -> definition.copy(fields = definition.fields.sortedBy { it.name })
+                is GraphQLModel.InterfaceTypeDefinition -> definition.copy(fields = definition.fields.sortedBy { it.name })
+                else -> definition
+            }
+        }
+        .toSet()
 
     private fun String.toWirespec(): String = toWirespecFiles().values.single()
 

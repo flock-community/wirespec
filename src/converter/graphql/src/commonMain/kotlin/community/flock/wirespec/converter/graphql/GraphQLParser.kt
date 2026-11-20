@@ -24,7 +24,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.coerceTo
 import community.flock.wirespec.converter.common.Parser
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BEFORE_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT_PARAMETER
@@ -263,7 +262,7 @@ private class GraphQLConverter(private val document: Document) {
     fun fileAnnotations(): List<Annotation> = document.definitions
         .filterIsInstance<ObjectTypeDefinition>()
         .filter { definition -> definition.name in nested && definition.fields.any { !it.leadsToNested() } }
-        .map { definition -> route(definition.name).let { route -> rootDefinitions.getValue(route.first().first).annotation(route.map { (parent, field) -> field.toPathParameter(parent) }) } }
+        .map { definition -> route(definition.name).let { route -> rootDefinitions.getValue(route.first().first).annotation(route.map { (parent, field) -> field.toPathParameter() }) } }
 
     private fun ObjectTypeDefinition.nestedOperation(): Operation = rootDefinitions.getValue(route(name).first().first).operation
 
@@ -283,25 +282,19 @@ private class GraphQLConverter(private val document: Document) {
     private fun ObjectTypeDefinition.holder(): Type? = takeIf { description != null || directives.isNotEmpty() }
         ?.let { type(name, commonAnnotations(), emptyList()) }
 
-    /**
-     * A field of the path: its type, or what describes it when it has more than a type. `before` names the field that
-     * follows it in [parent], so the field comes back in its place.
-     */
-    private fun FieldDefinition.toPathParameter(parent: ObjectTypeDefinition): Annotation.Parameter = parent.fields.dropWhile { it != this }.drop(1).firstOrNull()?.name.let { before ->
-        when {
-            description == null && directives.isEmpty() && before == null -> parameter(name, type.print())
-            else -> Annotation.Parameter(
-                name,
-                Annotation.Value.Dict(
-                    listOfNotNull(
-                        parameter(TYPE_PARAMETER, type.print()),
-                        description?.let { parameter("description", it) },
-                        parameter("directives", directives.map { it.print() }),
-                        before?.let { parameter(BEFORE_PARAMETER, it) },
-                    ),
+    /** A field of the path: its type, or what describes it when it has more than a type. */
+    private fun FieldDefinition.toPathParameter(): Annotation.Parameter = when {
+        description == null && directives.isEmpty() -> parameter(name, type.print())
+        else -> Annotation.Parameter(
+            name,
+            Annotation.Value.Dict(
+                listOfNotNull(
+                    parameter(TYPE_PARAMETER, type.print()),
+                    description?.let { parameter("description", it) },
+                    parameter("directives", directives.map { it.print() }),
                 ),
-            )
-        }
+            ),
+        )
     }
 
     private fun FieldDefinition.isNesting(): Boolean = arguments.isEmpty() && (type is TypeRef.Named || (type is TypeRef.NonNull && type.type is TypeRef.Named))
@@ -321,22 +314,12 @@ private class GraphQLConverter(private val document: Document) {
 
     /**
      * A field with arguments is an rpc that names its type, as an operation names the type it is a field of, and is
-     * named after both. `before` names the field that follows it, so the field comes back in its place.
+     * named after both.
      */
     private fun ImplementingTypeDefinition.functions(identifier: String): List<Rpc> = (names[name] ?: name.sanitize()).let { prefix ->
-        fields.mapIndexedNotNull { index, field ->
-            field.takeIf { it.arguments.isNotEmpty() }?.let {
-                claim(prefix + field.name.capitalized()).let { rpc ->
-                    field.toRpc(
-                        identifier = rpc,
-                        annotation = annotation(
-                            Operation.QUERY.annotationName,
-                            parameter(DEFAULT_PARAMETER, identifier),
-                            fields.drop(index + 1).firstOrNull { it.arguments.isEmpty() }?.let { parameter(BEFORE_PARAMETER, it.name) },
-                        ),
-                        named = fieldName(rpc, name),
-                    )
-                }
+        fields.filter { it.arguments.isNotEmpty() }.map { field ->
+            claim(prefix + field.name.capitalized()).let { rpc ->
+                field.toRpc(identifier = rpc, annotation = annotation(Operation.QUERY.annotationName, identifier), named = fieldName(rpc, name))
             }
         }
     }

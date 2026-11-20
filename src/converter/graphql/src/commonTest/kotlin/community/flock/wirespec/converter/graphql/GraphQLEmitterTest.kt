@@ -397,7 +397,7 @@ class GraphQLEmitterTest {
             |  email: String
             |}
             |
-            |@GraphQLQuery("User", before: "email")
+            |@GraphQLQuery("User")
             |rpc UserFriends {
             |  first: Integer32? = 10
             |} -> User[]
@@ -409,10 +409,10 @@ class GraphQLEmitterTest {
         """.trimMargin().toGraphQL() shouldBe """
             |type User {
             |  name: String!
+            |  email: String!
             |  friends(
             |    first: Int = 10
             |  ): [User!]!
-            |  email: String!
             |  avatar(
             |    size: Int!
             |  ): String
@@ -425,7 +425,7 @@ class GraphQLEmitterTest {
     fun anOperationIsAFieldOfTheNestedTypeItNames() {
         """
             |@file:GraphQLQuery(path: { account: "AccountQuery!" })
-            |@file:GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account", before: "me" } })
+            |@file:GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account" } })
             |@file:GraphQLMutation(path: { account: "AccountMutation!" })
             |
             |type User {
@@ -461,9 +461,9 @@ class GraphQLEmitterTest {
             |}
             |
             |type AccountQuery {
+            |  me: User!
             |  "The users of the account"
             |  users: UserQuery
-            |  me: User!
             |}
             |
             |type UserQuery {

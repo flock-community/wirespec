@@ -17,7 +17,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Spread
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BEFORE_PARAMETER
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.BUILT_IN
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DEFAULT_PARAMETER
@@ -210,7 +209,7 @@ internal class WirespecToGraphQL(ast: AST) {
         is Rpc ->
             members
                 .filter { (owner, members) -> (owner.second != null || owner.first !in fieldHolders) && members.first().rpc === this }
-                .map { (owner, members) -> ObjectTypeDefinition(null, owner.first, emptyList(), emptyList(), members.placedAmong(emptyList()), owner.second != null) }
+                .map { (owner, members) -> ObjectTypeDefinition(null, owner.first, emptyList(), emptyList(), members.inOrder(), owner.second != null) }
         else -> listOfNotNull(convertModel())
     }
 
@@ -297,28 +296,17 @@ internal class WirespecToGraphQL(ast: AST) {
         InputObjectTypeDefinition(description(), name, emptyList(), shape.fields.map { it.toInputValue() }, false)
     }
 
-    /** The fields of a shape, and those its rpcs add. */
-    private fun Definition.fieldDefinitions(shape: Shape): List<FieldDefinition> = members[identifier.value to null].orEmpty()
-        .placedAmong(shape.fields.map { it.toFieldDefinition() })
+    /** The fields of a shape, and those its rpcs add after them. */
+    private fun Definition.fieldDefinitions(shape: Shape): List<FieldDefinition> = shape.fields.map { it.toFieldDefinition() } + members[identifier.value to null].orEmpty().inOrder()
 
     /**
      * A field that [rpc] adds to the type [owner], in the `extend` block of a root type that [owner] names next to it.
-     * It comes [before] the field of that name. A field that [nests] a type is one of a path, and not the rpc itself.
+     * A field that [nests] a type is one of a path, and not the rpc itself.
      */
-    private data class Member(val owner: Pair<String, String?>, val field: FieldDefinition, val before: String?, val nests: Boolean, val rpc: Rpc)
+    private data class Member(val owner: Pair<String, String?>, val field: FieldDefinition, val nests: Boolean, val rpc: Rpc)
 
-    /**
-     * Each field goes before the field it names. A field that names none comes after [fields], in the order of the rpcs,
-     * and one that nests a type after those: its file can be read before or after the file of the type it is a field of.
-     */
-    private fun List<Member>.placedAmong(fields: List<FieldDefinition>): List<FieldDefinition> = partition { it.before == null }.let { (last, placed) ->
-        place(fields + last.sortedBy { it.nests }.map { it.field }, placed)
-    }
-
-    private tailrec fun place(fields: List<FieldDefinition>, pending: List<Member>): List<FieldDefinition> = when (val next = pending.firstOrNull { member -> fields.any { it.name == member.before } }) {
-        null -> fields + pending.map { it.field }
-        else -> place(fields.indexOfFirst { it.name == next.before }.let { fields.take(it) + next.field + fields.drop(it) }, pending - next)
-    }
+    /** The fields in the order of their rpcs, and those that nest a type after the others, wherever the rpcs of that type are. */
+    private fun List<Member>.inOrder(): List<FieldDefinition> = sortedBy { it.nests }.map { it.field }
 
     /**
      * An rpc is a field of the type its annotation names. An operation of a nested type also adds the fields of the path
@@ -326,8 +314,7 @@ internal class WirespecToGraphQL(ast: AST) {
      */
     private fun Rpc.members(): List<Member> = pathFields().let { path ->
         path.runningFold(rootType()) { _, field -> field.leaf()!! to null }.let { owners ->
-            path.mapIndexed { index, field -> Member(owners[index], field.toPathField(), field.single(BEFORE_PARAMETER), nests = true, this) } +
-                Member(owners.last(), toFieldDefinition(), annotations.firstOrNull { it.name == operation(this).annotationName }?.single(BEFORE_PARAMETER), nests = false, this)
+            path.mapIndexed { index, field -> Member(owners[index], field.toPathField(), nests = true, this) } + Member(owners.last(), toFieldDefinition(), nests = false, this)
         }
     }
 
@@ -349,7 +336,7 @@ internal class WirespecToGraphQL(ast: AST) {
 
     private fun Annotation.toPathField(): FieldDefinition = FieldDefinition(single("description"), name, emptyList(), parseType(single(TYPE_PARAMETER)!!), array("directives").map(::parseDirective))
 
-    /** Every path names its fields, and the one that describes a field decides its description, directives and place. */
+    /** Every path names its fields, and the one that describes a field decides its description and directives. */
     private fun List<Member>.merged(): List<Member> = groupBy { it.field.name }.values.map { same ->
         same.first().let { first ->
             first.copy(
@@ -357,7 +344,6 @@ internal class WirespecToGraphQL(ast: AST) {
                     description = same.firstNotNullOfOrNull { it.field.description },
                     directives = same.map { it.field.directives }.firstOrNull { it.isNotEmpty() }.orEmpty(),
                 ),
-                before = same.firstNotNullOfOrNull { it.before },
             )
         }
     }
