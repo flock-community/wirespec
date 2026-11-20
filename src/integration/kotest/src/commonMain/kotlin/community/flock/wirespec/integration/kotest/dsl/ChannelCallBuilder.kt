@@ -13,6 +13,15 @@ import kotlin.reflect.typeOf
 
 public inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
 
+/** A channel message as the [community.flock.wirespec.integration.kotest.extension.ChannelTransport] publishes it. */
+public data class RawMessage(
+    public val topic: String,
+    public val key: String?,
+    public val body: ByteArray,
+)
+
+public suspend fun RawMessage.send(): Unit = currentChannelContext().transport.publish(topic, key, body)
+
 @WirespecScenarioDsl
 public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     @PublishedApi internal val channelClass: KClass<*>,
@@ -27,11 +36,9 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
 
     public fun messageGen(): Arb<P> = arbitrary { rs -> buildPayload(rs) }
 
-    public suspend fun send(gen: Gen<P>): P {
-        val payload = gen.draw(currentRandomSource())
-        publish(payload)
-        return payload
-    }
+    public suspend fun send(gen: Gen<P>): P = gen.draw(currentRandomSource()).also { payload -> rawMessage(payload).send() }
+
+    public suspend fun raw(gen: Gen<P>): RawMessage = rawMessage(gen.draw(currentRandomSource()))
 
     @Suppress("UNCHECKED_CAST")
     private fun buildPayload(rs: RandomSource): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
@@ -39,11 +46,11 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
         else -> primitive.draw(rs) as P
     }
 
-    private suspend fun publish(payload: P) {
-        val ctx = currentChannelContext()
-        val body = ctx.serialization.serializeBody(payload, payloadType)
-        ctx.transport.publish(resolveTopic(), key, body)
-    }
+    private suspend fun rawMessage(payload: P): RawMessage = RawMessage(
+        topic = resolveTopic(),
+        key = key,
+        body = currentChannelContext().serialization.serializeBody(payload, payloadType),
+    )
 
     private fun resolveTopic(): String = topic ?: channelClass.simpleName
         ?: error("$channelClass: cannot resolve a topic — pin one with topic(...).")

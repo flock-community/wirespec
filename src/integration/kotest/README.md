@@ -207,9 +207,16 @@ The generator overrides of Part 1 are not involved.
 
 ### Outside the contract
 
-The typed entry points only build what the contract allows, and `call()` fails on an
-undeclared response. To test past the contract, every endpoint also gets terminals on
-the raw forms, `Wirespec.RawRequest` and `Wirespec.RawResponse`:
+The typed entry points only draw what the contract allows, and an endpoint's `call()`
+fails on an undeclared response. To test past the contract, every operation also has
+terminals on its raw form, the value as it goes to or comes from the code under test:
+
+| Operation         | Raw form               | `raw()` on       | Sent as is with                                  |
+|-------------------|------------------------|------------------|--------------------------------------------------|
+| Endpoint request  | `Wirespec.RawRequest`  | a request `Gen`  | `call()`, returning the `RawResponse` unchecked  |
+| Endpoint response | `Wirespec.RawResponse` | a response `Gen` | `mock(<Endpoint>) { request -> … }`              |
+| Channel message   | `RawMessage`           | a message `Gen`  | `send()`                                         |
+| Rpc request       | `<Rpc>Request`         | a request `Gen`  | `call()`, returning what the service answers     |
 
 ```kotlin
 // raw() draws one request and serializes it as call() would send it (endpoint context).
@@ -220,18 +227,32 @@ val response = request.copy(headers = request.headers - "token").call()
 response.statusCode shouldBe 401
 
 // mock(<Endpoint>) stubs a RawResponse for the requests the typed predicate accepts.
+// raw() on a response Gen serializes one with the mock context's serialization.
 Wirespec.RawResponse(statusCode = 503, headers = emptyMap(), body = null)
     .mock(GetStock) { req -> req.path.sku == "SKU-001" }
 
-// raw() on a response Gen serializes one with the mock context's serialization.
-val stock = GetStock.generate.response200().raw()
+// raw(topic, key) serializes a message as send() would publish it (channel context);
+// send() on a RawMessage publishes its topic, key and body as is.
+val message = CampaignEvents.generate.message().raw("campaign-events")
+message.copy(body = "not json".encodeToByteArray()).send()
+
+// An rpc has no wire format: its raw form is the <Rpc>Request the Service receives.
+GetUserRequest(id = UserId("not-a-user-id")).call()
 ```
 
-`Wirespec.RawRequest.call()` is the one runtime terminal (in `…kotest.dsl`, next to
-`draw`): a raw request already says where it goes. A raw response doesn't, so its
-`mock` is generated per endpoint and takes the endpoint object to pick the overload.
-`Gen<…Request>.raw()` and `Gen<…Response<*>>.raw()` erase to the same JVM signature in
-one file, so the response one carries `@JvmName("rawResponse")`.
+The endpoint and channel raw forms are what goes over the wire, so a test can break
+anything the typed values can't express. An rpc has no wire format (Wirespec defines
+no transport for it; `call()` invokes the registered `Service`), so its raw form is the
+`<Rpc>Request` itself, and outside the contract means values the Kotlin types allow but
+the contract doesn't: a refined value off its pattern, a number out of its bounds.
+
+`Wirespec.RawRequest.call()`, `RawMessage` and `RawMessage.send()` are runtime (in
+`…kotest.dsl`, next to `draw`): a raw request or message already says where it goes. A
+raw response doesn't, so its `mock` is generated per endpoint and takes the endpoint
+object to pick the overload. `Gen<…Request>.raw()` and `Gen<…Response<*>>.raw()` erase to
+the same JVM signature in one file, so the response one carries
+`@JvmName("rawResponse")`. Channels sharing a payload get one `raw`, as they get one
+`send`.
 
 ### Wiring the transport
 
@@ -248,7 +269,8 @@ class MySpec : FunSpec({
 ```
 
 `WirespecEndpointExtension` backs an endpoint's `call()` and `raw()` and a raw request's `call()`, `WirespecChannelExtension` backs
-`send()`, `WirespecMockExtension` backs `mock` and a response's `raw()`, and `WirespecRpcExtension` backs an rpc's `call()`, which runs on
+`send()` and `raw()` on messages and a `RawMessage`'s `send()`, `WirespecMockExtension` backs `mock` and a response's `raw()`, and
+`WirespecRpcExtension` backs an rpc's `call()`, also on an `<Rpc>Request`, which runs on
 the one registered service implementing that rpc's `Service`; supply whichever the spec needs. A call into a missing
 context fails with a message naming the extension to add. Responses are
 validated against the contract — an

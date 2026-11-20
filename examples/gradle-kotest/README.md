@@ -51,7 +51,7 @@ build/generated/.../generated/
 | `service/`, `repository/`        | In-memory domain logic                                                                                                                                                                                  |
 | `kafka/`                         | Publisher/consumer implementing the generated channel `Sender`/`Listener`                                                                                                                               |
 | `CampaignEndpointScenarioTest`   | HTTP scenarios, and a raw request outside the contract (`.raw()`, `.call()` on a `Wirespec.RawRequest`)                                                                                                 |
-| `CampaignChannelScenarioTest`    | Kafka messaging scenarios (`@EmbeddedKafka`)                                                                                                                                                            |
+| `CampaignChannelScenarioTest`    | Kafka messaging scenarios (`@EmbeddedKafka`), and a raw message outside the contract                                                                                                                    |
 | `ProductAvailabilityMockTest`    | Mocks the downstream inventory service with `.mock { req -> … }`, and with a raw response outside its contract                                                                                          |
 | `ProjectConfig`                  | Registers every extension once for the whole suite, plus `KafkaChannelTransport` (producer-only `ChannelTransport` backing `send()`) and `WireMockMockServer` (the `MockServer` the `.mock` DSL drives) |
 
@@ -147,6 +147,19 @@ without checking it against the contract:
 val request = CreateProduct.generate.request { body { sku("SKU-405") } }.raw()
 request.copy(method = "PUT").call().statusCode shouldBe 405
 ```
+
+`CampaignChannelScenarioTest` does the same for a message: `raw()` serializes a contract
+`CampaignEvent` as `send()` would publish it, the test swaps its event type for one the contract
+doesn't declare, and `send()` on the `RawMessage` publishes the bytes as they are:
+
+```kotlin
+val message = CampaignEvents.generate.message { eventType(CampaignEventType.ENDED) }.raw(CAMPAIGN_EVENTS_TOPIC)
+val cancelled = message.body.decodeToString().replace("\"ENDED\"", "\"CANCELLED\"")
+message.copy(body = cancelled.encodeToByteArray()).send()
+```
+
+The example has no rpcs. An rpc has no wire format, so its raw form is the `<Rpc>Request` the
+service receives; see the [Kotest integration docs](https://wirespec.io/docs/integration/kotest).
 
 The mock server is resolved from an ambient context installed by `WirespecMockExtension` — the
 response-side counterpart to `WirespecEndpointExtension`. The extension consumes a framework-neutral

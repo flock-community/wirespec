@@ -160,6 +160,10 @@ class KotestDslExtensionTest {
         output shouldContain "return call.send(this)"
         output shouldNotContain "QueueMessage"
         output shouldNotContain "inner.sendFields"
+
+        output shouldContain "import community.flock.wirespec.integration.kotest.dsl.RawMessage"
+        output shouldContain "public suspend fun Gen<String>.raw(topic: String? = null, key: String? = null): RawMessage {"
+        output shouldContain "return call.raw(this)"
     }
 
     @Test
@@ -179,6 +183,8 @@ class KotestDslExtensionTest {
         output shouldContain "public val OldListener.generate: OldListenerGenerate"
         val sendSignature = "public suspend fun Gen<Event>.send(topic: String? = null, key: String? = null): Event {"
         output.windowed(sendSignature.length).count { it == sendSignature } shouldBe 1
+        val rawSignature = "public suspend fun Gen<Event>.raw(topic: String? = null, key: String? = null): RawMessage {"
+        output.windowed(rawSignature.length).count { it == rawSignature } shouldBe 1
     }
 
     @Test
@@ -271,6 +277,14 @@ class KotestDslExtensionTest {
         output shouldContain "public suspend fun Gen<PingRequest>.call(): String ="
         output shouldContain "rpcCall(Ping.Service::class, this) { service, _ -> service.ping() }"
         output shouldNotContain "PingRequestBuilder"
+
+        output shouldContain "public suspend fun Gen<GetUserRequest>.raw(): GetUserRequest ="
+        output shouldContain "rawRpcRequest(this)"
+        output shouldContain "public suspend fun GetUserRequest.call(): GetUser.Response ="
+        output shouldContain "rawRpcCall(GetUser.Service::class, this) { service, request -> service.getUser(request.id) }"
+        output shouldContain "public suspend fun Gen<PingRequest>.raw(): PingRequest ="
+        output shouldContain "public suspend fun PingRequest.call(): String ="
+        output shouldContain "rawRpcCall(Ping.Service::class, this) { service, _ -> service.ping() }"
     }
 
     @Test

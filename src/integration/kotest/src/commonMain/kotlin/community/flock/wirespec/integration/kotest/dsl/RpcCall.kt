@@ -9,4 +9,12 @@ public suspend fun <S : Any, Req, Res> rpcCall(
     serviceClass: KClass<S>,
     requestGen: Gen<Req>,
     invoke: suspend (S, Req) -> Res,
-): Res = invoke(currentRpcContext().service(serviceClass), requestGen.draw(currentRandomSource()))
+): Res = rawRpcCall(serviceClass, rawRpcRequest(requestGen), invoke)
+
+public suspend fun <Req> rawRpcRequest(requestGen: Gen<Req>): Req = requestGen.draw(currentRandomSource())
+
+public suspend fun <S : Any, Req, Res> rawRpcCall(
+    serviceClass: KClass<S>,
+    request: Req,
+    invoke: suspend (S, Req) -> Res,
+): Res = invoke(currentRpcContext().service(serviceClass), request)

@@ -40,6 +40,9 @@ internal object ChannelDslFile {
             if (emitSend || !isRecord) {
                 import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
             }
+            if (emitSend) {
+                import("community.flock.wirespec.integration.kotest.dsl", "RawMessage")
+            }
             if (isRecord) {
                 import("community.flock.wirespec.integration.kotest.dsl", "generatedGen")
                 import("${packageName.value}.generator", "${payload}Generator")
@@ -80,16 +83,18 @@ internal object ChannelDslFile {
             )
 
             if (emitSend) {
-                asyncFunction("send") {
-                    visibility(Visibility.PUBLIC)
-                    receiver(genPayload)
-                    arg("topic", IrType.Nullable(IrType.String), rawExpr("null"))
-                    arg("key", IrType.Nullable(IrType.String), rawExpr("null"))
-                    returnType(IrType.Custom(payload))
-                    raw("val call = channelCall<$payload>(${shape.name}::class)")
-                    raw("topic?.let { call.topic(it) }")
-                    raw("key?.let { call.key(it) }")
-                    returns(rawExpr("call.send(this)"))
+                listOf("send" to IrType.Custom(payload), "raw" to IrType.Custom("RawMessage")).forEach { (terminal, returned) ->
+                    asyncFunction(terminal) {
+                        visibility(Visibility.PUBLIC)
+                        receiver(genPayload)
+                        arg("topic", IrType.Nullable(IrType.String), rawExpr("null"))
+                        arg("key", IrType.Nullable(IrType.String), rawExpr("null"))
+                        returnType(returned)
+                        raw("val call = channelCall<$payload>(${shape.name}::class)")
+                        raw("topic?.let { call.topic(it) }")
+                        raw("key?.let { call.key(it) }")
+                        returns(rawExpr("call.$terminal(this)"))
+                    }
                 }
             }
         }

@@ -51,6 +51,8 @@ internal object RpcDslFile {
                 import("community.flock.wirespec.kotlin", "Wirespec")
             }
             import("community.flock.wirespec.integration.kotest.dsl", "rpcCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "rawRpcRequest")
+            import("community.flock.wirespec.integration.kotest.dsl", "rawRpcCall")
             if (shape.requestFields.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
@@ -141,11 +143,26 @@ internal object RpcDslFile {
     private fun FileBuilder.buildCall(shape: RpcShape) {
         val args = shape.parameters.joinToString(", ") { "request.${it.identifier.value.escapeKotlinIdentifier()}" }
         val request = if (shape.parameters.isEmpty()) "_" else "request"
+        val serviceClass = "${shape.name}.Service::class"
+        val invoke = "{ service, $request -> service.${shape.functionName}($args) }"
+        val requestGen = IrType.Custom("Gen", listOf(IrType.Custom(shape.requestName)))
         asyncFunction("call") {
             visibility(Visibility.PUBLIC)
-            receiver(IrType.Custom("Gen", listOf(IrType.Custom(shape.requestName))))
+            receiver(requestGen)
             returnType(IrType.Custom(shape.callReturnType))
-            returns(rawExpr("rpcCall(${shape.name}.Service::class, this) { service, $request -> service.${shape.functionName}($args) }"))
+            returns(rawExpr("rpcCall($serviceClass, this) $invoke"))
+        }
+        asyncFunction("raw") {
+            visibility(Visibility.PUBLIC)
+            receiver(requestGen)
+            returnType(IrType.Custom(shape.requestName))
+            returns(rawExpr("rawRpcRequest(this)"))
+        }
+        asyncFunction("call") {
+            visibility(Visibility.PUBLIC)
+            receiver(IrType.Custom(shape.requestName))
+            returnType(IrType.Custom(shape.callReturnType))
+            returns(rawExpr("rawRpcCall($serviceClass, this) $invoke"))
         }
     }
 
