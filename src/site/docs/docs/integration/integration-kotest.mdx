@@ -394,59 +394,81 @@ form** of what goes to or comes from the code under test. You can test a service
 consumer with a message it can't read, or a client whose downstream answers with a status that isn't declared. Each
 kind of operation has its own raw form:
 
-| Operation         | Raw form               | `raw()` on       | Sent as is with                                    |
-|-------------------|------------------------|------------------|----------------------------------------------------|
-| Endpoint request  | `Wirespec.RawRequest`  | a request `Gen`  | `call()`, which returns the `Wirespec.RawResponse` |
-| Endpoint response | `Wirespec.RawResponse` | a response `Gen` | `mock(<Endpoint>) { request -> … }`                |
-| Channel message   | `RawMessage`           | a message `Gen`  | `send()`                                           |
-| Rpc request       | `<Rpc>Request`         | a request `Gen`  | `call()`, which returns what the service answers   |
+| Operation         | Raw form         | `raw()` on       | Sent as is with                                     |
+|-------------------|------------------|------------------|-----------------------------------------------------|
+| Endpoint request  | `RawRequest<B>`  | a request `Gen`  | `call()`, which returns a `RawResponse<ByteArray?>` |
+| Endpoint response | `RawResponse<B>` | a response `Gen` | `mock(<Endpoint>) { request -> … }`                 |
+| Channel message   | `RawMessage<B>`  | a message `Gen`  | `send()`                                            |
+| Rpc request       | `<Rpc>Request`   | a request `Gen`  | `call()`, which returns what the service answers    |
 
 Each one works the same way. `raw()` draws one value from a `Gen` and gives it in the form that `call()`, `mock` or
-`send()` would hand over. Change what the test is about, usually with `copy`, or build the raw form by hand, and send
-it. Nothing checks it against the contract on the way, and `call()` on a raw endpoint request doesn't check the response
-either.
+`send()` would hand over. Change what the test is about, or build the raw form by hand, and send it. Nothing checks it
+against the contract on the way, and `call()` on a raw endpoint request doesn't check the response either.
 
-`call()` on a `Wirespec.RawRequest`, `send()` on a `RawMessage` and `RawMessage` itself come from
-`community.flock.wirespec.integration.kotest.dsl`, like `draw()`. The other raw entry points are generated with the
-rest of the DSL, in `<packageName>.kotest`.
+`RawRequest`, `RawResponse` and `RawMessage` are types of the Kotest integration, not of the Wirespec runtime. They and
+the functions on them (`call()`, `send()` and `withBody`) come from `community.flock.wirespec.integration.kotest.dsl`,
+like `draw()`. The other raw entry points are generated with the rest of the DSL, in `<packageName>.kotest`.
+
+#### The body of a raw value
+
+You give the body of a raw request, response or message as an input of any type. The integration serializes it as
+that type when it sends it, with the serialization of the context it goes through, so you don't have to write the bytes
+yourself:
+
+- a `ByteArray` goes over the wire as it is,
+- `null` sends no body (requests and responses only),
+- any other value is serialized as its type: the `B` of `RawRequest<B>`, `RawResponse<B>` and `RawMessage<B>`.
+
+The type is taken when you build the raw value, and kept in its `bodyType`. `copy` changes any part but the type of the
+body; `withBody(input)` gives the raw value a body of another type:
+
+```kotlin
+// The body of a contract request, replaced by a map that the contract doesn't allow
+val request = CreateTodo.generate.request { body { name("Buy milk") } }.raw()
+request.withBody(mapOf("name" to 42, "done" to "maybe")).call().status shouldBe 400
+```
+
+`raw()` gives the body as the bytes that `call()`, `mock` or `send()` would send, a `ByteArray`. So a raw value from
+`raw()` goes out exactly as the typed one would.
 
 #### Endpoint requests
 
-A `Wirespec.RawRequest` holds what goes over HTTP: the method, the path segments, the queries, the headers and the body
-bytes. `raw()` on a request `Gen` serializes one request as `call()` would send it, with the serialization of the
-[endpoint context](#wiring-the-transport). `call()` on the `Wirespec.RawRequest` sends it through the same
-transportation, and returns the `Wirespec.RawResponse` as it came back:
+A `RawRequest` holds what goes over HTTP: the method, the path segments, the queries, the headers and the body. `raw()`
+on a request `Gen` serializes one request as `call()` would send it, with the serialization of the
+[endpoint context](#wiring-the-transport). `call()` on the `RawRequest` sends it through the same transportation, and
+returns the `RawResponse` as it came back, with the status, the headers and the body bytes:
 
 ```kotlin
 val request = CreateTodo.generate.request { body { name("Buy milk") } }.raw()
 
-val response = request.copy(body = "not json".encodeToByteArray()).call()
-response.statusCode shouldBe 400
+val response = request.withBody("not json".encodeToByteArray()).call()
+response.status shouldBe 400
+response.body?.decodeToString() shouldContain "malformed"
 ```
 
 You can also write a raw request by hand, for example for a method the contract doesn't declare:
 
 ```kotlin
-val response = Wirespec.RawRequest(
+val response = RawRequest(
     method = "DELETE",
     path = listOf("api", "todos"),
     queries = emptyMap(),
     headers = emptyMap(),
     body = null,
 ).call()
-response.statusCode shouldBe 405
+response.status shouldBe 405
 ```
 
 #### Endpoint responses
 
 A mocked downstream service can answer outside its contract too. `raw()` on a response `Gen` serializes one response
-with the serialization of the mock context. `mock(<Endpoint>) { request -> … }` registers a `Wirespec.RawResponse` for
-every request to that endpoint that the typed predicate accepts. A raw response doesn't say which endpoint it answers,
-so you name the endpoint:
+with the serialization of the mock context. `mock(<Endpoint>) { request -> … }` registers a `RawResponse` for every
+request to that endpoint that the typed predicate accepts. A raw response doesn't say which endpoint it answers, so you
+name the endpoint:
 
 ```kotlin
-// A status the contract doesn't declare
-Wirespec.RawResponse(statusCode = 503, headers = emptyMap(), body = null)
+// A status the contract doesn't declare, with a body of a type it doesn't declare either
+RawResponse(status = 503, headers = emptyMap(), body = mapOf("reason" to "maintenance"))
     .mock(GetTodoById) { request -> request.path.id == "42" }
 
 // A contract response with its body cut off halfway
@@ -457,28 +479,28 @@ todo.copy(body = todo.body?.let { it.copyOf(it.size / 2) })
 
 #### Channel messages
 
-A `RawMessage` holds what the `ChannelTransport` publishes: the topic, the key and the body bytes. `raw()` on a message
-`Gen` serializes one message as `send()` would publish it, with the serialization of the channel context. It takes the
-same optional topic and key as `send()`, and without a topic it uses the simple name of the channel. `send()` on the
+A `RawMessage` holds what the `ChannelTransport` publishes: the topic, the key and the body. `raw()` on a message `Gen`
+serializes one message as `send()` would publish it, with the serialization of the channel context. It takes the same
+optional topic and key as `send()`, and without a topic it uses the simple name of the channel. `send()` on the
 `RawMessage` publishes it through the same transport:
 
 ```kotlin
-// A contract message with an event type the contract doesn't declare
-val message = CampaignEvents.generate.message { eventType(CampaignEventType.ENDED) }.raw("campaign-events")
-val cancelled = message.body.decodeToString().replace("\"ENDED\"", "\"CANCELLED\"")
-message.copy(body = cancelled.encodeToByteArray()).send()
+// An event type the contract doesn't declare
+val cancelled = mapOf("campaignId" to "c-1", "eventType" to "CANCELLED", "discountPercentage" to 10)
+RawMessage(topic = "campaign-events", key = null, body = cancelled).send()
 
-// A message that isn't JSON at all
-RawMessage(topic = "campaign-events", key = null, body = "not json".encodeToByteArray()).send()
+// A contract message whose body isn't JSON at all
+CampaignEvents.generate.message().raw("campaign-events").withBody("not json".encodeToByteArray()).send()
 ```
 
 #### Rpc requests
 
 An rpc has no wire format: Wirespec defines no transport for it, and `call()` hands the parameters straight to the
-registered `Service`. So the raw form of an rpc request is the `<Rpc>Request` itself, and a value outside the contract
-is one the Kotlin types allow but the contract doesn't: a refined value that doesn't match its pattern, or a number
-outside its bounds. `raw()` on a request `Gen` draws the `<Rpc>Request` that `call()` would hand over. `call()` on an
-`<Rpc>Request` hands that one to the service as is, and returns what the service answers:
+registered `Service`. So the raw form of an rpc request is the `<Rpc>Request` itself, a data class generated with the
+DSL, and a value outside the contract is one the Kotlin types allow but the contract doesn't: a refined value that
+doesn't match its pattern, or a number outside its bounds. `raw()` on a request `Gen` draws the `<Rpc>Request` that
+`call()` would hand over. `call()` on an `<Rpc>Request` hands that one to the service as is, and returns what the
+service answers:
 
 ```kotlin
 // UserId only allows ^u-[0-9]{3}$
@@ -506,12 +528,12 @@ val unmatched = GetUser.Service { GetUser.generate.result { id("not-a-user-id") 
 The DSL takes its transport, and a `RandomSource` per test, from an ambient context. A Kotest extension installs one
 for each kind of operation; register the ones your spec uses:
 
-| Extension                   | Backs                                                                                       | Takes                                                      |
-|-----------------------------|---------------------------------------------------------------------------------------------|------------------------------------------------------------|
-| `WirespecEndpointExtension` | `call()` and `raw()` on endpoint requests, `call()` on a `Wirespec.RawRequest`              | a `Wirespec.Transportation` and a `Wirespec.Serialization` |
-| `WirespecMockExtension`     | `mock` on endpoint responses and on a `Wirespec.RawResponse`, `raw()` on endpoint responses | a `MockServer` and a `Wirespec.Serialization`              |
-| `WirespecChannelExtension`  | `send()` and `raw()` on messages, `send()` on a `RawMessage`                                | a `ChannelTransport` and a `Wirespec.Serialization`        |
-| `WirespecRpcExtension`      | `call()` and `raw()` on rpc requests, `call()` on an `<Rpc>Request`                         | the `Service` implementations                              |
+| Extension                   | Backs                                                                              | Takes                                                      |
+|-----------------------------|------------------------------------------------------------------------------------|------------------------------------------------------------|
+| `WirespecEndpointExtension` | `call()` and `raw()` on endpoint requests, `call()` on a `RawRequest`              | a `Wirespec.Transportation` and a `Wirespec.Serialization` |
+| `WirespecMockExtension`     | `mock` on endpoint responses and on a `RawResponse`, `raw()` on endpoint responses | a `MockServer` and a `Wirespec.Serialization`              |
+| `WirespecChannelExtension`  | `send()` and `raw()` on messages, `send()` on a `RawMessage`                       | a `ChannelTransport` and a `Wirespec.Serialization`        |
+| `WirespecRpcExtension`      | `call()` and `raw()` on rpc requests, `call()` on an `<Rpc>Request`                | the `Service` implementations                              |
 
 They live in `community.flock.wirespec.integration.kotest.extension` and compose: register several and they share one
 `RandomSource` per test.

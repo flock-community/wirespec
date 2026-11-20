@@ -50,7 +50,7 @@ build/generated/.../generated/
 | `downstream/`                    | `InventoryClient` + HTTP transportation driving the generated `GetStock` client                                                                                                                         |
 | `service/`, `repository/`        | In-memory domain logic                                                                                                                                                                                  |
 | `kafka/`                         | Publisher/consumer implementing the generated channel `Sender`/`Listener`                                                                                                                               |
-| `CampaignEndpointScenarioTest`   | HTTP scenarios, and a raw request outside the contract (`.raw()`, `.call()` on a `Wirespec.RawRequest`)                                                                                                 |
+| `CampaignEndpointScenarioTest`   | HTTP scenarios, and a raw request outside the contract (`.raw()`, `.call()` on a `RawRequest`)                                                                                                          |
 | `CampaignChannelScenarioTest`    | Kafka messaging scenarios (`@EmbeddedKafka`), and a raw message outside the contract                                                                                                                    |
 | `ProductAvailabilityMockTest`    | Mocks the downstream inventory service with `.mock { req -> … }`, and with a raw response outside its contract                                                                                          |
 | `ProjectConfig`                  | Registers every extension once for the whole suite, plus `KafkaChannelTransport` (producer-only `ChannelTransport` backing `send()`) and `WireMockMockServer` (the `MockServer` the `.mock` DSL drives) |
@@ -124,43 +124,6 @@ availability.body.available shouldBe 7L
 through the generated names. The stub matches on the endpoint's method and path template first, then
 on the predicate — so two stubs with different predicates route each SKU to its own response.
 
-### Outside the contract
-
-The typed DSL stays within the contract. To test what happens outside it, both directions also take
-the raw form, `Wirespec.RawRequest` / `Wirespec.RawResponse`. `ProductAvailabilityMockTest` lets the
-downstream answer with a status `inventory.ws` doesn't declare, and checks that the app's own answer
-still matches `campaign.ws` (`InventoryClient` treats it as no stock):
-
-```kotlin
-Wirespec.RawResponse(statusCode = 503, headers = emptyMap(), body = "inventory is down".encodeToByteArray())
-    .mock(GetStock) { req -> req.path.sku == sku }
-
-val availability = GetProductAvailability.generate.request { path { id(productId) } }.call()
-availability.shouldBeInstanceOf<GetProductAvailability.Response404>()
-```
-
-`CampaignEndpointScenarioTest` goes the other way: `raw()` serializes a contract request as `call()`
-would send it, the test changes its method, and `call()` on the raw request returns the raw response
-without checking it against the contract:
-
-```kotlin
-val request = CreateProduct.generate.request { body { sku("SKU-405") } }.raw()
-request.copy(method = "PUT").call().statusCode shouldBe 405
-```
-
-`CampaignChannelScenarioTest` does the same for a message: `raw()` serializes a contract
-`CampaignEvent` as `send()` would publish it, the test swaps its event type for one the contract
-doesn't declare, and `send()` on the `RawMessage` publishes the bytes as they are:
-
-```kotlin
-val message = CampaignEvents.generate.message { eventType(CampaignEventType.ENDED) }.raw(CAMPAIGN_EVENTS_TOPIC)
-val cancelled = message.body.decodeToString().replace("\"ENDED\"", "\"CANCELLED\"")
-message.copy(body = cancelled.encodeToByteArray()).send()
-```
-
-The example has no rpcs. An rpc has no wire format, so its raw form is the `<Rpc>Request` the
-service receives; see the [Kotest integration docs](https://wirespec.io/docs/integration/kotest).
-
 The mock server is resolved from an ambient context installed by `WirespecMockExtension` — the
 response-side counterpart to `WirespecEndpointExtension`. The extension consumes a framework-neutral
 [`MockServer`](../../src/integration/kotest/src/commonMain/kotlin/community/flock/wirespec/integration/kotest/WirespecMockContext.kt);
@@ -203,6 +166,42 @@ class ProductAvailabilityMockTest : FunSpec({
     }
 }
 ```
+
+### Outside the contract
+
+The typed DSL stays within the contract. To test what happens outside it, both directions also take
+the raw form, the Kotest integration's `RawRequest` / `RawResponse` / `RawMessage`, whose body is any
+typed input (serialized as its type) or bytes. `ProductAvailabilityMockTest` lets the
+downstream answer with a status `inventory.ws` doesn't declare, and checks that the app's own answer
+still matches `campaign.ws` (`InventoryClient` treats it as no stock):
+
+```kotlin
+RawResponse(status = 503, headers = emptyMap(), body = mapOf("reason" to "inventory is down"))
+    .mock(GetStock) { req -> req.path.sku == sku }
+
+val availability = GetProductAvailability.generate.request { path { id(productId) } }.call()
+availability.shouldBeInstanceOf<GetProductAvailability.Response404>()
+```
+
+`CampaignEndpointScenarioTest` goes the other way: `raw()` serializes a contract request as `call()`
+would send it, the test changes its method, and `call()` on the raw request returns the raw response
+without checking it against the contract:
+
+```kotlin
+val request = CreateProduct.generate.request { body { sku("SKU-405") } }.raw()
+request.copy(method = "PUT").call().status shouldBe 405
+```
+
+`CampaignChannelScenarioTest` does the same for a message. It gives a `RawMessage` a map as its body,
+with an event type the contract doesn't declare, and `send()` publishes it serialized as it is given:
+
+```kotlin
+val cancelled = mapOf("campaignId" to campaignId, "eventType" to "CANCELLED", "discountPercentage" to 10L)
+RawMessage(topic = CAMPAIGN_EVENTS_TOPIC, key = null, body = cancelled).send()
+```
+
+The example has no rpcs. An rpc has no wire format, so its raw form is the `<Rpc>Request` the
+service receives; see the [Kotest integration docs](https://wirespec.io/docs/integration/kotest).
 
 ## Running
 

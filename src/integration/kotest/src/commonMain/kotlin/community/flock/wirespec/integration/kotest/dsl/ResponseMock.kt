@@ -15,11 +15,11 @@ public suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> respo
 public suspend fun <Res : Wirespec.Response<*>> rawResponse(
     server: Wirespec.Server<*, Res>,
     responseGen: Gen<Res>,
-): Wirespec.RawResponse = server.server(currentMockContext().serialization).to(responseGen.draw(currentRandomSource()))
+): RawResponse<ByteArray?> = server.server(currentMockContext().serialization).to(responseGen.draw(currentRandomSource())).toKotest()
 
 public suspend fun <Req : Wirespec.Request<*>> rawResponseMock(
     server: Wirespec.Server<Req, *>,
-    response: Wirespec.RawResponse,
+    response: RawResponse<*>,
     predicate: (Req) -> Boolean,
 ) {
     val ctx = currentMockContext()
@@ -29,7 +29,7 @@ public suspend fun <Req : Wirespec.Request<*>> rawResponseMock(
             method = server.method,
             pathTemplate = server.pathTemplate,
             matches = { raw -> runCatching { predicate(edge.from(raw)) }.getOrDefault(false) },
-            response = response,
+            response = response.toWirespec(ctx.serialization),
         ),
     )
 }

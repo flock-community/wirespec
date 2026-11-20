@@ -5,13 +5,13 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.ActivateCampa
 import community.flock.wirespec.examples.kotest.generated.endpoint.CreateCampaign
 import community.flock.wirespec.examples.kotest.generated.kotest.call
 import community.flock.wirespec.examples.kotest.generated.kotest.generate
-import community.flock.wirespec.examples.kotest.generated.kotest.raw
 import community.flock.wirespec.examples.kotest.generated.kotest.send
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEvent
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEventType
 import community.flock.wirespec.examples.kotest.generated.model.CampaignInput
 import community.flock.wirespec.examples.kotest.generated.model.CampaignStatus
 import community.flock.wirespec.examples.kotest.kafka.CAMPAIGN_EVENTS_TOPIC
+import community.flock.wirespec.integration.kotest.dsl.RawMessage
 import community.flock.wirespec.integration.kotest.dsl.send
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.assertions.nondeterministic.eventually
@@ -20,6 +20,7 @@ import io.kotest.extensions.spring.testContextManager
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.property.RandomSource
 import kotlinx.coroutines.Dispatchers
@@ -104,19 +105,14 @@ class CampaignChannelScenarioTest :
             received shouldBe sent
         }
 
-        test("a message outside the contract goes over the topic byte for byte") {
-            val message = CampaignEvents.generate
-                .message {
-                    eventType(CampaignEventType.ENDED)
-                }
-                .raw(CAMPAIGN_EVENTS_TOPIC)
-            val cancelled = message.body.decodeToString().replace("\"ENDED\"", "\"CANCELLED\"")
-            val outsideTheContract = message.copy(body = cancelled.encodeToByteArray())
+        test("a message outside the contract goes over the topic as it is given") {
+            val campaignId = UUID.randomUUID().toString()
+            val cancelled = mapOf("campaignId" to campaignId, "eventType" to "CANCELLED", "discountPercentage" to 10L)
 
-            outsideTheContract.send()
+            RawMessage(topic = CAMPAIGN_EVENTS_TOPIC, key = null, body = cancelled).send()
 
-            val received = awaitRecord(CAMPAIGN_EVENTS_TOPIC) { record -> record.value().decodeToString().takeIf { it == cancelled } }
-            received shouldBe cancelled
+            val received = awaitRecord(CAMPAIGN_EVENTS_TOPIC) { record -> record.value().decodeToString().takeIf { campaignId in it } }
+            received shouldContain "\"eventType\":\"CANCELLED\""
         }
     })
 

@@ -69,7 +69,7 @@ class CampaignEndpointScenarioTest :
 
             val response = request.copy(method = "PUT").call()
 
-            response.statusCode shouldBe 405
+            response.status shouldBe 405
         }
 
         test("GetProduct on an unknown id returns a 404 with a contract Error") {

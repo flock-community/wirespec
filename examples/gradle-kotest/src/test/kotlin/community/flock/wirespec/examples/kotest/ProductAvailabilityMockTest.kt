@@ -9,7 +9,7 @@ import community.flock.wirespec.examples.kotest.generated.kotest.mock
 import community.flock.wirespec.examples.kotest.generated.model.Availability
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
 import community.flock.wirespec.examples.kotest.generated.model.StockLevel
-import community.flock.wirespec.kotlin.Wirespec
+import community.flock.wirespec.integration.kotest.dsl.RawResponse
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -83,7 +83,7 @@ class ProductAvailabilityMockTest :
             val sku = "SKU-DOWN"
             val productId = createProduct(sku)
 
-            Wirespec.RawResponse(statusCode = 503, headers = emptyMap(), body = "inventory is down".encodeToByteArray())
+            RawResponse(status = 503, headers = emptyMap(), body = mapOf("reason" to "inventory is down"))
                 .mock(GetStock) { req -> req.path.sku == sku }
 
             val availability = GetProductAvailability.generate

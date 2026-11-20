@@ -83,7 +83,7 @@ internal object ChannelDslFile {
             )
 
             if (emitSend) {
-                listOf("send" to IrType.Custom(payload), "raw" to IrType.Custom("RawMessage")).forEach { (terminal, returned) ->
+                listOf("send" to IrType.Custom(payload), "raw" to IrType.Custom("RawMessage<ByteArray>")).forEach { (terminal, returned) ->
                     asyncFunction(terminal) {
                         visibility(Visibility.PUBLIC)
                         receiver(genPayload)

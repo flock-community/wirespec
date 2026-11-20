@@ -30,9 +30,11 @@ public suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.
 public suspend fun <Req : Wirespec.Request<*>> rawRequest(
     client: Wirespec.Client<Req, *>,
     requestGen: Gen<Req>,
-): Wirespec.RawRequest = client.client(currentEndpointContext().serialization).to(requestGen.draw(currentRandomSource()))
+): RawRequest<ByteArray?> = client.client(currentEndpointContext().serialization).to(requestGen.draw(currentRandomSource())).toKotest()
 
-public suspend fun Wirespec.RawRequest.call(): Wirespec.RawResponse = currentEndpointContext().transportation.transport(this)
+public suspend fun RawRequest<*>.call(): RawResponse<ByteArray?> = currentEndpointContext()
+    .let { ctx -> ctx.transportation.transport(toWirespec(ctx.serialization)) }
+    .toKotest()
 
 @WirespecScenarioDsl
 public class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> internal constructor(

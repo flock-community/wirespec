@@ -54,11 +54,13 @@ class KotestDslExtensionTest {
     fun emitsRawFormsOfRequestsAndResponsesAndARawMock() {
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
 
-        output shouldContain "public suspend fun Gen<GetTodos.Request>.raw(): Wirespec.RawRequest ="
+        output shouldContain "import community.flock.wirespec.integration.kotest.dsl.RawRequest"
+        output shouldContain "import community.flock.wirespec.integration.kotest.dsl.RawResponse"
+        output shouldContain "public suspend fun Gen<GetTodos.Request>.raw(): RawRequest<ByteArray?> ="
         output shouldContain "rawRequest(GetTodos.api, this)"
-        output shouldContain "@JvmName(\"rawResponse\")\npublic suspend fun Gen<GetTodos.Response<*>>.raw(): Wirespec.RawResponse ="
+        output shouldContain "@JvmName(\"rawResponse\")\npublic suspend fun Gen<GetTodos.Response<*>>.raw(): RawResponse<ByteArray?> ="
         output shouldContain "rawResponse(GetTodos.api, this)"
-        output shouldContain "public suspend fun Wirespec.RawResponse.mock(endpoint: GetTodos, predicate: (GetTodos.Request) -> Boolean): Unit ="
+        output shouldContain "public suspend fun RawResponse<*>.mock(endpoint: GetTodos, predicate: (GetTodos.Request) -> Boolean): Unit ="
         output shouldContain "rawResponseMock(GetTodos.api, this, predicate)"
     }
 
@@ -162,7 +164,7 @@ class KotestDslExtensionTest {
         output shouldNotContain "inner.sendFields"
 
         output shouldContain "import community.flock.wirespec.integration.kotest.dsl.RawMessage"
-        output shouldContain "public suspend fun Gen<String>.raw(topic: String? = null, key: String? = null): RawMessage {"
+        output shouldContain "public suspend fun Gen<String>.raw(topic: String? = null, key: String? = null): RawMessage<ByteArray> {"
         output shouldContain "return call.raw(this)"
     }
 
@@ -183,7 +185,7 @@ class KotestDslExtensionTest {
         output shouldContain "public val OldListener.generate: OldListenerGenerate"
         val sendSignature = "public suspend fun Gen<Event>.send(topic: String? = null, key: String? = null): Event {"
         output.windowed(sendSignature.length).count { it == sendSignature } shouldBe 1
-        val rawSignature = "public suspend fun Gen<Event>.raw(topic: String? = null, key: String? = null): RawMessage {"
+        val rawSignature = "public suspend fun Gen<Event>.raw(topic: String? = null, key: String? = null): RawMessage<ByteArray> {"
         output.windowed(rawSignature.length).count { it == rawSignature } shouldBe 1
     }
 

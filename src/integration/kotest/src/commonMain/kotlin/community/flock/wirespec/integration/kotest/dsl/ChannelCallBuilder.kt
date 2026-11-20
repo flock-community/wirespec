@@ -13,14 +13,8 @@ import kotlin.reflect.typeOf
 
 public inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
 
-/** A channel message as the [community.flock.wirespec.integration.kotest.extension.ChannelTransport] publishes it. */
-public data class RawMessage(
-    public val topic: String,
-    public val key: String?,
-    public val body: ByteArray,
-)
-
-public suspend fun RawMessage.send(): Unit = currentChannelContext().transport.publish(topic, key, body)
+public suspend fun RawMessage<*>.send(): Unit = currentChannelContext()
+    .let { ctx -> ctx.transport.publish(topic, key, ctx.serialization.serializeRaw(body, bodyType)) }
 
 @WirespecScenarioDsl
 public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
@@ -38,7 +32,7 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
 
     public suspend fun send(gen: Gen<P>): P = gen.draw(currentRandomSource()).also { payload -> rawMessage(payload).send() }
 
-    public suspend fun raw(gen: Gen<P>): RawMessage = rawMessage(gen.draw(currentRandomSource()))
+    public suspend fun raw(gen: Gen<P>): RawMessage<ByteArray> = rawMessage(gen.draw(currentRandomSource()))
 
     @Suppress("UNCHECKED_CAST")
     private fun buildPayload(rs: RandomSource): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
@@ -46,7 +40,7 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
         else -> primitive.draw(rs) as P
     }
 
-    private suspend fun rawMessage(payload: P): RawMessage = RawMessage(
+    private suspend fun rawMessage(payload: P): RawMessage<ByteArray> = RawMessage(
         topic = resolveTopic(),
         key = key,
         body = currentChannelContext().serialization.serializeBody(payload, payloadType),

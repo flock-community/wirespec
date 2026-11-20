@@ -38,6 +38,8 @@ internal object EndpointDslFile {
 
             import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
             import("community.flock.wirespec.integration.kotest.dsl", "requestCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "RawRequest")
+            import("community.flock.wirespec.integration.kotest.dsl", "RawResponse")
             import("community.flock.wirespec.integration.kotest.dsl", "rawRequest")
             import("community.flock.wirespec.integration.kotest.dsl", "rawResponseMock")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
@@ -50,7 +52,6 @@ internal object EndpointDslFile {
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
             }
             import(endpointPkg, shape.name)
-            import("community.flock.wirespec.kotlin", "Wirespec")
             import("io.kotest.property", "Gen")
             import("io.kotest.property", "Arb")
             val isListBody = shape.bodyKind == EndpointShape.BodyKind.List
@@ -157,7 +158,7 @@ internal object EndpointDslFile {
         asyncFunction("raw") {
             visibility(Visibility.PUBLIC)
             receiver(genOf("${shape.name}.Request"))
-            returnType(IrType.Custom("Wirespec.RawRequest"))
+            returnType(IrType.Custom("RawRequest<ByteArray?>"))
             returns(rawExpr("rawRequest(${shape.name}.api, this)"))
         }
     }
@@ -168,7 +169,7 @@ internal object EndpointDslFile {
             annotation("@JvmName(\"rawResponse\")")
             visibility(Visibility.PUBLIC)
             receiver(genOf("${shape.name}.Response<*>"))
-            returnType(IrType.Custom("Wirespec.RawResponse"))
+            returnType(IrType.Custom("RawResponse<ByteArray?>"))
             returns(rawExpr("rawResponse(${shape.name}.api, this)"))
         }
     }
@@ -180,7 +181,7 @@ internal object EndpointDslFile {
     private fun FileBuilder.buildRawResponseMock(shape: EndpointShape) {
         asyncFunction("mock") {
             visibility(Visibility.PUBLIC)
-            receiver(IrType.Custom("Wirespec.RawResponse"))
+            receiver(IrType.Custom("RawResponse<*>"))
             arg("endpoint", IrType.Custom(shape.name))
             arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
             returnType(IrType.Unit)
