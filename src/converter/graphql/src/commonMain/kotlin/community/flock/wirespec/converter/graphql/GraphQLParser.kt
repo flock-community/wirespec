@@ -220,7 +220,7 @@ private class GraphQLConverter(private val document: Document) {
 
     private fun ObjectTypeDefinition.convert(): List<Definition> = when (name) {
         in roots -> rootDefinitions.getValue(this).let { root ->
-            listOfNotNull(type(root.type, commonAnnotations(interfaces), emptyList()).takeIf { needsType() }) + operations(root.annotation(emptyList()))
+            listOfNotNull(type(root.type, commonAnnotations(interfaces), emptyList()).takeIf { needsType() }) + operations(root.annotation())
         }
         in nested -> listOfNotNull(holder()) + operations(annotation(nestedOperation().annotationName, name))
         else -> implementation().takeUnless { bringsNothing(it) }
@@ -228,7 +228,7 @@ private class GraphQLConverter(private val document: Document) {
             .orEmpty()
     }
 
-    /** A root operation type as its operations name it: the root type [type] of an [operation], and its `extend` block [extend]. */
+    /** A root operation type as its operations name it, or a nested type: the type [type] of an [operation], and its `extend` block [extend]. */
     private data class Root(val operation: Operation, val type: String, val extend: Int?)
 
     private val rootDefinitions: Map<ObjectTypeDefinition, Root> by lazy {
@@ -242,12 +242,11 @@ private class GraphQLConverter(private val document: Document) {
             }
     }
 
-    /** The root type is only spelled out when it is not the default for the operation. */
-    private fun Root.annotation(path: List<Annotation.Parameter>): Annotation = annotation(
+    /** On an rpc, the root type is only spelled out when it is not the default for the operation. */
+    private fun Root.annotation(): Annotation = annotation(
         operation.annotationName,
         type.takeIf { it != operation.defaultTypeName }?.let { parameter(DEFAULT_PARAMETER, it) },
         extend?.let { parameter("extend", it.toString()) },
-        path.takeIf { it.isNotEmpty() }?.let { Annotation.Parameter(PATH_PARAMETER, Annotation.Value.Dict(it)) },
     )
 
     /** The fields of a type as operations. A field that leads to a nested type is written with the module of that type. */
@@ -256,13 +255,24 @@ private class GraphQLConverter(private val document: Document) {
     }
 
     /**
-     * Where the operations of each nested type are: the root type, and the fields that lead from there to the type. The
-     * rpcs of the type name it, and so the annotation whose path leads to it.
+     * Where the nested types are: for every type that has fields leading to a nested type, an annotation that names
+     * the type and those fields, each with the type it returns. The rpcs of a nested type name it, and so the field
+     * that leads to it.
      */
     fun fileAnnotations(): List<Annotation> = document.definitions
         .filterIsInstance<ObjectTypeDefinition>()
-        .filter { definition -> definition.name in nested && definition.fields.any { !it.leadsToNested() } }
-        .map { definition -> route(definition.name).let { route -> rootDefinitions.getValue(route.first().first).annotation(route.map { (parent, field) -> field.toPathParameter() }) } }
+        .mapNotNull { parent ->
+            parent.fields.filter { it.leadsToNested() }.takeIf { it.isNotEmpty() }?.let { fields ->
+                (rootDefinitions[parent] ?: Root(parent.nestedOperation(), parent.name, null)).let { root ->
+                    annotation(
+                        root.operation.annotationName,
+                        parameter(DEFAULT_PARAMETER, root.type),
+                        root.extend?.let { parameter("extend", it.toString()) },
+                        Annotation.Parameter(PATH_PARAMETER, Annotation.Value.Dict(fields.map { it.toPathParameter() })),
+                    )
+                }
+            }
+        }
 
     private fun ObjectTypeDefinition.nestedOperation(): Operation = rootDefinitions.getValue(route(name).first().first).operation
 

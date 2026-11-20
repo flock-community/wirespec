@@ -427,13 +427,13 @@ type NotificationsQuery {
 }
 ```
 
-Only the operations are rpcs. The nested type is a namespace: the header of the file declares it, with the `path` of
-fields that lead to it from the root type and the type each returns, and an rpc names it to be one of its fields. So
-neither `NotificationsQuery` nor the field `notifications` needs a definition of its own:
+Only the operations are rpcs. The nested type is a namespace: the header of the file declares it, by naming the type
+and its field that leads to the nested type, and an rpc names the nested type to be one of its fields. So neither
+`NotificationsQuery` nor the field `notifications` needs a definition of its own:
 
 ```wirespec title="notifications.ws"
-@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
-@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })
+@file:GraphQLMutation("Mutation", path: { notifications: "NotificationsMutation!" })
 
 @GraphQLQuery("NotificationsQuery")
 rpc Inbox {
@@ -446,17 +446,19 @@ rpc MarkRead {
 } -> Unit
 ```
 
-The query of `Inbox` nests its field in the fields of the path, and the client reads the result from there:
+The query of `Inbox` nests its field in the field that leads to its type, and the client reads the result from there:
 
 ```graphql
 query Inbox($limit: Int!) { notifications { result: inbox(limit: $limit) { id text } } }
 ```
 
 A file can declare several namespaces, next to operations of the root types themselves: each rpc names the one it is
-in, and an rpc that names none is a field of the root type. A path can go through several fields, in order:
-`path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" }`. Its fields take no arguments. The build
-fails when an rpc names a type that is not the root type and that no path in the header of its file leads to. The
-[GraphQL converter](../converters/graphql.md#nested-types) writes the namespaces of a schema.
+in, and an rpc that names none is a field of the root type. A namespace can hold another:
+`@file:GraphQLQuery("NotificationsQuery", path: { archive: "ArchiveQuery" })` nests `ArchiveQuery` in
+`NotificationsQuery`, and the query of its rpcs in `notifications { archive { ... } }`. The fields that lead to a
+namespace take no arguments. The build fails when an rpc names a type that is not defined, is not the root type, and
+that no field in the header of its file leads to. The [GraphQL converter](../converters/graphql.md#nested-types) writes
+the namespaces of a schema.
 
 ## Configuration
 

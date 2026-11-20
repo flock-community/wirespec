@@ -23,9 +23,9 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
  * ```
  *
- * An rpc that names a type a `path` in the header of its file leads to, `@GraphQLQuery("NotificationsQuery")` with
- * `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`, is a field of that type, so its document nests
- * it in the fields of the path: `query Inbox { notifications { result: inbox { id } } }`.
+ * An rpc that names a type a field in the header of its file leads to, `@GraphQLQuery("NotificationsQuery")` with
+ * `@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })`, is a field of that type, so its
+ * document nests it in the fields that lead there: `query Inbox { notifications { result: inbox { id } } }`.
  *
  * Every parameter of the rpc is a variable, typed and defaulted as the field argument it is passed to. The field is
  * aliased, so a client reads it under the same name whatever the field is called, and selects every field of its result,
@@ -75,7 +75,7 @@ public class GraphQLOperations(ast: AST) {
     public fun path(rpc: Rpc): List<String> = schema.rootType(schema.operation(rpc)).let { root ->
         check(schema.rootType(rpc) == root) {
             "Cannot write a GraphQL query for rpc ${rpc.identifier.value}: it is a field of ${schema.rootType(rpc)}, which is not the root type $root. " +
-                "Name the fields that lead from $root to its type in the header of its file, like `@file:${schema.operation(rpc).annotationName}(path: { field: \"${schema.rootType(rpc)}\" })`."
+                "Name the fields that lead from $root to its type in the header of its file, like `@file:${schema.operation(rpc).annotationName}(\"$root\", path: { field: \"${schema.rootType(rpc)}\" })`."
         }
         schema.path(rpc)
     }

@@ -422,10 +422,9 @@ class GraphQLParserTest {
 
         source.toWirespecFiles() shouldBe mapOf(
             "schema.ws" to """
-                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] } })
-                |@file:GraphQLQuery(path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] }, archive: "ArchiveQuery" })
-                |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
-                |@file:GraphQLQuery(path: { type: "TypeQuery" })
+                |@file:GraphQLQuery("Query", path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] }, type: "TypeQuery" })
+                |@file:GraphQLMutation("Mutation", path: { notifications: "NotificationsMutation!" })
+                |@file:GraphQLQuery("NotificationsQuery", path: { archive: "ArchiveQuery" })
                 |
                 |@GraphQLQuery
                 |rpc Ping {} -> Boolean?
@@ -572,7 +571,7 @@ class GraphQLParserTest {
             "type Query { notifications_inbox(limit: Int): [T!] notificationsCount: Int } $todo" to emptyList(),
         ).forEach { (source, nested) ->
             val module = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true).modules.single()
-            val namespaces = module.annotations.map { it.namespace() }
+            val namespaces = module.annotations.flatMap { it.namespaces() }
             module.statements.filterIsInstance<Rpc>()
                 .filter { rpc -> rpc.annotations.first().parameters.any { it.name == "default" && (it.value as Annotation.Value.Single).value in namespaces } }
                 .map { it.identifier.value } shouldContainExactly nested
@@ -777,10 +776,10 @@ class GraphQLParserTest {
     private fun convert(source: String): List<Definition> = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), source), strict = true)
         .modules.flatMap { it.statements }
 
-    /** The type that the path of a `@file:` annotation leads to: the type of its last field, whatever its nullability. */
-    private fun Annotation.namespace(): String = (parameters.single { it.name == "path" }.value as Annotation.Value.Dict).value.last().value
-        .let { field -> (field as? Annotation.Value.Dict)?.value?.single { it.name == "type" }?.value ?: field }
-        .let { (it as Annotation.Value.Single).value.trimEnd('!') }
+    /** The nested types that the fields of a `@file:` annotation lead to, whatever their nullability. */
+    private fun Annotation.namespaces(): List<String> = (parameters.single { it.name == "path" }.value as Annotation.Value.Dict).value
+        .map { field -> (field.value as? Annotation.Value.Dict)?.value?.single { it.name == "type" }?.value ?: field.value }
+        .map { (it as Annotation.Value.Single).value.trimEnd('!') }
 
     /** The definitions in any order, with the fields of each type in any order: what a schema with functions among its other fields comes back as. */
     private fun GraphQLModel.Document.unordered(): Set<GraphQLModel.Definition> = definitions

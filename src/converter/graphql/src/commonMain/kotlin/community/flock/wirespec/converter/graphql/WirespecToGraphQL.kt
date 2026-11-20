@@ -60,9 +60,9 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  * The inverse of [GraphQLParser]: rebuilds the GraphQL document from the Wirespec definitions and their annotations,
  * which gives back the schema it was converted from, but for the fields an implementation declares differently from
  * its interface. A type that spreads the part of an interface implements that interface. An rpc is a field of the type
- * its annotation names, `@GraphQLQuery("User")`. That is a type that a `path` in the header of its file leads to,
- * `@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })`, which nests that type in the root type, or
- * else a type that holds data, or else the root operation type. Wirespec that does not come from GraphQL gets the
+ * its annotation names, `@GraphQLQuery("User")`. That is a type that a field in the header of its file leads to,
+ * `@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })`, which nests that type in `Query`,
+ * or else a type that holds data, or else the root operation type. Wirespec that does not come from GraphQL gets the
  * closest GraphQL counterpart.
  *
  * The schema and directive definitions are `@spec:` annotations of the [ast], so they come first, in the order of the
@@ -164,7 +164,7 @@ internal class WirespecToGraphQL(ast: AST) {
     /** The type that holds data which an rpc names, by its GraphQL name. */
     private fun Rpc.dataType(): String? = operation(this).let { operation ->
         annotations.firstOrNull { it.name == operation.annotationName }?.single(DEFAULT_PARAMETER)
-            ?.takeIf { nesting() == null }
+            ?.takeIf { route().isEmpty() }
             ?.let { fieldHolders[it]?.graphQLName() }
             ?.takeIf { it != rootType(operation) }
     }
@@ -318,25 +318,40 @@ internal class WirespecToGraphQL(ast: AST) {
         }
     }
 
-    /**
-     * What says where the type an operation names is nested: the annotation of its file, for the same kind of operation,
-     * whose path leads to that type. None for an operation of the root type itself.
-     */
-    private fun Rpc.nesting(): Annotation? = operation(this).annotationName.let { name ->
-        annotations.firstOrNull { it.name == name }?.single(DEFAULT_PARAMETER)?.let { type ->
-            fileAnnotations[identifier.value].orEmpty().firstOrNull { it.name == name && it.dictionaries(PATH_PARAMETER).lastOrNull()?.leaf() == type }
-        }
+    /** A field of the type [parent], in its `extend` block when it is a root type, that leads to a nested type. */
+    private data class Link(val parent: Pair<String, String?>, val field: Annotation)
+
+    /** What the header of the file of an operation says about nesting: for each type it names, the fields that lead to a nested type. */
+    private fun Rpc.links(): List<Link> = operation(this).let { operation ->
+        fileAnnotations[identifier.value].orEmpty()
+            .filter { it.name == operation.annotationName }
+            .flatMap { annotation -> annotation.dictionaries(PATH_PARAMETER).map { Link((annotation.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to annotation.single("extend"), it) } }
     }
 
+    /**
+     * The fields that lead from the root type to the type an operation names: the field that leads to that type, the
+     * field that leads to the type that one is a field of, and so on. None for an operation of the root type itself.
+     */
+    private fun Rpc.route(): List<Link> = annotations.firstOrNull { it.name == operation(this).annotationName }?.single(DEFAULT_PARAMETER)
+        ?.let { type ->
+            links().let { links ->
+                generateSequence(links.find { it.field.leaf() == type }) { link -> links.find { it.field.leaf() == link.parent.first } }
+                    .take(links.size)
+                    .toList()
+                    .reversed()
+            }
+        }
+        .orEmpty()
+
     /** The fields of the path that leads to the type an operation names, each with the type it returns, or with all that describes it. */
-    private fun Rpc.pathFields(): List<Annotation> = nesting()?.dictionaries(PATH_PARAMETER).orEmpty()
+    private fun Rpc.pathFields(): List<Annotation> = route().map { it.field }
 
     /** The type a field of a path returns. */
     private fun Annotation.leaf(): String? = single(TYPE_PARAMETER)?.let(::parseType)?.leaf()
 
     private fun Annotation.toPathField(): FieldDefinition = FieldDefinition(single("description"), name, emptyList(), parseType(single(TYPE_PARAMETER)!!), array("directives").map(::parseDirective))
 
-    /** Every path names its fields, and the one that describes a field decides its description and directives. */
+    /** Every rpc of a nested type adds the fields that lead to it, and the one that describes a field decides its description and directives. */
     private fun List<Member>.merged(): List<Member> = groupBy { it.field.name }.values.map { same ->
         same.first().let { first ->
             first.copy(
@@ -350,8 +365,8 @@ internal class WirespecToGraphQL(ast: AST) {
 
     /** The root operation type an rpc is a field of or nested in, and the `extend` block it is in. */
     private fun Rpc.rootType(): Pair<String, String?> = operation(this).let { operation ->
-        (nesting() ?: annotations.firstOrNull { it.name == operation.annotationName })
-            ?.let { (it.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to it.single("extend") }
+        route().firstOrNull()?.parent
+            ?: annotations.firstOrNull { it.name == operation.annotationName }?.let { (it.single(DEFAULT_PARAMETER) ?: operation.defaultTypeName) to it.single("extend") }
             ?: (operation.defaultTypeName to null)
     }
 

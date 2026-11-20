@@ -1,5 +1,5 @@
-@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
-@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })
+@file:GraphQLMutation("Mutation", path: { notifications: "NotificationsMutation!" })
 
 type Notification {
   id: String,

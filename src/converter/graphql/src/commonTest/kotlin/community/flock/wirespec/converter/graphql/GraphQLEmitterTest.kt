@@ -424,9 +424,9 @@ class GraphQLEmitterTest {
     @Test
     fun anOperationIsAFieldOfTheNestedTypeItNames() {
         """
-            |@file:GraphQLQuery(path: { account: "AccountQuery!" })
-            |@file:GraphQLQuery(path: { account: "AccountQuery!", users: { type: "UserQuery", description: "The users of the account" } })
-            |@file:GraphQLMutation(path: { account: "AccountMutation!" })
+            |@file:GraphQLQuery("Query", path: { account: "AccountQuery!" })
+            |@file:GraphQLQuery("AccountQuery", path: { users: { type: "UserQuery", description: "The users of the account" } })
+            |@file:GraphQLMutation("Mutation", path: { account: "AccountMutation!" })
             |
             |type User {
             |  name: String

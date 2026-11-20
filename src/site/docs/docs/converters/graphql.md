@@ -101,7 +101,7 @@ The fields of such a type are operations too, and only they become rpcs. The typ
 file declares it, and every rpc of the type names it.
 
 ```wirespec
-@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })
 
 @GraphQLQuery("NotificationsQuery")
 rpc Inbox {
@@ -112,23 +112,22 @@ rpc Inbox {
 rpc InboxCount {} -> Integer32
 ```
 
-- `@file:GraphQLQuery(path: ...)` names the fields that lead from the root type to the nested type, with the type every
-  field returns. The last of them is the namespace: here `NotificationsQuery`, which `Query.notifications` returns.
+- `@file:GraphQLQuery("Query", path: ...)` names a type, and the fields of that type that lead to a nested type, each
+  with the type it returns. Here `Query.notifications` returns `NotificationsQuery`, which makes that a namespace.
 - `@GraphQLQuery("NotificationsQuery")` on an rpc makes it a field of that type. An rpc that names no type, or the root
   type, is a field of the root type.
 
-Neither `NotificationsQuery` nor the field `notifications` has a Wirespec definition: both are rebuilt from the path.
-The [GraphQL client](../integration/integration-graphql.mdx#nested-types) nests the query of the rpc in the fields of
-the path.
+Neither `NotificationsQuery` nor the field `notifications` has a Wirespec definition: both are rebuilt from the header.
+The [GraphQL client](../integration/integration-graphql.mdx#nested-types) nests the query of the rpc in the fields
+that lead to its type.
 
-A file declares as many namespaces as it needs, one annotation each, next to the operations of the root types
-themselves. So a GraphQL file always converts to one Wirespec file, named after it: `campaign.graphqls` becomes
-`campaign.ws`.
+A file declares as many namespaces as it needs, next to the operations of the root types themselves. So a GraphQL file
+always converts to one Wirespec file, named after it: `campaign.graphqls` becomes `campaign.ws`.
 
 ```wirespec
-@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
-@file:GraphQLQuery(path: { notifications: "NotificationsQuery!", archive: "ArchiveQuery" })
-@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
+@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!", settings: "SettingsQuery" })
+@file:GraphQLQuery("NotificationsQuery", path: { archive: "ArchiveQuery" })
+@file:GraphQLMutation("Mutation", path: { notifications: "NotificationsMutation!" })
 
 @GraphQLQuery
 rpc Ping {} -> Boolean
@@ -149,13 +148,14 @@ rpc MarkRead {
 } -> Boolean?
 ```
 
-- A path can go through several types, as the one to `ArchiveQuery` does. Each nested type with operations has an
-  annotation of its own, with the whole path to it.
-- A field of the path that has more than a type holds it next to its type, its `description` and its `directives`:
+- There is one annotation for every type with fields that lead to a nested type, and it names all of those fields.
+- A nested type can nest another: `NotificationsQuery.archive` returns `ArchiveQuery`. The fields that lead to the type
+  of an rpc are followed back to the root type: `Search` is `Query.notifications.archive.search`.
+- A field that has more than a type holds it next to its type, its `description` and its `directives`:
   `path: { notifications: { type: "NotificationsQuery!", description: "...", directives: ["@deprecated"] } }`.
-- A field of the path comes back after the other fields of its type.
-- The annotation takes the root type when it is not the default, and the `extend` block the first field of the path is
-  in, as `@GraphQLQuery` on an rpc of a root type does: `@file:GraphQLQuery("QueryRoot", extend: "1", path: { ... })`.
+- A field that leads to a nested type comes back after the other fields of its type.
+- The annotation of a root type names it, also when it is the default, and takes the `extend` block its fields are in:
+  `@file:GraphQLQuery("QueryRoot", extend: "1", path: { ... })`. Without a type, it is about the default root type.
 - A nested type with a description or directives keeps them on an empty `type`, like a root type does.
 - The annotation counts for the file it is written in: an rpc names a namespace of its own file.
 
@@ -204,7 +204,7 @@ Many fields can lead to such a type, so the rpc is no operation of its own, and 
 
 So an rpc is always a field of the type its annotation names. That type is, in this order:
 
-1. a [nested type](#nested-types) that a `path` in the header of the file leads to;
+1. a [nested type](#nested-types) that a field in the header of the file leads to;
 2. a type that holds data, defined in Wirespec;
 3. the root operation type, also when the annotation names none.
 
@@ -448,8 +448,8 @@ Wirespec converted by earlier versions has them, on a `type Schema` or `type ...
 | `@GraphQLImplements(["Node"])`                                                 | types, unions       | the interfaces an object or interface implements without spreading them (see above)                                                                                                         |
 | `@GraphQLDefault("MEDIUM")`                                                    | fields              | a default value that cannot be a Wirespec default (see above), in GraphQL syntax                                                                                                            |
 | `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                    | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
-| `@GraphQLQuery(path: { notifications: "NotificationsQuery!" })`                | `@file:`            | a [type nested](#nested-types) in a root operation type: the fields that lead to it, each with its type, or with its `type`, `description` and `directives`; also for `@GraphQLMutation` and `@GraphQLSubscription`                               |
-| `@GraphQLQuery("NotificationsQuery")`                                          | rpcs                | an `rpc` that is a field of the nested type that a path in the header of its file leads to                                                                                                  |
+| `@GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })`       | `@file:`            | the fields of the named type that lead to a [nested type](#nested-types), each with its type, or with its `type`, `description` and `directives`; also for `@GraphQLMutation` and `@GraphQLSubscription`                                       |
+| `@GraphQLQuery("NotificationsQuery")`                                          | rpcs                | an `rpc` that is a field of the nested type that a field in the header of its file leads to                                                                                                 |
 | `@GraphQLQuery("User")`                                                        | rpcs                | an `rpc` that is a [field with arguments](#fields-with-arguments) of the named type that holds data                                                                                         |
 | `@GraphQLName("todo")`                                                         | rpcs                | the field name of an `rpc` whose name does not read back as that field name                                                                                                                 |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`     | enums               | the description and directives of an enum value; one for every such value                                                                                                                   |
@@ -550,8 +550,8 @@ counterpart:
 - A union or type marked `@GraphQLInterface` becomes an interface, as described in
   [Writing interfaces in Wirespec](#writing-interfaces-in-wirespec). A part only adds its fields.
 - An `rpc` becomes a field of `Query`, unless it is marked `@GraphQLMutation` or `@GraphQLSubscription`. When it names
-  a type that a `path` in the header of its file leads to, it becomes a field of that type, and the fields and types of
-  the path are written with it. When it names a type that holds data, it becomes a field of that type. Its error type is not written, because GraphQL returns errors next to the data.
+  a type that a field in the header of its file leads to, it becomes a field of that type, and the fields and types
+  that lead there are written with it. When it names a type that holds data, it becomes a field of that type. Its error type is not written, because GraphQL returns errors next to the data.
 - A field cannot take arguments: `@GraphQLArgument` on a field, where Wirespec converted by earlier versions has them,
   is an error. Write the field as an rpc that names the type: `@GraphQLQuery("User")`.
 - GraphQL only takes input objects as arguments. A type that an `rpc` takes, directly or through its fields, becomes an

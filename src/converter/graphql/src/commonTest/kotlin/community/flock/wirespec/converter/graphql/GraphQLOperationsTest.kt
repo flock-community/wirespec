@@ -212,8 +212,8 @@ class GraphQLOperationsTest {
     @Test
     fun nestsAnOperationInTheFieldsOfThePathToTheTypeItNames() {
         val ast = """
-            |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
-            |@file:GraphQLQuery(path: { notifications: "NotificationsQuery!", archive: { type: "ArchiveQuery", description: "What was read" } })
+            |@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })
+            |@file:GraphQLQuery("NotificationsQuery", path: { archive: { type: "ArchiveQuery", description: "What was read" } })
             |@file:GraphQLMutation(path: { notifications: "NotificationsMutation!" })
             |
             |type Notification {
@@ -313,7 +313,7 @@ class GraphQLOperationsTest {
                 |rpc InboxCount {} -> Integer32
             """.trimMargin().parsed().documents()
         }.message shouldContain "rpc InboxCount: it is a field of NotificationsQuery, which is not the root type Query. " +
-            "Name the fields that lead from Query to its type in the header of its file, like `@file:GraphQLQuery(path: { field: \"NotificationsQuery\" })`."
+            "Name the fields that lead from Query to its type in the header of its file, like `@file:GraphQLQuery(\"Query\", path: { field: \"NotificationsQuery\" })`."
     }
 
     private fun String.fromGraphQL(): AST = GraphQLParser.parse(ModuleContent(FileUri("schema.graphql"), this), strict = true)

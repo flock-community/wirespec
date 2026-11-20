@@ -338,11 +338,11 @@ val queryTodo: QueryTodo.Service = QueryTodoGraphQL.GraphQLClient(serialization,
 ## Operations behind a namespace
 
 Many schemas group their operations in a type that a field of `Query` returns, like `Query.notifications { inbox }`.
-Only the operations are rpcs. The header of the file declares the type as a namespace, with the `path` of fields that
-lead to it, and the rpc names it. The client nests the query in those fields:
+Only the operations are rpcs. The header of the file declares the type as a namespace, by naming the field of `Query`
+that leads to it, and the rpc names it. The client nests the query in that field:
 
 ```wirespec
-@file:GraphQLQuery(path: { notifications: "NotificationsQuery!" })
+@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })
 
 @GraphQLQuery("NotificationsQuery")
 rpc Inbox {
