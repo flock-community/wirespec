@@ -2,12 +2,6 @@ package community.flock.wirespec.integration.kotest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import community.flock.wirespec.integration.jackson.v2.kotlin.WirespecSerialization
-import community.flock.wirespec.integration.kotest.dsl.RawMessage
-import community.flock.wirespec.integration.kotest.dsl.RawRequest
-import community.flock.wirespec.integration.kotest.dsl.RawResponse
-import community.flock.wirespec.integration.kotest.dsl.call
-import community.flock.wirespec.integration.kotest.dsl.send
-import community.flock.wirespec.integration.kotest.dsl.withBody
 import community.flock.wirespec.integration.kotest.extension.ChannelTransport
 import community.flock.wirespec.integration.kotest.extension.MockServer
 import community.flock.wirespec.integration.kotest.extension.MockStub
@@ -18,11 +12,10 @@ import community.flock.wirespec.integration.kotest.extension.WirespecRpcContext
 import community.flock.wirespec.integration.kotest.kotlin.generated.channel.TodoEvents
 import community.flock.wirespec.integration.kotest.kotlin.generated.endpoint.GetTodo
 import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.FindUsersRequest
-import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.GetUserRequest
 import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.call
 import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.generate
 import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.mock
-import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.raw
+import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.modify
 import community.flock.wirespec.integration.kotest.kotlin.generated.kotest.send
 import community.flock.wirespec.integration.kotest.kotlin.generated.model.NotFound
 import community.flock.wirespec.integration.kotest.kotlin.generated.model.Role
@@ -35,16 +28,16 @@ import community.flock.wirespec.integration.kotest.kotlin.generated.rpc.GetUser
 import community.flock.wirespec.integration.kotest.runtime.WirespecSeed
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.property.RandomSource
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 
-class RawDslTest {
+class ModifyDslTest {
 
     private val serialization = WirespecSerialization(jacksonObjectMapper())
 
@@ -62,31 +55,29 @@ class RawDslTest {
     }
 
     @Test
-    fun rawIsTheRequestCallSends() = runBlocking<Unit> {
+    fun modifyStartsFromTheRequestCallSends() = runBlocking<Unit> {
         val transportation = RecordingTransportation(Wirespec.RawResponse(statusCode = 404, headers = emptyMap(), body = """{"reason":"gone"}""".encodeToByteArray()))
 
         withContext(endpointScope(transportation)) {
-            getTodo42().raw() shouldBe RawRequest<ByteArray?>(
-                method = "GET",
-                path = listOf("todos", "42"),
-                queries = emptyMap(),
-                headers = mapOf("token" to listOf("secret")),
-                body = null,
-            )
-
+            getTodo42().modify {
+                method shouldBe "GET"
+                path shouldBe listOf("todos", "42")
+                headers shouldBe mapOf("token" to listOf("secret"))
+                body.shouldBeNull()
+            }.call()
             getTodo42().call()
-            transportation.requests.single() shouldBe getTodo(id = "42", headers = mapOf("token" to listOf("secret")))
         }
+
+        transportation.requests shouldBe List(2) { getTodo(id = "42", headers = mapOf("token" to listOf("secret"))) }
     }
 
     @Test
-    fun aRawRequestIsSentAsIsAndItsResponseIsNotCheckedAgainstTheContract() = runBlocking<Unit> {
+    fun aModifiedRequestIsSentAsIsAndItsResponseIsNotCheckedAgainstTheContract() = runBlocking<Unit> {
         val transportation = RecordingTransportation(Wirespec.RawResponse(statusCode = 401, headers = mapOf("reason" to listOf("token")), body = "missing token".encodeToByteArray()))
 
         withContext(endpointScope(transportation)) {
-            val withoutToken = getTodo42().raw().let { it.copy(headers = it.headers - "token") }
+            val response = getTodo42().modify { headers -= "token" }.call()
 
-            val response = withoutToken.call()
             response.status shouldBe 401
             response.headers shouldBe mapOf("reason" to listOf("token"))
             response.body?.decodeToString() shouldBe "missing token"
@@ -97,40 +88,39 @@ class RawDslTest {
     }
 
     @Test
-    fun aRawBodyIsSerializedAsItsTypeUnlessItIsBytes() = runBlocking<Unit> {
+    fun aModifiedBodyIsAnInputOfAnyType() = runBlocking<Unit> {
         val transportation = RecordingTransportation(Wirespec.RawResponse(statusCode = 400, headers = emptyMap(), body = null))
 
         withContext(endpointScope(transportation)) {
-            val request = getTodo42().raw()
-            request.withBody(mapOf("name" to 42)).call()
-            request.withBody("not json".encodeToByteArray()).call()
-
-            request.withBody(Todo(id = "1", name = "Buy milk", done = false)).bodyType shouldBe typeOf<Todo>()
+            getTodo42().modify {
+                method = "PUT"
+                body(mapOf("name" to 42))
+            }.call()
+            getTodo42().modify { body(Todo(id = "1", name = "Buy milk", done = false)) }.call()
+            getTodo42().modify { body("not json".encodeToByteArray()) }.call()
         }
 
-        transportation.requests.map { it.body?.decodeToString() } shouldBe listOf("""{"name":42}""", "not json")
+        transportation.requests.map { it.method } shouldBe listOf("PUT", "GET", "GET")
+        transportation.requests.map { it.body?.decodeToString() } shouldBe listOf(
+            """{"name":42}""",
+            """{"id":"1","name":"Buy milk","done":false}""",
+            "not json",
+        )
     }
 
     @Test
-    fun rawIsTheResponseMockServes() = runBlocking<Unit> {
+    fun aModifiedResponseIsMockedForTheRequestsThePredicateAccepts() = runBlocking<Unit> {
         val server = RecordingMockServer()
 
         withContext(mockScope(server)) {
-            val raw = GetTodo.generate.response200 { body = Todo.generate { name("Buy milk") } }.raw()
-
-            raw.status shouldBe 200
-            serialization.deserializeBody<Todo>(raw.body!!, typeOf<Todo>()).name shouldBe "Buy milk"
-        }
-        server.stubs shouldBe emptyList()
-    }
-
-    @Test
-    fun aRawResponseMocksTheEndpointForTheRequestsThePredicateAccepts() = runBlocking<Unit> {
-        val server = RecordingMockServer()
-        val maintenance = RawResponse(status = 503, headers = emptyMap(), body = TodoError("maintenance"))
-
-        withContext(mockScope(server)) {
-            maintenance.mock(GetTodo) { request -> request.path.id == "42" }
+            GetTodo.generate.response200 { body = Todo.generate { name("Buy milk") } }
+                .modify {
+                    status shouldBe 200
+                    serialization.deserializeBody<Todo>(body as ByteArray, typeOf<Todo>()).name shouldBe "Buy milk"
+                    status = 503
+                    body(TodoError("maintenance"))
+                }
+                .mock { request -> request.path.id == "42" }
         }
 
         val stub = server.stubs.single()
@@ -144,75 +134,39 @@ class RawDslTest {
     }
 
     @Test
-    fun rawIsTheMessageSendPublishes() = runBlocking<Unit> {
+    fun aModifiedMessageIsPublishedWithItsBody() = runBlocking<Unit> {
         val transport = RecordingChannelTransport()
-        val message = TodoEvents.generate.message { name("Buy milk") }
-
-        val raw = withContext(channelScope(transport)) { message.raw("todos", key = "t-1") }
-        transport.published shouldBe emptyList()
-        withContext(channelScope(transport)) { message.send("todos", key = "t-1") }
-
-        val sent = transport.published.single()
-        sent.topic shouldBe "todos"
-        sent.key shouldBe "t-1"
-        sent.body.decodeToString() shouldBe raw.body.decodeToString()
-        serialization.deserializeBody<Todo>(raw.body, typeOf<Todo>()).name shouldBe "Buy milk"
-    }
-
-    @Test
-    fun aRawMessageWithoutATopicGoesToTheChannelName() = runBlocking<Unit> {
-        withContext(channelScope(RecordingChannelTransport())) {
-            TodoEvents.generate.message().raw().topic shouldBe "TodoEvents"
-        }
-    }
-
-    @Test
-    fun aRawMessageIsPublishedAsItIsGiven() = runBlocking<Unit> {
-        val transport = RecordingChannelTransport()
-        val notJson = RawMessage(topic = "todos", key = null, body = "not json".encodeToByteArray())
-        val nameAsNumber = RawMessage(topic = "todos", key = "t-1", body = mapOf("name" to 42))
 
         withContext(channelScope(transport)) {
-            notJson.send()
-            nameAsNumber.send()
+            TodoEvents.generate.message { name("Buy milk") }.modify { }.send("todos", key = "t-1")
+            TodoEvents.generate.message().modify { body(mapOf("name" to 42)) }.send("todos")
+            TodoEvents.generate.message().modify { body("not json".encodeToByteArray()) }.send()
         }
 
-        val (bytes, typed) = transport.published
-        bytes.topic shouldBe "todos"
-        bytes.key shouldBe null
-        bytes.body shouldBeSameInstanceAs notJson.body
-        typed.key shouldBe "t-1"
+        val (unchanged, typed, bytes) = transport.published
+        unchanged.topic shouldBe "todos"
+        unchanged.key shouldBe "t-1"
+        serialization.deserializeBody<Todo>(unchanged.body, typeOf<Todo>()).name shouldBe "Buy milk"
         typed.body.decodeToString() shouldBe """{"name":42}"""
+        bytes.topic shouldBe "TodoEvents"
+        bytes.body.decodeToString() shouldBe "not json"
     }
 
     @Test
-    fun rawIsTheRpcRequestCallHandsToTheService() = runBlocking<Unit> {
-        val received = mutableListOf<FindUsersRequest>()
-        val findUsers = FindUsers.Service { role, limit -> emptyList<User>().also { received += FindUsersRequest(role, limit) } }
-        val request = FindUsers.generate.request { role(Role.ADMIN) }
-
-        val raw = withContext(rpcScope(findUsers)) { request.raw() }
-        received shouldBe emptyList()
-        withContext(rpcScope(findUsers)) { request.call() }
-
-        received shouldBe listOf(raw)
-    }
-
-    @Test
-    fun aRawRpcRequestOutsideTheContractReachesTheServiceAsIs() = runBlocking<Unit> {
+    fun aModifiedRpcRequestReachesTheServiceAsIs() = runBlocking<Unit> {
         val receivedIds = mutableListOf<UserId>()
-        val receivedLimits = mutableListOf<Long>()
+        val receivedRequests = mutableListOf<FindUsersRequest>()
         val getUser = GetUser.Service { id -> GetUser.Error(NotFound("no such user")).also { receivedIds += id } }
-        val findUsers = FindUsers.Service { _, limit -> emptyList<User>().also { receivedLimits += limit } }
+        val findUsers = FindUsers.Service { role, limit -> emptyList<User>().also { receivedRequests += FindUsersRequest(role, limit) } }
 
         withContext(rpcScope(getUser, findUsers)) {
-            GetUserRequest(id = UserId("not-a-user-id")).call() shouldBe GetUser.Error(NotFound("no such user"))
-            FindUsers.generate.request().raw().copy(limit = 0L).call()
+            GetUser.generate.request().modify { copy(id = UserId("not-a-user-id")) }.call() shouldBe GetUser.Error(NotFound("no such user"))
+            FindUsers.generate.request { role(Role.ADMIN) }.modify { copy(limit = 0L) }.call()
         }
 
         receivedIds shouldBe listOf(UserId("not-a-user-id"))
         UserId("not-a-user-id").validate() shouldBe false
-        receivedLimits shouldBe listOf(0L)
+        receivedRequests shouldBe listOf(FindUsersRequest(role = Role.ADMIN, limit = 0L))
     }
 
     private fun getTodo(id: String, headers: Map<String, List<String>>) = Wirespec.RawRequest(
@@ -229,11 +183,13 @@ class RawDslTest {
         override suspend fun transport(request: Wirespec.RawRequest): Wirespec.RawResponse = response.also { requests += request }
     }
 
+    private class Published(val topic: String, val key: String?, val body: ByteArray)
+
     private class RecordingChannelTransport : ChannelTransport {
-        val published = mutableListOf<RawMessage<ByteArray>>()
+        val published = mutableListOf<Published>()
 
         override suspend fun publish(topic: String, key: String?, body: ByteArray) {
-            published += RawMessage(topic, key, body)
+            published += Published(topic, key, body)
         }
     }
 

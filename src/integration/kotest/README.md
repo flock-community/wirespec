@@ -208,57 +208,57 @@ The generator overrides of Part 1 are not involved.
 ### Outside the contract
 
 The typed entry points only draw what the contract allows, and an endpoint's `call()`
-fails on an undeclared response. To test past the contract, every operation also has
-terminals on its raw form, the value as it goes to or comes from the code under test:
-
-| Operation         | Raw form         | `raw()` on       | Sent as is with                                 |
-|-------------------|------------------|------------------|-------------------------------------------------|
-| Endpoint request  | `RawRequest<B>`  | a request `Gen`  | `call()`, returning the `RawResponse` unchecked |
-| Endpoint response | `RawResponse<B>` | a response `Gen` | `mock(<Endpoint>) { request -> … }`             |
-| Channel message   | `RawMessage<B>`  | a message `Gen`  | `send()`                                        |
-| Rpc request       | `<Rpc>Request`   | a request `Gen`  | `call()`, returning what the service answers    |
-
-`RawRequest`, `RawResponse` and `RawMessage` are this integration's own types (in
-`…kotest.dsl`), not the Wirespec runtime's. Their body is an input of any type `B`,
-captured as `bodyType` when the value is built: a `ByteArray` goes over the wire as it
-is, `null` sends none, and anything else is serialized as `bodyType` with the context's
-serialization. `withBody(input)` swaps the body for one of another type; `copy` keeps
-the body's type. They turn into `Wirespec.RawRequest`/`RawResponse` only at the
-boundary, for the `Wirespec.Transportation` and the `MockStub`.
+fails on an undeclared response. To test past the contract, `modify { … }` changes a
+drawn value before it goes out. It hangs off the operation's own `Gen`, so a test reads
+through the operation's name and breaks only what it is about:
 
 ```kotlin
-// raw() serializes one request as call() would send it (endpoint context): a ByteArray body.
-val request = PutTodo.generate.request { path { id("42") } }.raw()
-
-// call() on a RawRequest sends it as is and returns the RawResponse unchecked.
-val response = request.copy(headers = request.headers - "token").call()
+// A request outside the contract; call() returns the RawResponse unchecked.
+val response = PutTodo.generate.request { path { id("42") } }
+    .modify {
+        headers -= "token"
+        body(mapOf("done" to "maybe"))   // an input of any type, serialized as its type
+    }
+    .call()
 response.status shouldBe 401
 
-// A typed input as the body, serialized as its type.
-request.withBody(mapOf("done" to "maybe")).call()
+// A mocked downstream answering outside its contract.
+GetStock.generate.response200()
+    .modify {
+        status = 503
+        body(mapOf("reason" to "maintenance"))
+    }
+    .mock { req -> req.path.sku == "SKU-001" }
 
-// mock(<Endpoint>) stubs a RawResponse for the requests the typed predicate accepts.
-RawResponse(status = 503, headers = emptyMap(), body = mapOf("reason" to "maintenance"))
-    .mock(GetStock) { req -> req.path.sku == "SKU-001" }
+// A message outside the contract.
+CampaignEvents.generate.message().modify { body("not json".encodeToByteArray()) }.send("campaign-events")
 
-// send() on a RawMessage publishes it through the channel transport.
-RawMessage(topic = "campaign-events", key = null, body = "not json".encodeToByteArray()).send()
-
-// An rpc has no wire format: its raw form is the <Rpc>Request the Service receives.
-GetUserRequest(id = UserId("not-a-user-id")).call()
+// An rpc has no wire format: modify works on the <Rpc>Request the Service receives.
+GetUser.generate.request().modify { copy(id = UserId("not-a-user-id")) }.call()
 ```
 
-An rpc has no wire format (Wirespec defines no transport for it; `call()` invokes the
-registered `Service`), so its raw form is the generated `<Rpc>Request` itself, and
-outside the contract means values the Kotlin types allow but the contract doesn't: a
-refined value off its pattern, a number out of its bounds.
+| Starts from                     | Block receiver                  | Changes                                        | Then                       |
+|---------------------------------|---------------------------------|------------------------------------------------|----------------------------|
+| `<Endpoint>.generate.request`   | `RawRequestScope`               | `method`, `path`, `queries`, `headers`, `body` | `call()` → `RawResponse`   |
+| `<Endpoint>.generate.response*` | `RawResponseScope`              | `status`, `headers`, `body`                    | `mock { request -> … }`    |
+| `<Channel>.generate.message`    | `RawMessageScope`               | `body`                                         | `send(topic, key)`         |
+| `<Rpc>.generate.request`        | `<Rpc>Request` (returns a copy) | its parameters                                 | `call()` → service answer  |
 
-`RawRequest.call()`, `RawMessage.send()` and `withBody` are runtime: a raw request or
-message already says where it goes. A raw response doesn't, so its `mock` is generated
-per endpoint and takes the endpoint object to pick the overload. `Gen<…Request>.raw()`
-and `Gen<…Response<*>>.raw()` erase to the same JVM signature in one file, so the
-response one carries `@JvmName("rawResponse")`. Channels sharing a payload get one
-`raw`, as they get one `send`.
+For endpoints and channels the scope starts from the value serialized as the typed
+terminal would send it, so an empty block changes nothing but skips the response check.
+`body(input)` takes any type (reified): a `ByteArray` goes over the wire as it is, `null`
+sends none, and anything else is serialized as its type with the context's
+serialization. The scopes, `RawResponse` and the `Modified*` holders are this
+integration's own types (in `…kotest.dsl`); they turn into `Wirespec.RawRequest`/
+`RawResponse` only at the `Wirespec.Transportation` and the `MockStub`.
+
+`modify` is generated per operation; its result is a `ModifiedRequest`, `ModifiedResponse`
+or `ModifiedMessage` holding the `Gen` and the block, and the terminal after it is
+generated too, so it is imported with the typed one. An rpc's `modify` maps the `Gen`
+instead, and the typed `call()` follows. The request's and the response's `modify` erase
+to the same JVM signature in one file, so the response one carries
+`@JvmName("modifyResponse")`. Channels sharing a payload get one `modify`, as they get
+one `send`; an rpc without parameters gets none.
 
 ### Wiring the transport
 
@@ -274,9 +274,8 @@ class MySpec : FunSpec({
 })
 ```
 
-`WirespecEndpointExtension` backs an endpoint's `call()` and `raw()` and a raw request's `call()`, `WirespecChannelExtension` backs
-`send()` and `raw()` on messages and a `RawMessage`'s `send()`, `WirespecMockExtension` backs `mock` and a response's `raw()`, and
-`WirespecRpcExtension` backs an rpc's `call()`, also on an `<Rpc>Request`, which runs on
+`WirespecEndpointExtension` backs an endpoint's `call()`, `WirespecChannelExtension` backs
+`send()`, `WirespecMockExtension` backs `mock { … }` (each also after `modify`) and `WirespecRpcExtension` backs an rpc's `call()`, which runs on
 the one registered service implementing that rpc's `Service`; supply whichever the spec needs. A call into a missing
 context fails with a message naming the extension to add. Responses are
 validated against the contract — an

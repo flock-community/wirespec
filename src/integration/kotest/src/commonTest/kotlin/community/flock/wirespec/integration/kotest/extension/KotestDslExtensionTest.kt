@@ -51,17 +51,19 @@ class KotestDslExtensionTest {
     }
 
     @Test
-    fun emitsRawFormsOfRequestsAndResponsesAndARawMock() {
+    fun emitsModifyOnRequestsAndResponsesWithTheirOwnTerminals() {
         val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
 
-        output shouldContain "import community.flock.wirespec.integration.kotest.dsl.RawRequest"
-        output shouldContain "import community.flock.wirespec.integration.kotest.dsl.RawResponse"
-        output shouldContain "public suspend fun Gen<GetTodos.Request>.raw(): RawRequest<ByteArray?> ="
-        output shouldContain "rawRequest(GetTodos.api, this)"
-        output shouldContain "@JvmName(\"rawResponse\")\npublic suspend fun Gen<GetTodos.Response<*>>.raw(): RawResponse<ByteArray?> ="
-        output shouldContain "rawResponse(GetTodos.api, this)"
-        output shouldContain "public suspend fun RawResponse<*>.mock(endpoint: GetTodos, predicate: (GetTodos.Request) -> Boolean): Unit ="
-        output shouldContain "rawResponseMock(GetTodos.api, this, predicate)"
+        output shouldContain "public fun Gen<GetTodos.Request>.modify(block: RawRequestScope.() -> Unit): ModifiedRequest<GetTodos.Request> ="
+        output shouldContain "ModifiedRequest(this, block)"
+        output shouldContain "public suspend fun ModifiedRequest<GetTodos.Request>.call(): RawResponse ="
+        output shouldContain "modifiedRequestCall(GetTodos.api, this)"
+
+        output shouldContain "@JvmName(\"modifyResponse\")\npublic fun Gen<GetTodos.Response<*>>.modify(block: RawResponseScope.() -> Unit): ModifiedResponse<GetTodos.Response<*>> ="
+        output shouldContain "ModifiedResponse(this, block)"
+        output shouldContain "public suspend fun ModifiedResponse<GetTodos.Response<*>>.mock(predicate: (GetTodos.Request) -> Boolean): Unit ="
+        output shouldContain "modifiedResponseMock(GetTodos.api, this, predicate)"
+        output shouldNotContain ".raw()"
     }
 
     @Test
@@ -163,9 +165,9 @@ class KotestDslExtensionTest {
         output shouldNotContain "QueueMessage"
         output shouldNotContain "inner.sendFields"
 
-        output shouldContain "import community.flock.wirespec.integration.kotest.dsl.RawMessage"
-        output shouldContain "public suspend fun Gen<String>.raw(topic: String? = null, key: String? = null): RawMessage<ByteArray> {"
-        output shouldContain "return call.raw(this)"
+        output shouldContain "public fun Gen<String>.modify(block: RawMessageScope.() -> Unit): ModifiedMessage<String> ="
+        output shouldContain "ModifiedMessage(this, block)"
+        output shouldContain "public suspend fun ModifiedMessage<String>.send(topic: String? = null, key: String? = null): Unit {"
     }
 
     @Test
@@ -185,8 +187,8 @@ class KotestDslExtensionTest {
         output shouldContain "public val OldListener.generate: OldListenerGenerate"
         val sendSignature = "public suspend fun Gen<Event>.send(topic: String? = null, key: String? = null): Event {"
         output.windowed(sendSignature.length).count { it == sendSignature } shouldBe 1
-        val rawSignature = "public suspend fun Gen<Event>.raw(topic: String? = null, key: String? = null): RawMessage<ByteArray> {"
-        output.windowed(rawSignature.length).count { it == rawSignature } shouldBe 1
+        val modifySignature = "public fun Gen<Event>.modify(block: RawMessageScope.() -> Unit): ModifiedMessage<Event> ="
+        output.windowed(modifySignature.length).count { it == modifySignature } shouldBe 1
     }
 
     @Test
@@ -280,13 +282,9 @@ class KotestDslExtensionTest {
         output shouldContain "rpcCall(Ping.Service::class, this) { service, _ -> service.ping() }"
         output shouldNotContain "PingRequestBuilder"
 
-        output shouldContain "public suspend fun Gen<GetUserRequest>.raw(): GetUserRequest ="
-        output shouldContain "rawRpcRequest(this)"
-        output shouldContain "public suspend fun GetUserRequest.call(): GetUser.Response ="
-        output shouldContain "rawRpcCall(GetUser.Service::class, this) { service, request -> service.getUser(request.id) }"
-        output shouldContain "public suspend fun Gen<PingRequest>.raw(): PingRequest ="
-        output shouldContain "public suspend fun PingRequest.call(): String ="
-        output shouldContain "rawRpcCall(Ping.Service::class, this) { service, _ -> service.ping() }"
+        output shouldContain "public fun Gen<GetUserRequest>.modify(block: GetUserRequest.() -> GetUserRequest): Arb<GetUserRequest> ="
+        output shouldContain "modifiedRpcRequest(this, block)"
+        output shouldNotContain "Gen<PingRequest>.modify"
     }
 
     @Test

@@ -6,11 +6,10 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.GetCampaign
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetProduct
 import community.flock.wirespec.examples.kotest.generated.kotest.call
 import community.flock.wirespec.examples.kotest.generated.kotest.generate
-import community.flock.wirespec.examples.kotest.generated.kotest.raw
+import community.flock.wirespec.examples.kotest.generated.kotest.modify
 import community.flock.wirespec.examples.kotest.generated.model.CampaignId
 import community.flock.wirespec.examples.kotest.generated.model.Product
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
-import community.flock.wirespec.integration.kotest.dsl.call
 import community.flock.wirespec.integration.kotest.dsl.draw
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -63,11 +62,12 @@ class CampaignEndpointScenarioTest :
         }
 
         test("a method the contract doesn't declare on /products is rejected with a 405") {
-            val request = CreateProduct.generate.request {
-                body { sku("SKU-405") }
-            }.raw()
-
-            val response = request.copy(method = "PUT").call()
+            val response = CreateProduct.generate
+                .request {
+                    body { sku("SKU-405") }
+                }
+                .modify { method = "PUT" }
+                .call()
 
             response.status shouldBe 405
         }

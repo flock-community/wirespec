@@ -5,14 +5,13 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.ActivateCampa
 import community.flock.wirespec.examples.kotest.generated.endpoint.CreateCampaign
 import community.flock.wirespec.examples.kotest.generated.kotest.call
 import community.flock.wirespec.examples.kotest.generated.kotest.generate
+import community.flock.wirespec.examples.kotest.generated.kotest.modify
 import community.flock.wirespec.examples.kotest.generated.kotest.send
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEvent
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEventType
 import community.flock.wirespec.examples.kotest.generated.model.CampaignInput
 import community.flock.wirespec.examples.kotest.generated.model.CampaignStatus
 import community.flock.wirespec.examples.kotest.kafka.CAMPAIGN_EVENTS_TOPIC
-import community.flock.wirespec.integration.kotest.dsl.RawMessage
-import community.flock.wirespec.integration.kotest.dsl.send
 import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.FunSpec
@@ -109,7 +108,10 @@ class CampaignChannelScenarioTest :
             val campaignId = UUID.randomUUID().toString()
             val cancelled = mapOf("campaignId" to campaignId, "eventType" to "CANCELLED", "discountPercentage" to 10L)
 
-            RawMessage(topic = CAMPAIGN_EVENTS_TOPIC, key = null, body = cancelled).send()
+            CampaignEvents.generate
+                .message()
+                .modify { body(cancelled) }
+                .send(CAMPAIGN_EVENTS_TOPIC)
 
             val received = awaitRecord(CAMPAIGN_EVENTS_TOPIC) { record -> record.value().decodeToString().takeIf { campaignId in it } }
             received shouldContain "\"eventType\":\"CANCELLED\""

@@ -50,9 +50,9 @@ build/generated/.../generated/
 | `downstream/`                    | `InventoryClient` + HTTP transportation driving the generated `GetStock` client                                                                                                                         |
 | `service/`, `repository/`        | In-memory domain logic                                                                                                                                                                                  |
 | `kafka/`                         | Publisher/consumer implementing the generated channel `Sender`/`Listener`                                                                                                                               |
-| `CampaignEndpointScenarioTest`   | HTTP scenarios, and a raw request outside the contract (`.raw()`, `.call()` on a `RawRequest`)                                                                                                          |
-| `CampaignChannelScenarioTest`    | Kafka messaging scenarios (`@EmbeddedKafka`), and a raw message outside the contract                                                                                                                    |
-| `ProductAvailabilityMockTest`    | Mocks the downstream inventory service with `.mock { req -> … }`, and with a raw response outside its contract                                                                                          |
+| `CampaignEndpointScenarioTest`   | HTTP scenarios, and a request outside the contract (`.modify { … }.call()`)                                                                                                                             |
+| `CampaignChannelScenarioTest`    | Kafka messaging scenarios (`@EmbeddedKafka`), and a message outside the contract (`.modify { … }.send()`)                                                                                               |
+| `ProductAvailabilityMockTest`    | Mocks the downstream inventory service with `.mock { req -> … }`, also outside its contract (`.modify { … }.mock { … }`)                                                                                |
 | `ProjectConfig`                  | Registers every extension once for the whole suite, plus `KafkaChannelTransport` (producer-only `ChannelTransport` backing `send()`) and `WireMockMockServer` (the `MockServer` the `.mock` DSL drives) |
 
 ## How the tests wire the transport
@@ -169,39 +169,46 @@ class ProductAvailabilityMockTest : FunSpec({
 
 ### Outside the contract
 
-The typed DSL stays within the contract. To test what happens outside it, both directions also take
-the raw form, the Kotest integration's `RawRequest` / `RawResponse` / `RawMessage`, whose body is any
-typed input (serialized as its type) or bytes. `ProductAvailabilityMockTest` lets the
-downstream answer with a status `inventory.ws` doesn't declare, and checks that the app's own answer
-still matches `campaign.ws` (`InventoryClient` treats it as no stock):
+The typed DSL stays within the contract. To test what happens outside it, `modify { … }` changes a
+drawn request, response or message before it goes out, on the same chain as `call()`, `mock` and
+`send()`. Its `body(input)` takes an input of any type and serializes it as that type.
+`ProductAvailabilityMockTest` lets the downstream answer with a status `inventory.ws` doesn't
+declare, and checks that the app's own answer still matches `campaign.ws` (`InventoryClient`
+treats it as no stock):
 
 ```kotlin
-RawResponse(status = 503, headers = emptyMap(), body = mapOf("reason" to "inventory is down"))
-    .mock(GetStock) { req -> req.path.sku == sku }
+GetStock.generate.response200()
+    .modify {
+        status = 503
+        body(mapOf("reason" to "inventory is down"))
+    }
+    .mock { req -> req.path.sku == sku }
 
 val availability = GetProductAvailability.generate.request { path { id(productId) } }.call()
 availability.shouldBeInstanceOf<GetProductAvailability.Response404>()
 ```
 
-`CampaignEndpointScenarioTest` goes the other way: `raw()` serializes a contract request as `call()`
-would send it, the test changes its method, and `call()` on the raw request returns the raw response
-without checking it against the contract:
+`CampaignEndpointScenarioTest` goes the other way: it sends a contract request with a method the
+contract doesn't declare, and `call()` after `modify` returns the raw response without checking it
+against the contract:
 
 ```kotlin
-val request = CreateProduct.generate.request { body { sku("SKU-405") } }.raw()
-request.copy(method = "PUT").call().status shouldBe 405
+CreateProduct.generate.request { body { sku("SKU-405") } }
+    .modify { method = "PUT" }
+    .call()
+    .status shouldBe 405
 ```
 
-`CampaignChannelScenarioTest` does the same for a message. It gives a `RawMessage` a map as its body,
+`CampaignChannelScenarioTest` does the same for a message. It gives the message a map as its body,
 with an event type the contract doesn't declare, and `send()` publishes it serialized as it is given:
 
 ```kotlin
 val cancelled = mapOf("campaignId" to campaignId, "eventType" to "CANCELLED", "discountPercentage" to 10L)
-RawMessage(topic = CAMPAIGN_EVENTS_TOPIC, key = null, body = cancelled).send()
+CampaignEvents.generate.message().modify { body(cancelled) }.send(CAMPAIGN_EVENTS_TOPIC)
 ```
 
-The example has no rpcs. An rpc has no wire format, so its raw form is the `<Rpc>Request` the
-service receives; see the [Kotest integration docs](https://wirespec.io/docs/integration/kotest).
+The example has no rpcs. An rpc has no wire format, so its `modify { copy(…) }` changes the
+`<Rpc>Request` the service receives; see the [Kotest integration docs](https://wirespec.io/docs/integration/kotest).
 
 ## Running
 

@@ -27,14 +27,21 @@ public suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.
     return CallExecutor.executeRequest(client, endpointObject, request) as Resp
 }
 
-public suspend fun <Req : Wirespec.Request<*>> rawRequest(
-    client: Wirespec.Client<Req, *>,
-    requestGen: Gen<Req>,
-): RawRequest<ByteArray?> = client.client(currentEndpointContext().serialization).to(requestGen.draw(currentRandomSource())).toKotest()
+/** A request [Gen], and what changes in its raw form before it is sent. */
+public class ModifiedRequest<Req : Wirespec.Request<*>>(
+    internal val requestGen: Gen<Req>,
+    internal val modification: RawRequestScope.() -> Unit,
+)
 
-public suspend fun RawRequest<*>.call(): RawResponse<ByteArray?> = currentEndpointContext()
-    .let { ctx -> ctx.transportation.transport(toWirespec(ctx.serialization)) }
-    .toKotest()
+public suspend fun <Req : Wirespec.Request<*>> modifiedRequestCall(
+    client: Wirespec.Client<Req, *>,
+    request: ModifiedRequest<Req>,
+): RawResponse = currentEndpointContext().let { ctx ->
+    client.client(ctx.serialization).to(request.requestGen.draw(currentRandomSource()))
+        .let { raw -> RawRequestScope(raw).apply(request.modification).toWirespec(ctx.serialization) }
+        .let { raw -> ctx.transportation.transport(raw) }
+        .toKotest()
+}
 
 @WirespecScenarioDsl
 public class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> internal constructor(

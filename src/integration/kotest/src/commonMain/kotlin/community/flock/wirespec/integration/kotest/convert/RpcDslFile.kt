@@ -51,8 +51,9 @@ internal object RpcDslFile {
                 import("community.flock.wirespec.kotlin", "Wirespec")
             }
             import("community.flock.wirespec.integration.kotest.dsl", "rpcCall")
-            import("community.flock.wirespec.integration.kotest.dsl", "rawRpcRequest")
-            import("community.flock.wirespec.integration.kotest.dsl", "rawRpcCall")
+            if (shape.parameters.isNotEmpty()) {
+                import("community.flock.wirespec.integration.kotest.dsl", "modifiedRpcRequest")
+            }
             if (shape.requestFields.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
@@ -78,6 +79,9 @@ internal object RpcDslFile {
                 getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
             buildCall(shape)
+            if (shape.parameters.isNotEmpty()) {
+                buildModify(shape)
+            }
             if (shape.requestFields.isNotEmpty()) {
                 elements.add(RecordBuilder.buildBuilderClass(shape.requestName, shape.requestFields))
             }
@@ -143,26 +147,22 @@ internal object RpcDslFile {
     private fun FileBuilder.buildCall(shape: RpcShape) {
         val args = shape.parameters.joinToString(", ") { "request.${it.identifier.value.escapeKotlinIdentifier()}" }
         val request = if (shape.parameters.isEmpty()) "_" else "request"
-        val serviceClass = "${shape.name}.Service::class"
-        val invoke = "{ service, $request -> service.${shape.functionName}($args) }"
-        val requestGen = IrType.Custom("Gen", listOf(IrType.Custom(shape.requestName)))
         asyncFunction("call") {
             visibility(Visibility.PUBLIC)
-            receiver(requestGen)
+            receiver(IrType.Custom("Gen", listOf(IrType.Custom(shape.requestName))))
             returnType(IrType.Custom(shape.callReturnType))
-            returns(rawExpr("rpcCall($serviceClass, this) $invoke"))
+            returns(rawExpr("rpcCall(${shape.name}.Service::class, this) { service, $request -> service.${shape.functionName}($args) }"))
         }
-        asyncFunction("raw") {
+    }
+
+    private fun FileBuilder.buildModify(shape: RpcShape) {
+        val request = IrType.Custom(shape.requestName)
+        function("modify") {
             visibility(Visibility.PUBLIC)
-            receiver(requestGen)
-            returnType(IrType.Custom(shape.requestName))
-            returns(rawExpr("rawRpcRequest(this)"))
-        }
-        asyncFunction("call") {
-            visibility(Visibility.PUBLIC)
-            receiver(IrType.Custom(shape.requestName))
-            returnType(IrType.Custom(shape.callReturnType))
-            returns(rawExpr("rawRpcCall($serviceClass, this) $invoke"))
+            receiver(IrType.Custom("Gen", listOf(request)))
+            arg("block", IrType.Function(emptyList(), request, request))
+            returnType(IrType.Custom("Arb", listOf(request)))
+            returns(rawExpr("modifiedRpcRequest(this, block)"))
         }
     }
 

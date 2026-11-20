@@ -41,7 +41,8 @@ internal object ChannelDslFile {
                 import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
             }
             if (emitSend) {
-                import("community.flock.wirespec.integration.kotest.dsl", "RawMessage")
+                import("community.flock.wirespec.integration.kotest.dsl", "ModifiedMessage")
+                import("community.flock.wirespec.integration.kotest.dsl", "RawMessageScope")
             }
             if (isRecord) {
                 import("community.flock.wirespec.integration.kotest.dsl", "generatedGen")
@@ -83,17 +84,25 @@ internal object ChannelDslFile {
             )
 
             if (emitSend) {
-                listOf("send" to IrType.Custom(payload), "raw" to IrType.Custom("RawMessage<ByteArray>")).forEach { (terminal, returned) ->
-                    asyncFunction(terminal) {
+                val modifiedPayload = IrType.Custom("ModifiedMessage", listOf(IrType.Custom(payload)))
+                function("modify") {
+                    visibility(Visibility.PUBLIC)
+                    receiver(genPayload)
+                    arg("block", IrType.Function(emptyList(), IrType.Unit, IrType.Custom("RawMessageScope")))
+                    returnType(modifiedPayload)
+                    returns(rawExpr("ModifiedMessage(this, block)"))
+                }
+                listOf(genPayload to IrType.Custom(payload), modifiedPayload to IrType.Unit).forEach { (sent, returned) ->
+                    asyncFunction("send") {
                         visibility(Visibility.PUBLIC)
-                        receiver(genPayload)
+                        receiver(sent)
                         arg("topic", IrType.Nullable(IrType.String), rawExpr("null"))
                         arg("key", IrType.Nullable(IrType.String), rawExpr("null"))
                         returnType(returned)
                         raw("val call = channelCall<$payload>(${shape.name}::class)")
                         raw("topic?.let { call.topic(it) }")
                         raw("key?.let { call.key(it) }")
-                        returns(rawExpr("call.$terminal(this)"))
+                        returns(rawExpr("call.send(this)"))
                     }
                 }
             }
