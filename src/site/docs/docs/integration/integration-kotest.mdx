@@ -25,7 +25,8 @@ response.shouldBeInstanceOf<CreateTodo.Response201>()
 The fields you don't pin are drawn from the contract: string patterns, integer and number bounds, nullability, enums,
 refined types, lists and nested records are all respected. `call()` sends the request over your own transport and
 checks the response against the contract, so a test fails when the service answers with an undeclared status or a body
-that doesn't match.
+that doesn't match. To test [outside the contract](#outside-the-contract) on purpose, use the raw form of a request or
+a response.
 
 The integration has two parts that you can use together or on their own:
 
@@ -327,6 +328,54 @@ GetTodoById.generate.response200 {
 }.mock { request -> request.path.id == "42" }
 ```
 
+### Outside the contract
+
+The entry points above stay within the contract: you can only build requests it allows, and `call()` fails on a
+response it doesn't declare. To test what happens outside it, use the raw form of a request or a response:
+`Wirespec.RawRequest` and `Wirespec.RawResponse` hold the method, path segments, queries, headers and body bytes as
+they go over the wire.
+
+`raw()` draws one request and serializes it as `call()` would send it, with the serialization of the
+[endpoint context](#wiring-the-transport). Change what the test is about, then `call()` on the `Wirespec.RawRequest`
+sends it through the same transportation. It returns the `Wirespec.RawResponse` as it came back, without checking it
+against the contract:
+
+```kotlin
+val request = CreateTodo.generate.request { body { name("Buy milk") } }.raw()
+
+val response = request.copy(body = "not json".encodeToByteArray()).call()
+response.statusCode shouldBe 400
+```
+
+You can also write a raw request by hand, for example for a method the contract doesn't declare:
+
+```kotlin
+val response = Wirespec.RawRequest(
+    method = "DELETE",
+    path = listOf("api", "todos"),
+    queries = emptyMap(),
+    headers = emptyMap(),
+    body = null,
+).call()
+response.statusCode shouldBe 405
+```
+
+`call()` on a raw request comes from `community.flock.wirespec.integration.kotest.dsl`, like `draw()`.
+
+A mock works the same way. `raw()` on a response `Gen` draws one response and serializes it with the serialization of
+the mock context, and `mock(<Endpoint>) { request -> … }` registers a `Wirespec.RawResponse` for every request to that
+endpoint that the typed predicate accepts. That way a downstream service can answer with a status its contract doesn't
+declare, or a body that doesn't match:
+
+```kotlin
+Wirespec.RawResponse(statusCode = 503, headers = emptyMap(), body = null)
+    .mock(GetTodoById) { request -> request.path.id == "42" }
+
+val todo = GetTodoById.generate.response200 { body = Todo.generate { name("Buy milk") } }.raw()
+todo.copy(body = todo.body?.let { it.copyOf(it.size / 2) })
+    .mock(GetTodoById) { request -> request.path.id == "43" }
+```
+
 ### Channels
 
 `<Channel>.generate.message { … }` returns a `Gen` of messages, and `send()` publishes one through the channel
@@ -391,12 +440,12 @@ that matches its pattern.
 The DSL takes its transport, and a `RandomSource` per test, from an ambient context. A Kotest extension installs one
 for each kind of operation; register the ones your spec uses:
 
-| Extension                   | Backs                   | Takes                                                      |
-|-----------------------------|-------------------------|------------------------------------------------------------|
-| `WirespecEndpointExtension` | `call()` on an endpoint | a `Wirespec.Transportation` and a `Wirespec.Serialization` |
-| `WirespecMockExtension`     | `mock { … }`            | a `MockServer` and a `Wirespec.Serialization`              |
-| `WirespecChannelExtension`  | `send()`                | a `ChannelTransport` and a `Wirespec.Serialization`        |
-| `WirespecRpcExtension`      | `call()` on an rpc      | the `Service` implementations                              |
+| Extension                   | Backs                                                          | Takes                                                      |
+|-----------------------------|----------------------------------------------------------------|------------------------------------------------------------|
+| `WirespecEndpointExtension` | `call()` on an endpoint or a raw request, `raw()` on a request | a `Wirespec.Transportation` and a `Wirespec.Serialization` |
+| `WirespecMockExtension`     | `mock`, `raw()` on a response                                  | a `MockServer` and a `Wirespec.Serialization`              |
+| `WirespecChannelExtension`  | `send()`                                                       | a `ChannelTransport` and a `Wirespec.Serialization`        |
+| `WirespecRpcExtension`      | `call()` on an rpc                                             | the `Service` implementations                              |
 
 They live in `community.flock.wirespec.integration.kotest.extension` and compose: register several and they share one
 `RandomSource` per test.

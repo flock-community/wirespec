@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest.dsl
 
+import community.flock.wirespec.integration.kotest.extension.currentEndpointContext
 import community.flock.wirespec.integration.kotest.runtime.CallExecutor
 import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
@@ -25,6 +26,13 @@ public suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.
     @Suppress("UNCHECKED_CAST")
     return CallExecutor.executeRequest(client, endpointObject, request) as Resp
 }
+
+public suspend fun <Req : Wirespec.Request<*>> rawRequest(
+    client: Wirespec.Client<Req, *>,
+    requestGen: Gen<Req>,
+): Wirespec.RawRequest = client.client(currentEndpointContext().serialization).to(requestGen.draw(currentRandomSource()))
+
+public suspend fun Wirespec.RawRequest.call(): Wirespec.RawResponse = currentEndpointContext().transportation.transport(this)
 
 @WirespecScenarioDsl
 public class EndpointCallBuilder<BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.Response<*>> internal constructor(

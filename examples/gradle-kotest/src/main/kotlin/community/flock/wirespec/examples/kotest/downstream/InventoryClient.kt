@@ -14,5 +14,7 @@ class InventoryClient(
     private val edge = GetStock.api.client(serialization)
     private val transportation = HttpTransportation(baseUrl)
 
-    suspend fun getStock(sku: String): GetStock.Response<*> = edge.from(transportation.transport(edge.to(GetStock.Request(sku))))
+    /** `null` when the inventory service answers outside its contract: with a status it doesn't declare, or a body that doesn't match. */
+    suspend fun getStock(sku: String): GetStock.Response<*>? = transportation.transport(edge.to(GetStock.Request(sku)))
+        .let { response -> runCatching { edge.from(response) }.getOrNull() }
 }

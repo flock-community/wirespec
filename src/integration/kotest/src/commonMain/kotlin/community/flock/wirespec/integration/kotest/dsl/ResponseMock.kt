@@ -10,16 +10,26 @@ public suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> respo
     server: Wirespec.Server<Req, Res>,
     responseGen: Gen<Res>,
     predicate: (Req) -> Boolean,
+): Unit = rawResponseMock(server, rawResponse(server, responseGen), predicate)
+
+public suspend fun <Res : Wirespec.Response<*>> rawResponse(
+    server: Wirespec.Server<*, Res>,
+    responseGen: Gen<Res>,
+): Wirespec.RawResponse = server.server(currentMockContext().serialization).to(responseGen.draw(currentRandomSource()))
+
+public suspend fun <Req : Wirespec.Request<*>> rawResponseMock(
+    server: Wirespec.Server<Req, *>,
+    response: Wirespec.RawResponse,
+    predicate: (Req) -> Boolean,
 ) {
     val ctx = currentMockContext()
     val edge = server.server(ctx.serialization)
-    val response = responseGen.draw(currentRandomSource())
     ctx.server.stub(
         MockStub(
             method = server.method,
             pathTemplate = server.pathTemplate,
             matches = { raw -> runCatching { predicate(edge.from(raw)) }.getOrDefault(false) },
-            response = edge.to(response),
+            response = response,
         ),
     )
 }

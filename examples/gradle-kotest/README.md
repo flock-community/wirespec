@@ -50,9 +50,9 @@ build/generated/.../generated/
 | `downstream/`                    | `InventoryClient` + HTTP transportation driving the generated `GetStock` client                                                                                                                         |
 | `service/`, `repository/`        | In-memory domain logic                                                                                                                                                                                  |
 | `kafka/`                         | Publisher/consumer implementing the generated channel `Sender`/`Listener`                                                                                                                               |
-| `CampaignEndpointScenarioTest`   | HTTP scenarios                                                                                                                                                                                          |
+| `CampaignEndpointScenarioTest`   | HTTP scenarios, and a raw request outside the contract (`.raw()`, `.call()` on a `Wirespec.RawRequest`)                                                                                                 |
 | `CampaignChannelScenarioTest`    | Kafka messaging scenarios (`@EmbeddedKafka`)                                                                                                                                                            |
-| `ProductAvailabilityMockTest`    | Mocks the downstream inventory service with `.mock { req -> … }`                                                                                                                                        |
+| `ProductAvailabilityMockTest`    | Mocks the downstream inventory service with `.mock { req -> … }`, and with a raw response outside its contract                                                                                          |
 | `ProjectConfig`                  | Registers every extension once for the whole suite, plus `KafkaChannelTransport` (producer-only `ChannelTransport` backing `send()`) and `WireMockMockServer` (the `MockServer` the `.mock` DSL drives) |
 
 ## How the tests wire the transport
@@ -123,6 +123,30 @@ availability.body.available shouldBe 7L
 `req` is the fully typed `GetStock.Request`, so `req.path.sku` / `req.queries` / `req.body` read
 through the generated names. The stub matches on the endpoint's method and path template first, then
 on the predicate — so two stubs with different predicates route each SKU to its own response.
+
+### Outside the contract
+
+The typed DSL stays within the contract. To test what happens outside it, both directions also take
+the raw form, `Wirespec.RawRequest` / `Wirespec.RawResponse`. `ProductAvailabilityMockTest` lets the
+downstream answer with a status `inventory.ws` doesn't declare, and checks that the app's own answer
+still matches `campaign.ws` (`InventoryClient` treats it as no stock):
+
+```kotlin
+Wirespec.RawResponse(statusCode = 503, headers = emptyMap(), body = "inventory is down".encodeToByteArray())
+    .mock(GetStock) { req -> req.path.sku == sku }
+
+val availability = GetProductAvailability.generate.request { path { id(productId) } }.call()
+availability.shouldBeInstanceOf<GetProductAvailability.Response404>()
+```
+
+`CampaignEndpointScenarioTest` goes the other way: `raw()` serializes a contract request as `call()`
+would send it, the test changes its method, and `call()` on the raw request returns the raw response
+without checking it against the contract:
+
+```kotlin
+val request = CreateProduct.generate.request { body { sku("SKU-405") } }.raw()
+request.copy(method = "PUT").call().statusCode shouldBe 405
+```
 
 The mock server is resolved from an ambient context installed by `WirespecMockExtension` — the
 response-side counterpart to `WirespecEndpointExtension`. The extension consumes a framework-neutral

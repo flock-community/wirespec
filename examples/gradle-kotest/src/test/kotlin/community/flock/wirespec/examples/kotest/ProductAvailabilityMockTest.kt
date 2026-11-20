@@ -9,6 +9,7 @@ import community.flock.wirespec.examples.kotest.generated.kotest.mock
 import community.flock.wirespec.examples.kotest.generated.model.Availability
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
 import community.flock.wirespec.examples.kotest.generated.model.StockLevel
+import community.flock.wirespec.kotlin.Wirespec
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -76,6 +77,23 @@ class ProductAvailabilityMockTest :
                 it.available shouldBe 42L
                 it.inStock shouldBe true
             }
+        }
+
+        test("availability stays within its contract when the downstream answers outside its own") {
+            val sku = "SKU-DOWN"
+            val productId = createProduct(sku)
+
+            Wirespec.RawResponse(statusCode = 503, headers = emptyMap(), body = "inventory is down".encodeToByteArray())
+                .mock(GetStock) { req -> req.path.sku == sku }
+
+            val availability = GetProductAvailability.generate
+                .request {
+                    path { id(productId) }
+                }
+                .call()
+
+            availability.shouldBeInstanceOf<GetProductAvailability.Response404>()
+            availability.body.message shouldBe "No stock for sku: $sku"
         }
     }) {
     companion object {

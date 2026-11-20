@@ -38,15 +38,19 @@ internal object EndpointDslFile {
 
             import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
             import("community.flock.wirespec.integration.kotest.dsl", "requestCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "rawRequest")
+            import("community.flock.wirespec.integration.kotest.dsl", "rawResponseMock")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             if (shape.responseVariants.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
                 import("community.flock.wirespec.integration.kotest.dsl", "responseMock")
+                import("community.flock.wirespec.integration.kotest.dsl", "rawResponse")
             }
             if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
             }
             import(endpointPkg, shape.name)
+            import("community.flock.wirespec.kotlin", "Wirespec")
             import("io.kotest.property", "Gen")
             import("io.kotest.property", "Arb")
             val isListBody = shape.bodyKind == EndpointShape.BodyKind.List
@@ -71,9 +75,12 @@ internal object EndpointDslFile {
                 getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
             buildRequestCall(shape)
+            buildRawRequest(shape)
             if (shape.responseVariants.isNotEmpty()) {
                 buildResponseMock(shape)
+                buildRawResponse(shape)
             }
+            buildRawResponseMock(shape)
             buildScopeClass(shape, present, required)
             shape.responseVariants.forEach { variant -> buildResponseScope(shape, variant) }
             present.forEach { slot -> buildSlotBuilder(shape, slot) }
@@ -143,6 +150,41 @@ internal object EndpointDslFile {
             arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
             returnType(IrType.Unit)
             returns(rawExpr("responseMock(${shape.name}.api, this, predicate)"))
+        }
+    }
+
+    private fun FileBuilder.buildRawRequest(shape: EndpointShape) {
+        asyncFunction("raw") {
+            visibility(Visibility.PUBLIC)
+            receiver(genOf("${shape.name}.Request"))
+            returnType(IrType.Custom("Wirespec.RawRequest"))
+            returns(rawExpr("rawRequest(${shape.name}.api, this)"))
+        }
+    }
+
+    /** The request's `raw()` in the same file erases to the same JVM signature, so this one is renamed for the JVM. */
+    private fun FileBuilder.buildRawResponse(shape: EndpointShape) {
+        asyncFunction("raw") {
+            annotation("@JvmName(\"rawResponse\")")
+            visibility(Visibility.PUBLIC)
+            receiver(genOf("${shape.name}.Response<*>"))
+            returnType(IrType.Custom("Wirespec.RawResponse"))
+            returns(rawExpr("rawResponse(${shape.name}.api, this)"))
+        }
+    }
+
+    /**
+     * A raw response names no endpoint, so `endpoint` says which endpoint's requests it answers. Its only value is the
+     * endpoint object, and every endpoint has its own overload.
+     */
+    private fun FileBuilder.buildRawResponseMock(shape: EndpointShape) {
+        asyncFunction("mock") {
+            visibility(Visibility.PUBLIC)
+            receiver(IrType.Custom("Wirespec.RawResponse"))
+            arg("endpoint", IrType.Custom(shape.name))
+            arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
+            returnType(IrType.Unit)
+            returns(rawExpr("rawResponseMock(${shape.name}.api, this, predicate)"))
         }
     }
 

@@ -51,6 +51,18 @@ class KotestDslExtensionTest {
     }
 
     @Test
+    fun emitsRawFormsOfRequestsAndResponsesAndARawMock() {
+        val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
+
+        output shouldContain "public suspend fun Gen<GetTodos.Request>.raw(): Wirespec.RawRequest ="
+        output shouldContain "rawRequest(GetTodos.api, this)"
+        output shouldContain "@JvmName(\"rawResponse\")\npublic suspend fun Gen<GetTodos.Response<*>>.raw(): Wirespec.RawResponse ="
+        output shouldContain "rawResponse(GetTodos.api, this)"
+        output shouldContain "public suspend fun Wirespec.RawResponse.mock(endpoint: GetTodos, predicate: (GetTodos.Request) -> Boolean): Unit ="
+        output shouldContain "rawResponseMock(GetTodos.api, this, predicate)"
+    }
+
+    @Test
     fun blockStyleSlotsAreVarsValidatedOnFlush() {
         val output = CompileFullEndpointTest.compiler(::emitter).shouldBeRight()
 
