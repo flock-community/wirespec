@@ -3,11 +3,11 @@ package community.flock.wirespec.generated.channel
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-object Queue : Wirespec.Channel {
-  fun interface Sender {
-      fun queue(message: String)
+public object Queue : Wirespec.Channel {
+  public fun interface Sender {
+      public fun queue(message: String)
   }
-  fun interface Listener {
-      fun queue(handler: (String) -> Unit)
+  public fun interface Listener {
+      public fun queue(handler: (String) -> Unit)
   }
 }

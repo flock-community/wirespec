@@ -32,7 +32,7 @@ class WirespecCliTest {
         FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Kotlin).read().let { content ->
             content shouldContain "package community.flock.wirespec.generated.model"
             content shouldContain """
-                |data class Bla(
+                |public data class Bla(
                 |  val yolo: String,
                 |  val `class`: Boolean
                 |) : Wirespec.Shape {
@@ -91,7 +91,7 @@ class WirespecCliTest {
         val path = FilePath(directoryPath.resolve("model"), Name("Pet"), FileExtension.Kotlin)
 
         path.read() shouldContain """
-            |data class Pet(
+            |public data class Pet(
             |  val id: Long?,
             |  val category: Category?,
             |  val name: String,
@@ -123,7 +123,7 @@ class WirespecCliTest {
         val path = FilePath(directoryPath.resolve("model"), Name("Relationship"), FileExtension.Kotlin)
 
         path.read() shouldContain """
-            |data class Relationship(
+            |public data class Relationship(
             |  val namespace: String,
             |  val `object`: String,
             |  val relation: String,
@@ -148,9 +148,9 @@ class WirespecCliTest {
             content shouldContain """
                 |@kotlinx.serialization.Serializable
                 |@kotlinx.serialization.SerialName("Bla")
-                |data class Bla(
+                |public data class Bla(
             """.trimMargin()
-            content shouldContain "fun toBuilder()"
+            content shouldContain "public fun toBuilder()"
         }
         FilePath(DirectoryPath("$output/model"), Name("Bla"), FileExtension.TypeScript).read() shouldNotContain "kotlinx"
     }

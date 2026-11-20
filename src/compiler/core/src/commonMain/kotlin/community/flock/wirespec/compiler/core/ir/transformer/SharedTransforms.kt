@@ -30,7 +30,7 @@ public fun Struct.markMembersAsOverride(): Struct = copy(
 public fun <E : Element> E.ensureEmptyStructHasConstructor(): E = transform {
     matchingElements { struct: Struct ->
         if (struct.fields.isEmpty()) {
-            struct.copy(constructors = listOf(Constructor(emptyList(), emptyList())))
+            struct.copy(constructors = listOf(Constructor(emptyList(), emptyList(), visibility = null)))
         } else {
             struct
         }
