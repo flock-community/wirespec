@@ -21,7 +21,8 @@ This integration is experimental: its API, generated code and options may still 
 
 The `graphql` integration ships an [IR extension](../plugins/plugins.md#ir-extensions) that generates a typed GraphQL
 client from the [rpcs](../language/rpc.mdx) of a contract. Together with the [GraphQL converter](../converters/graphql.md),
-which turns every field of `Query` and `Mutation` into an rpc, it gives you a client for a GraphQL API from its schema.
+which turns every field of `Query` and `Mutation`, and of the types nested in them, into an rpc, it gives you a client
+for a GraphQL API from its schema.
 
 The client comes in two flavours, and you can mix them:
 
@@ -120,7 +121,9 @@ no GraphQL annotation.
 ```
 
 Only rpcs marked `@GraphQLQuery` or `@GraphQLMutation` get a client. `TodoAdded`, a subscription, and `CountTodos`,
-without a GraphQL annotation, are left out, so a contract can mix GraphQL operations with rpcs served another way. An rpc
+without a GraphQL annotation, are left out, so a contract can mix GraphQL operations with rpcs served another way. So is
+an rpc that names a type that holds data, a [field with arguments](../converters/graphql.md#fields-with-arguments) of
+that type. An rpc
 you write yourself needs `@GraphQLName` when the GraphQL field is not named after the rpc, as with `@GraphQLName("todo")`
 on `QueryTodo`.
 
@@ -407,11 +410,10 @@ GraphQL text and returns itself from every field. A partial result has the same 
 - A typed call selects every field of the result, all the way down. A union or interface selects `__typename` and an
   inline fragment for each member, so the serialization can tell the members apart by `__typename`.
 - GraphQL selects a finite set of fields, so a typed call cannot select a field that refers back to a type it is
-  selected in, such as `User.todos` inside `Todo.owner`, or a field that takes a required argument. Such a field is
-  left out when it is nullable. When it is not, the build fails with a message that names the field; use a selection
-  for that operation instead.
+  selected in, such as `User.todos` inside `Todo.owner`. Such a field is left out when it is nullable. When it is not,
+  the build fails with a message that names the field; use a selection for that operation instead.
 
-### Namespace types
+### Nested types
 
 A schema can group its operations in a type that a field of `Query` or `Mutation` returns:
 
@@ -425,28 +427,38 @@ type NotificationsQuery {
 }
 ```
 
-An rpc is a field of such a type when its annotation names the type, and a field of the root type returns it:
+Only the operations are rpcs. The nested type is a namespace: the header of the file declares it, by naming the type
+and its field that leads to the nested type, and an rpc names the nested type to be one of its fields. So neither
+`NotificationsQuery` nor the field `notifications` needs a definition of its own:
 
-```wirespec
-type NotificationsQuery {}
-
-@GraphQLQuery
-rpc Notifications {} -> NotificationsQuery
+```wirespec title="notifications.ws"
+@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })
+@file:GraphQLMutation("Mutation", path: { notifications: "NotificationsMutation!" })
 
 @GraphQLQuery("NotificationsQuery")
 rpc Inbox {
   limit: Integer32
 } -> Notification[]
+
+@GraphQLMutation("NotificationsMutation")
+rpc MarkRead {
+  id: String
+} -> Unit
 ```
 
-The query of `Inbox` nests its field in the field that leads to the type, and the client reads the result from there:
+The query of `Inbox` nests its field in the field that leads to its type, and the client reads the result from there:
 
 ```graphql
 query Inbox($limit: Int!) { notifications { result: inbox(limit: $limit) { id text } } }
 ```
 
-The fields that lead to the type take no arguments, and can pass through several types. The build fails when no field
-leads from the root type to the type an rpc names.
+A file can declare several namespaces, next to operations of the root types themselves: each rpc names the one it is
+in, and an rpc that names none is a field of the root type. A namespace can hold another:
+`@file:GraphQLQuery("NotificationsQuery", path: { archive: "ArchiveQuery" })` nests `ArchiveQuery` in
+`NotificationsQuery`, and the query of its rpcs in `notifications { archive { ... } }`. The fields that lead to a
+namespace take no arguments. The build fails when an rpc names a type that is not defined, is not the root type, and
+that no field in the header of its file leads to. The [GraphQL converter](../converters/graphql.md#nested-types) writes
+the namespaces of a schema.
 
 ## Configuration
 
@@ -464,7 +476,8 @@ left out. Configure the serialization to leave out null values to use the defaul
 ## Limitations
 
 - Subscriptions get no client, because they are not a single request and response.
-- Arguments of nested fields are not passed: a field that requires one cannot be selected.
+- A field with arguments of a type that is not nested in a root type, an rpc that names a type that holds data, gets no client and
+  cannot be selected: only the fields of a root type and of the types nested in it are operations.
 - A partial result cannot tell a field that was not selected from a field that is `null`: both read as empty.
 - A typed call returns a union as the Wirespec union of its models, which the serialization has to read by
   `__typename`. A partial result has no such need: it is a single type with the fields of every member.

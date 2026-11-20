@@ -472,6 +472,6 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeLeft()
-            .head.message shouldBe "Default values are only allowed on fields of a type definition, not on: limit"
+            .head.message shouldBe "Default values are only allowed on the fields of a type and the parameters of an rpc, not on: limit"
     }
 }

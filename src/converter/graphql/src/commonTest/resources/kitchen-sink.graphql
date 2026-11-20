@@ -82,6 +82,10 @@ type User implements & Entity & Node & Timestamped @key(fields: "id") @key(field
   tags: [String]
   matrix: [[Int!]!]
   cube: [[[Float]]]!
+  metadata: JSON
+  _internal: String
+  type: String
+  Uppercase: Int
   friends(
     "How many friends to return"
     first: Int = 10
@@ -91,10 +95,6 @@ type User implements & Entity & Node & Timestamped @key(fields: "id") @key(field
     legacy: Boolean = false @deprecated
   ): FriendConnection!
   avatar(size: Int! = 64, format: ImageFormat = PNG): String
-  metadata: JSON
-  _internal: String
-  type: String
-  Uppercase: Int
 }
 
 type FriendConnection {

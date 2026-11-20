@@ -87,6 +87,30 @@ class WirespecRoundTripTest {
             |}
         """.trimMargin().shouldRoundTrip()
     }
+
+    @Test
+    fun everyFileStaysAFileOfItsOwn() {
+        val orders = "type Order {\n  id: String\n}\n"
+        val customers = """
+            |@spec:OpenAPIInfo(title: "Shop", version: "1.0.0")
+            |@file:Owner("customers")
+            |
+            |type Customer {
+            |  id: String
+            |}
+            |
+        """.trimMargin()
+        val files = nonEmptyListOf("shop/orders.ws" to orders, "shop/customers.ws" to customers)
+            .map { (file, source) -> ModuleContent(FileUri(file), source) }
+        val ast = object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(files).orFail { "source did not parse: $it" }
+
+        val emitted = WirespecEmitter().emit(ast, noLogger).map { it.file to it.result }
+        if (emitted != listOf("orders.ws" to orders, "customers.ws" to customers)) {
+            fail("the files were not kept apart:\n${emitted.joinToString("\n") { (file, result) -> "--- $file ---\n$result" }}")
+        }
+    }
 }
 
 private fun String.shouldRoundTrip() {

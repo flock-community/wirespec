@@ -1,14 +1,10 @@
-type NotificationsQuery {}
-
-type NotificationsMutation {}
+@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })
+@file:GraphQLMutation("Mutation", path: { notifications: "NotificationsMutation!" })
 
 type Notification {
   id: String,
   text: String
 }
-
-@GraphQLQuery
-rpc Notifications {} -> NotificationsQuery
 
 @GraphQLQuery("NotificationsQuery")
 rpc Inbox {
@@ -18,10 +14,6 @@ rpc Inbox {
 
 @GraphQLQuery("NotificationsQuery")
 rpc InboxCount {} -> Integer32
-
-@GraphQLMutation
-@GraphQLName("notifications")
-rpc MutateNotifications {} -> NotificationsMutation
 
 @GraphQLMutation("NotificationsMutation")
 rpc MarkRead {

@@ -43,24 +43,26 @@ public fun AST.withoutDefaults(): AST = copy(
         module.copy(
             statements = module.statements.map { definition ->
                 when (definition) {
-                    // A part cannot hold defaults, so only the fields of the type itself have one to drop.
-                    is Type -> definition.copy(
-                        shape = Shape(
-                            definition.shape.value.map { entry ->
-                                when (entry) {
-                                    is Field -> entry.copy(defaultValue = null)
-                                    is Spread -> entry
-                                }
-                            },
-                        ),
-                    )
-                    is Endpoint, is Channel, is Rpc, is Enum, is Union, is Refined, is Part -> definition
+                    is Type -> definition.copy(shape = definition.shape.withoutDefaults())
+                    is Rpc -> definition.copy(shape = definition.shape.withoutDefaults())
+                    is Endpoint, is Channel, is Enum, is Union, is Refined, is Part -> definition
                 }
             },
         )
     },
 )
 
+/** A part cannot hold defaults, so only the fields of the shape itself have one to drop. */
+private fun Shape.withoutDefaults(): Shape = Shape(
+    value.map { entry ->
+        when (entry) {
+            is Field -> entry.copy(defaultValue = null)
+            is Spread -> entry
+        }
+    },
+)
+
+/** Only a type: no emitter generates code for the default of an rpc parameter, so none has to support it. */
 private fun Module.fieldsWithDefaults(): List<String> = statements
     .filterIsInstance<Type>()
     .flatMap { type -> type.shape.fields.filter { it.defaultValue != null }.map { "${type.identifier.value}.${it.identifier.value}" } }

@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
@@ -50,6 +51,35 @@ class ParseRpcTest {
                 result.shouldBeInstanceOf<Reference.Custom>().value shouldBe "Todo"
                 error.shouldBeInstanceOf<Reference.Custom>().value shouldBe "TodoError"
             }
+    }
+
+    @Test
+    fun testRpcParameterDefaults() {
+        val source =
+            // language=ws
+            """
+            |enum Order { ASC, DESC }
+            |rpc ListTodos {
+            |  limit: Integer? = 10,
+            |  order: Order = ASC,
+            |  query: String
+            |} -> String[]
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()[1]
+            .shouldBeInstanceOf<Rpc>()
+            .shape.fields.map { it.defaultValue } shouldBe listOf(DefaultValue.IntegerValue("10"), DefaultValue.EnumValue("ASC"), null)
+    }
+
+    @Test
+    fun testInvalidRpcParameterDefaults() {
+        mapOf(
+            "rpc ListTodos { limit: Integer = \"ten\" } -> String[]" to "Invalid default value \"ten\" for field limit of type Integer",
+            "enum Order { ASC, DESC } rpc ListTodos { order: Order = UP } -> String[]" to "Invalid default value UP for field order of type Order",
+        ).forEach { (source, message) ->
+            parser(source).shouldBeLeft().head.message shouldBe message
+        }
     }
 
     @Test

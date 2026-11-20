@@ -10,9 +10,9 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
+import community.flock.wirespec.converter.graphql.GraphQLAnnotations.annotationName
 import community.flock.wirespec.converter.graphql.GraphQLModel.InputValueDefinition
 import community.flock.wirespec.converter.graphql.GraphQLModel.Operation
-import community.flock.wirespec.converter.graphql.GraphQLModel.TypeRef
 import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
 
 /**
@@ -23,16 +23,20 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * query QueryTodo($id: ID!) { result: todo(id: $id) { id title owner { name } } }
  * ```
  *
- * An rpc that names another type than the root operation type, `@GraphQLQuery("NotificationsQuery")`, is a field of that
- * type, so its document nests it in the fields that lead there: `query Inbox { notifications { result: inbox { id } } }`.
+ * An rpc that names a type a field in the header of its file leads to, `@GraphQLQuery("NotificationsQuery")` with
+ * `@file:GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })`, is a field of that type, so its
+ * document nests it in the fields that lead there: `query Inbox { notifications { result: inbox { id } } }`.
  *
  * Every parameter of the rpc is a variable, typed and defaulted as the field argument it is passed to. The field is
  * aliased, so a client reads it under the same name whatever the field is called, and selects every field of its result,
  * all the way down. A union or interface selects `__typename` and one inline fragment for each member.
  *
- * GraphQL selects a finite set of fields, so a field that refers back to a type it is selected in, or that takes a
- * required argument, cannot be selected. Such a field is left out when it is nullable; when it is not, the rpc has no
- * document and [document] throws an [IllegalStateException] that names the field.
+ * GraphQL selects a finite set of fields, so a field that refers back to a type it is selected in cannot be selected.
+ * Such a field is left out when it is nullable; when it is not, the rpc has no document and [document] throws an
+ * [IllegalStateException] that names the field.
+ *
+ * An rpc that names a type that holds data, `@GraphQLQuery("User")`, is a field with arguments of a type that many
+ * fields can lead to, so it is no operation of its own and has no document.
  */
 public class GraphQLOperations(ast: AST) {
 
@@ -42,16 +46,19 @@ public class GraphQLOperations(ast: AST) {
         .filter { it is Type || it is Union || it is Enum || it is Refined }
         .associateBy { it.identifier.value }
 
-    /** The document that selects the result of [rpc] under [alias]; null for a subscription, which is no request and response. */
+    /**
+     * The document that selects the result of [rpc] under [alias]. Null for a subscription, which is no request and
+     * response, and for a field of a type, which is no operation.
+     */
     public fun document(rpc: Rpc, alias: String): String? = open(rpc, alias)
         ?.let { "$it${rpc.result.selection(Trail(rpc.identifier.value))}${close(rpc)}" }
 
     /**
      * The document of [rpc] up to where the selection of its result goes, for a caller that selects the fields itself:
-     * the document is this text, a space and the selection between braces, and [close]. Null for a subscription.
+     * the document is this text, a space and the selection between braces, and [close]. Null when [rpc] has no document.
      */
     public fun open(rpc: Rpc, alias: String): String? = schema.operation(rpc)
-        .takeUnless { it == Operation.SUBSCRIPTION }
+        .takeUnless { it == Operation.SUBSCRIPTION || schema.isFunction(rpc) }
         ?.let { operation ->
             val field = schema.fieldDefinition(rpc)
             "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { ${path(rpc).joinToString("") { "$it { " }}$alias: ${field.name}${field.arguments.passed()}"
@@ -62,18 +69,16 @@ public class GraphQLOperations(ast: AST) {
 
     /**
      * The fields that lead from the root operation type to the type [rpc] is a field of, which its document nests the
-     * field in and its response nests the result in: `notifications` for a field of the `NotificationsQuery` that
-     * `Query.notifications` returns. None for a field of the root operation type itself.
+     * field in and its response nests the result in: those of the `path` in its file, `notifications` for a field of the
+     * `NotificationsQuery` that `Query.notifications` returns. None for a field of the root operation type itself.
      */
-    public fun path(rpc: Rpc): List<String> = checkNotNull(schema.path(rpc)) {
-        schema.rootType(schema.operation(rpc)).let { root ->
-            "Cannot write a GraphQL query for rpc ${rpc.identifier.value}: it is a field of ${schema.parentType(rpc)}, but no field leads from $root to that type. " +
-                "Give $root a field that returns it, like `rpc Namespace {} -> ${schema.parentType(rpc)}`."
+    public fun path(rpc: Rpc): List<String> = schema.rootType(schema.operation(rpc)).let { root ->
+        check(schema.rootType(rpc) == root) {
+            "Cannot write a GraphQL query for rpc ${rpc.identifier.value}: it is a field of ${schema.rootType(rpc)}, which is not the root type $root. " +
+                "Name the fields that lead from $root to its type in the header of its file, like `@file:${schema.operation(rpc).annotationName}(\"$root\", path: { field: \"${schema.rootType(rpc)}\" })`."
         }
+        schema.path(rpc)
     }
-
-    /** Whether [field] can be selected without passing it an argument. */
-    public fun isSelectable(field: Field): Boolean = schema.fieldDefinition(field).arguments.none { it.type is TypeRef.NonNull && it.defaultValue == null }
 
     /** The name of [definition] in the GraphQL schema, which an inline fragment names. */
     public fun graphQLName(definition: Definition): String = schema.graphQLName(definition.identifier.value)
@@ -114,11 +119,7 @@ public class GraphQLOperations(ast: AST) {
         }
     }
 
-    private fun Field.unselectable(trail: Trail): String? = when {
-        reference.selected().any { it in trail.types } -> "refers back to a type it is selected in"
-        !isSelectable(this) -> "takes a required argument"
-        else -> null
-    }
+    private fun Field.unselectable(trail: Trail): String? = "refers back to a type it is selected in".takeIf { reference.selected().any { it in trail.types } }
 
     /** The type or union whose fields [reference] selects, through any list; null for a scalar or an enum. */
     public fun composite(reference: Reference): Definition? = when (reference) {

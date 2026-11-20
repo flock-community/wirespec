@@ -56,6 +56,23 @@ rpc SearchTodos {
 } -> Todo[]
 ```
 
+### Default values
+
+A parameter can declare a [default value](types#default-values) with `=`, with the same values and checks as the field
+of a type. It says what the RPC uses when the parameter is not provided:
+
+```wirespec
+rpc SearchTodos {
+    query: String,
+    limit: Integer? = 10,
+    done: Boolean = false
+} -> Todo[]
+```
+
+The default is part of the contract: the [GraphQL converter](../converters/graphql.md#default-values) reads and writes
+it as the default of an argument. Generated code takes the parameter as it is declared and does not fill in the
+default, so no emitter has to support it, and the ignore defaults option leaves it out like any other default.
+
 The curly braces are mandatory, also when the RPC takes no parameters at all:
 
 ```wirespec
