@@ -156,7 +156,8 @@ rpc MarkRead {
 - A field that leads to a nested type comes back after the other fields of its type.
 - The annotation of a root type names it, also when it is the default, and takes the `extend` block its fields are in:
   `@file:GraphQLQuery("QueryRoot", extend: "1", path: { ... })`. Without a type, it is about the default root type.
-- A nested type with a description or directives keeps them on an empty `type`, like a root type does.
+- A nested type with a description or directives holds them in the annotation that names it, which has a `path` only
+  when the type nests another: `@file:GraphQLQuery("NotificationsQuery", description: "...", directives: ["@key(fields: \"id\")"])`.
 - The annotation counts for the file it is written in: an rpc names a namespace of its own file.
 
 A type is nested when all of this holds, so that one path leads to it and nothing but its operations is left out:
@@ -448,7 +449,7 @@ Wirespec converted by earlier versions has them, on a `type Schema` or `type ...
 | `@GraphQLImplements(["Node"])`                                                 | types, unions       | the interfaces an object or interface implements without spreading them (see above)                                                                                                         |
 | `@GraphQLDefault("MEDIUM")`                                                    | fields              | a default value that cannot be a Wirespec default (see above), in GraphQL syntax                                                                                                            |
 | `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                    | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
-| `@GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })`       | `@file:`            | the fields of the named type that lead to a [nested type](#nested-types), each with its type, or with its `type`, `description` and `directives`; also for `@GraphQLMutation` and `@GraphQLSubscription`                                       |
+| `@GraphQLQuery("Query", path: { notifications: "NotificationsQuery!" })`       | `@file:`            | the fields of the named type that lead to a [nested type](#nested-types), each with its type, or with its `type`, `description` and `directives`; also the `description` and `directives` of a nested type; also for `@GraphQLMutation` and `@GraphQLSubscription` |
 | `@GraphQLQuery("NotificationsQuery")`                                          | rpcs                | an `rpc` that is a field of the nested type that a field in the header of its file leads to                                                                                                 |
 | `@GraphQLQuery("User")`                                                        | rpcs                | an `rpc` that is a [field with arguments](#fields-with-arguments) of the named type that holds data                                                                                         |
 | `@GraphQLName("todo")`                                                         | rpcs                | the field name of an `rpc` whose name does not read back as that field name                                                                                                                 |

@@ -424,7 +424,7 @@ class GraphQLParserTest {
             "schema.ws" to """
                 |@file:GraphQLQuery("Query", path: { notifications: { type: "NotificationsQuery!", description: "Everything about notifications", directives: ["@deprecated"] }, type: "TypeQuery" })
                 |@file:GraphQLMutation("Mutation", path: { notifications: "NotificationsMutation!" })
-                |@file:GraphQLQuery("NotificationsQuery", path: { archive: "ArchiveQuery" })
+                |@file:GraphQLQuery("NotificationsQuery", description: "Queries about notifications", path: { archive: "ArchiveQuery" })
                 |
                 |@GraphQLQuery
                 |rpc Ping {} -> Boolean?
@@ -434,11 +434,6 @@ class GraphQLParserTest {
                 |
                 |type Todo {
                 |  id: ID
-                |}
-                |
-                |@Description("Queries about notifications")
-                |type NotificationsQuery {
-                |
                 |}
                 |
                 |@GraphQLQuery("NotificationsQuery")
@@ -777,7 +772,7 @@ class GraphQLParserTest {
         .modules.flatMap { it.statements }
 
     /** The nested types that the fields of a `@file:` annotation lead to, whatever their nullability. */
-    private fun Annotation.namespaces(): List<String> = (parameters.single { it.name == "path" }.value as Annotation.Value.Dict).value
+    private fun Annotation.namespaces(): List<String> = (parameters.singleOrNull { it.name == "path" }?.value as? Annotation.Value.Dict)?.value.orEmpty()
         .map { field -> (field.value as? Annotation.Value.Dict)?.value?.single { it.name == "type" }?.value ?: field.value }
         .map { (it as Annotation.Value.Single).value.trimEnd('!') }
 

@@ -74,6 +74,17 @@ internal class WirespecToGraphQL(ast: AST) {
 
     private val spec: List<Annotation> = ast.annotations.map { it.annotation }
 
+    /**
+     * The description and directives of the types that have no Wirespec definition, which a `@file:` annotation that
+     * names the type holds, by the name of the type.
+     */
+    private val described: Map<String, Annotation> = ast.modules.toList()
+        .flatMap { it.annotations }
+        .filter { annotation -> Operation.entries.any { it.annotationName == annotation.name } }
+        .filter { it.single("description") != null || it.array("directives").isNotEmpty() }
+        .mapNotNull { annotation -> annotation.single(DEFAULT_PARAMETER)?.let { it to annotation } }
+        .toMap()
+
     /** The `@file:` annotations of the file each rpc is in, which say where the types its operations name are nested. */
     private val fileAnnotations: Map<String, List<Annotation>> = ast.modules.toList()
         .flatMap { module -> module.statements.filterIsInstance<Rpc>().map { it.identifier.value to module.annotations } }
@@ -209,7 +220,11 @@ internal class WirespecToGraphQL(ast: AST) {
         is Rpc ->
             members
                 .filter { (owner, members) -> (owner.second != null || owner.first !in fieldHolders) && members.first().rpc === this }
-                .map { (owner, members) -> ObjectTypeDefinition(null, owner.first, emptyList(), emptyList(), members.inOrder(), owner.second != null) }
+                .map { (owner, members) ->
+                    described[owner.first].takeIf { owner.second == null }.let { type ->
+                        ObjectTypeDefinition(type?.single("description"), owner.first, emptyList(), type?.array("directives").orEmpty().map(::parseDirective), members.inOrder(), owner.second != null)
+                    }
+                }
         else -> listOfNotNull(convertModel())
     }
 

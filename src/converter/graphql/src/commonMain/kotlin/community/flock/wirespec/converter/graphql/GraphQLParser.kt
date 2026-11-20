@@ -222,7 +222,7 @@ private class GraphQLConverter(private val document: Document) {
         in roots -> rootDefinitions.getValue(this).let { root ->
             listOfNotNull(type(root.type, commonAnnotations(interfaces), emptyList()).takeIf { needsType() }) + operations(root.annotation())
         }
-        in nested -> listOfNotNull(holder()) + operations(annotation(nestedOperation().annotationName, name))
+        in nested -> operations(annotation(nestedOperation().annotationName, name))
         else -> implementation().takeUnless { bringsNothing(it) }
             ?.let { identifier().let { identifier -> listOf(type(identifier, commonAnnotations(it.listed), it.entries)) + functions(identifier) } }
             .orEmpty()
@@ -255,24 +255,28 @@ private class GraphQLConverter(private val document: Document) {
     }
 
     /**
-     * Where the nested types are: for every type that has fields leading to a nested type, an annotation that names
-     * the type and those fields, each with the type it returns. The rpcs of a nested type name it, and so the field
-     * that leads to it.
+     * What the nested types are, which have no Wirespec definition: an annotation for every type that has fields leading
+     * to a nested type, which names the type and those fields, each with the type it returns, and for every nested type
+     * with a description or directives, which holds them. The rpcs of a nested type name it, and so the field that
+     * leads to it.
      */
     fun fileAnnotations(): List<Annotation> = document.definitions
         .filterIsInstance<ObjectTypeDefinition>()
-        .mapNotNull { parent ->
-            parent.fields.filter { it.leadsToNested() }.takeIf { it.isNotEmpty() }?.let { fields ->
-                (rootDefinitions[parent] ?: Root(parent.nestedOperation(), parent.name, null)).let { root ->
-                    annotation(
-                        root.operation.annotationName,
-                        parameter(DEFAULT_PARAMETER, root.type),
-                        root.extend?.let { parameter("extend", it.toString()) },
-                        Annotation.Parameter(PATH_PARAMETER, Annotation.Value.Dict(fields.map { it.toPathParameter() })),
-                    )
+        .mapNotNull { definition ->
+            definition.fields.filter { it.leadsToNested() }.let { fields ->
+                when (definition.name) {
+                    in nested -> Root(definition.nestedOperation(), definition.name, null)
+                        .takeIf { fields.isNotEmpty() || definition.description != null || definition.directives.isNotEmpty() }
+                        ?.let { annotation(it.operation.annotationName, parameter(DEFAULT_PARAMETER, it.type), definition.description?.let { description -> parameter("description", description) }, parameter("directives", definition.directives.map { directive -> directive.print() }), fields.toPath()) }
+                    else -> rootDefinitions[definition]
+                        ?.takeIf { fields.isNotEmpty() }
+                        ?.let { annotation(it.operation.annotationName, parameter(DEFAULT_PARAMETER, it.type), it.extend?.let { extend -> parameter("extend", extend.toString()) }, fields.toPath()) }
                 }
             }
         }
+
+    private fun List<FieldDefinition>.toPath(): Annotation.Parameter? = takeIf { it.isNotEmpty() }
+        ?.let { fields -> Annotation.Parameter(PATH_PARAMETER, Annotation.Value.Dict(fields.map { it.toPathParameter() })) }
 
     private fun ObjectTypeDefinition.nestedOperation(): Operation = rootDefinitions.getValue(route(name).first().first).operation
 
@@ -287,10 +291,6 @@ private class GraphQLConverter(private val document: Document) {
     }
 
     private fun FieldDefinition.leadsToNested(): Boolean = isNesting() && type.leaf() in nested
-
-    /** A nested type is rebuilt from its rpcs, so it only needs an empty type of its own to hold its description and directives. */
-    private fun ObjectTypeDefinition.holder(): Type? = takeIf { description != null || directives.isNotEmpty() }
-        ?.let { type(name, commonAnnotations(), emptyList()) }
 
     /** A field of the path: its type, or what describes it when it has more than a type. */
     private fun FieldDefinition.toPathParameter(): Annotation.Parameter = when {
