@@ -87,7 +87,7 @@ class ProductAvailabilityMockTest :
                 .response200()
                 .modify {
                     status = 503
-                    body(mapOf("reason" to "inventory is down"))
+                    body("reason" to "inventory is down")
                 }
                 .mock { req -> req.path.sku == sku }
 

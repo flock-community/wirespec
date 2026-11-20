@@ -420,6 +420,9 @@ sends it, with the serialization of the context it goes through, so you don't wr
 - `null` sends no body,
 - any other value is serialized as its type.
 
+Fields are a body too: `body("name" to 42, "done" to "maybe")` sends a map of them, serialized as one, which a JSON
+serialization writes as an object. That way you don't need a type for a body the contract doesn't declare.
+
 Until you call `body(input)`, `body` holds the bytes the drawn value serializes to.
 
 #### Endpoint requests
@@ -431,7 +434,7 @@ Until you call `body(input)`, `body` holds the bytes the drawn value serializes 
 ```kotlin
 val response = CreateTodo.generate
     .request { body { name("Buy milk") } }
-    .modify { body(mapOf("name" to 42, "done" to "maybe")) }
+    .modify { body("name" to 42, "done" to "maybe") }
     .call()
 
 response.status shouldBe 400
@@ -456,7 +459,7 @@ match:
 GetTodoById.generate.response200()
     .modify {
         status = 503
-        body(mapOf("reason" to "maintenance"))
+        body("reason" to "maintenance")
     }
     .mock { request -> request.path.id == "42" }
 
@@ -474,7 +477,7 @@ optional topic and key as for a typed message:
 ```kotlin
 // An event type the contract doesn't declare
 CampaignEvents.generate.message()
-    .modify { body(mapOf("campaignId" to "c-1", "eventType" to "CANCELLED", "discountPercentage" to 10)) }
+    .modify { body("campaignId" to "c-1", "eventType" to "CANCELLED", "discountPercentage" to 10) }
     .send("campaign-events")
 ```
 

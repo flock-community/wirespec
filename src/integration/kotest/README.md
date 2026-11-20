@@ -217,7 +217,7 @@ through the operation's name and breaks only what it is about:
 val response = PutTodo.generate.request { path { id("42") } }
     .modify {
         headers -= "token"
-        body(mapOf("done" to "maybe"))   // an input of any type, serialized as its type
+        body("done" to "maybe")   // fields, or an input of any type, serialized as its type
     }
     .call()
 response.status shouldBe 401
@@ -226,7 +226,7 @@ response.status shouldBe 401
 GetStock.generate.response200()
     .modify {
         status = 503
-        body(mapOf("reason" to "maintenance"))
+        body("reason" to "maintenance")
     }
     .mock { req -> req.path.sku == "SKU-001" }
 
@@ -246,11 +246,12 @@ GetUser.generate.request().modify { copy(id = UserId("not-a-user-id")) }.call()
 
 For endpoints and channels the scope starts from the value serialized as the typed
 terminal would send it, so an empty block changes nothing but skips the response check.
-`body(input)` takes any type (reified): a `ByteArray` goes over the wire as it is, `null`
-sends none, and anything else is serialized as its type with the context's
-serialization. The scopes, `RawResponse` and the `Modified*` holders are this
-integration's own types (in `…kotest.dsl`); they turn into `Wirespec.RawRequest`/
-`RawResponse` only at the `Wirespec.Transportation` and the `MockStub`.
+`body(input)` takes any type (reified): a `ByteArray` goes over the wire as it is,
+`null` sends none, and anything else is serialized as its type with the context's
+serialization. `body("name" to 42, "done" to "maybe")` sends a map of the fields. The
+scopes, `RawResponse` and the `Modified*` holders are this integration's own types (in
+`…kotest.dsl`); they turn into `Wirespec.RawRequest`/`RawResponse` only at the
+`Wirespec.Transportation` and the `MockStub`.
 
 `modify` is generated per operation; its result is a `ModifiedRequest`, `ModifiedResponse`
 or `ModifiedMessage` holding the `Gen` and the block, and the terminal after it is

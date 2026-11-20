@@ -14,7 +14,8 @@ public data class RawResponse(
 /**
  * The body of a value outside the contract. It starts as the bytes the typed value serializes to. [body] replaces it
  * with an input of any type: a [ByteArray] goes over the wire as it is, `null` sends none, and any other input is
- * serialized as its type with the serialization of the context it goes through.
+ * serialized as its type with the serialization of the context it goes through. Fields, `body("name" to 42)`, are a
+ * map of them.
  */
 @WirespecScenarioDsl
 public abstract class RawBodyScope internal constructor(body: ByteArray?) {
@@ -25,6 +26,8 @@ public abstract class RawBodyScope internal constructor(body: ByteArray?) {
     private var bodyType: KType = typeOf<ByteArray?>()
 
     public inline fun <reified B> body(input: B): Unit = replaceBody(input, typeOf<B>())
+
+    public fun body(vararg fields: Pair<String, Any?>): Unit = replaceBody(fields.toMap(), typeOf<Map<String, Any?>>())
 
     @PublishedApi
     internal fun replaceBody(input: Any?, type: KType) {

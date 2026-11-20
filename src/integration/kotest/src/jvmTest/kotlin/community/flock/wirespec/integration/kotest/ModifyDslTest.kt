@@ -94,7 +94,7 @@ class ModifyDslTest {
         withContext(endpointScope(transportation)) {
             getTodo42().modify {
                 method = "PUT"
-                body(mapOf("name" to 42))
+                body("name" to 42, "done" to "maybe")
             }.call()
             getTodo42().modify { body(Todo(id = "1", name = "Buy milk", done = false)) }.call()
             getTodo42().modify { body("not json".encodeToByteArray()) }.call()
@@ -102,7 +102,7 @@ class ModifyDslTest {
 
         transportation.requests.map { it.method } shouldBe listOf("PUT", "GET", "GET")
         transportation.requests.map { it.body?.decodeToString() } shouldBe listOf(
-            """{"name":42}""",
+            """{"name":42,"done":"maybe"}""",
             """{"id":"1","name":"Buy milk","done":false}""",
             "not json",
         )
@@ -139,7 +139,7 @@ class ModifyDslTest {
 
         withContext(channelScope(transport)) {
             TodoEvents.generate.message { name("Buy milk") }.modify { }.send("todos", key = "t-1")
-            TodoEvents.generate.message().modify { body(mapOf("name" to 42)) }.send("todos")
+            TodoEvents.generate.message().modify { body("name" to 42) }.send("todos")
             TodoEvents.generate.message().modify { body("not json".encodeToByteArray()) }.send()
         }
 
