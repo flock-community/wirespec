@@ -22,6 +22,7 @@ kotlin {
         compilations.named("codegen") {
             defaultSourceSet.dependencies {
                 implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:converter:openapi"))
             }
         }
         // The endpoint DSL reads the generated constructors' parameter names at runtime.

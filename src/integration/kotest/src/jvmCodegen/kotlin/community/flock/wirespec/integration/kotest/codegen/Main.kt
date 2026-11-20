@@ -6,7 +6,9 @@ import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.compiler.test.codegen
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.integration.kotest.extension.KotestDslExtension
+import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 
 fun main(args: Array<String>) = codegen(args) {
-    emit("kotlin", wirespec()) { KotlinEmitter(it, EmitShared(false)).applyExtensions(nonEmptyListOf(KotestDslExtension(it))) }
+    val productSeries = OpenAPIV3Parser.parse(moduleContent(inputDir.resolve("product-series.json")), false)
+    emit("kotlin", wirespec(), productSeries) { KotlinEmitter(it, EmitShared(false)).applyExtensions(nonEmptyListOf(KotestDslExtension(it))) }
 }
