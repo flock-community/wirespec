@@ -8,14 +8,12 @@ import arrow.core.nel
 import arrow.core.raise.either
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
-import community.flock.wirespec.compiler.core.emit.rpcNames
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateRpcError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateSpecAnnotationError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.InvalidEnumDefaultError
-import community.flock.wirespec.compiler.core.exceptions.RpcReferenceError
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
@@ -26,7 +24,6 @@ import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
-import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
@@ -47,10 +44,9 @@ public object Validator {
                 validateTypes(resolved),
                 validateChannels(resolved),
                 validateRpcs(resolved),
-                validateRpcReferences(resolved),
                 validateEnumDefaults(resolved),
                 validateSpecAnnotations(resolved),
-            ) { a, _, _, _, _, _, _, _ -> a }
+            ) { a, _, _, _, _, _, _ -> a }
         }
 
     private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
@@ -149,35 +145,6 @@ public object Validator {
         ?.value
 
     private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.validateNoDuplicates<Channel>(::DuplicateChannelError)
-
-    /**
-     * A field whose type is an rpc is a function of its type. Anywhere else an rpc is no type: not in a list or
-     * dictionary, not nullable, and not as a parameter, result or error of an rpc or a member of a union.
-     */
-    private fun validateRpcReferences(ast: AST): EitherNel<WirespecException, AST> = ast.rpcNames().let { rpcs ->
-        ast.modules.toList()
-            .flatMap { it.statements }
-            .flatMap { definition ->
-                when (definition) {
-                    is Type -> definition.shape.value.filterIsInstance<Field>().flatMap { it.reference.misplacedRpcs(rpcs, asField = true) }
-                    is Part -> definition.shape.value.filterIsInstance<Field>().flatMap { it.reference.misplacedRpcs(rpcs, asField = true) }
-                    is Rpc -> (definition.shape.value.filterIsInstance<Field>().map { it.reference } + definition.result + listOfNotNull(definition.error)).flatMap { it.misplacedRpcs(rpcs, asField = false) }
-                    is Union -> definition.entries.flatMap { it.misplacedRpcs(rpcs, asField = false) }
-                    is Endpoint, is Channel, is Enum, is Refined -> emptyList()
-                }.map { RpcReferenceError(definition.identifier.value, it) }
-            }
-            .toNonEmptyListOrNull()
-            ?.left()
-            ?: ast.right()
-    }
-
-    /** The rpcs this reference names where an rpc is no type; [asField], the reference itself may name one when it is not nullable. */
-    private fun Reference.misplacedRpcs(rpcs: Set<String>, asField: Boolean): List<String> = when (this) {
-        is Reference.Custom -> listOfNotNull(value.takeIf { it in rpcs && (!asField || isNullable) })
-        is Reference.Iterable -> reference.misplacedRpcs(rpcs, asField = false)
-        is Reference.Dict -> reference.misplacedRpcs(rpcs, asField = false)
-        is Reference.Any, is Reference.Unit, is Reference.Primitive -> emptyList()
-    }
 
     private fun validateRpcs(ast: AST): EitherNel<WirespecException, AST> = ast.validateNoDuplicates<Rpc>(::DuplicateRpcError)
 

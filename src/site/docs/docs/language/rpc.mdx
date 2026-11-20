@@ -86,36 +86,6 @@ Leaving them out is a parse error:
 rpc GetTodo -> Todo
 ```
 
-## Functions of a type
-
-A field of a [type](types) or [part](parts) can refer to an RPC. That makes the field a function of its type: it takes
-the parameters of the RPC and gives its result.
-
-```wirespec
-type User {
-    name: String,
-    friends: UserFriends
-}
-
-rpc UserFriends {
-    first: Integer? = 10
-} -> User[]
-```
-
-`friends` holds no data, so generated models leave it out: `User` is generated with just `name`, and `UserFriends` as
-any other RPC. The [GraphQL converter](../converters/graphql.md#fields-with-arguments) reads and writes such a field as
-a field with arguments, and the Wirespec emitter writes it as it is.
-
-An RPC can only be the type of a field itself. A list, a dictionary or a nullable reference of an RPC, and an RPC as a
-parameter, result or error of another RPC, is an error:
-
-```wirespec
-// Error: User cannot refer to rpc UserFriends here: an rpc can only be the type of a field of a type or part
-type User {
-    friends: UserFriends[]
-}
-```
-
 ## Result
 
 Every RPC has exactly one result, written after the `->`. The result is a single [type](types) reference, so

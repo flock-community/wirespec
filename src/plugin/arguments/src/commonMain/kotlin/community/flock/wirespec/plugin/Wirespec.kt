@@ -12,7 +12,6 @@ import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.ensureValidFor
 import community.flock.wirespec.compiler.core.emit.withoutDefaults
-import community.flock.wirespec.compiler.core.emit.withoutRpcFields
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.ParseOptions
 import community.flock.wirespec.compiler.core.validate.Validator
@@ -56,7 +55,7 @@ public fun convert(arguments: ConverterArguments) {
         // Unlike compile, convert does not fail on defaults a language cannot generate: the defaults come from the
         // converted spec, and those languages leave them out.
         .map { list -> list.map { if (arguments.ignoreDefaults) it.withoutDefaults() else it } }
-        .map { list -> list.flatMap { arguments.emitter.emit(if (arguments.emitter.emitsRpcFields) it else it.withoutRpcFields(), arguments.logger) } }
+        .map { list -> list.flatMap { arguments.emitter.emit(it, arguments.logger) } }
         .fold(arguments)
 }
 

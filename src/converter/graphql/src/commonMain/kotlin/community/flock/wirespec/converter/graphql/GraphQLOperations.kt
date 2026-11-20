@@ -35,8 +35,8 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * Such a field is left out when it is nullable; when it is not, the rpc has no document and [document] throws an
  * [IllegalStateException] that names the field.
  *
- * An rpc that a field refers to is a function of the type of that field, which many fields can lead to, so it is no
- * operation of its own and has no document. A selection leaves such a field out: it cannot pass its arguments.
+ * An rpc marked `@GraphQLField` is a field with arguments of a type that many fields can lead to, so it is no operation
+ * of its own and has no document.
  */
 public class GraphQLOperations(ast: AST) {
 
@@ -48,7 +48,7 @@ public class GraphQLOperations(ast: AST) {
 
     /**
      * The document that selects the result of [rpc] under [alias]. Null for a subscription, which is no request and
-     * response, and for a function of a type, which is no operation.
+     * response, and for a field of a type, which is no operation.
      */
     public fun document(rpc: Rpc, alias: String): String? = open(rpc, alias)
         ?.let { "$it${rpc.result.selection(Trail(rpc.identifier.value))}${close(rpc)}" }
@@ -58,7 +58,7 @@ public class GraphQLOperations(ast: AST) {
      * the document is this text, a space and the selection between braces, and [close]. Null when [rpc] has no document.
      */
     public fun open(rpc: Rpc, alias: String): String? = schema.operation(rpc)
-        .takeUnless { it == Operation.SUBSCRIPTION || schema.isFunction(rpc) }
+        .takeUnless { it == Operation.SUBSCRIPTION || schema.isFieldOfType(rpc) }
         ?.let { operation ->
             val field = schema.fieldDefinition(rpc)
             "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { ${path(rpc).joinToString("") { "$it { " }}$alias: ${field.name}${field.arguments.passed()}"
@@ -99,7 +99,7 @@ public class GraphQLOperations(ast: AST) {
 
     private fun Type.selection(trail: Trail): String = when {
         annotations.any { it.name == GraphQLAnnotations.UNION } -> listOf(TYPENAME).block()
-        else -> shape.fields.filterNot { schema.isFunction(it) }.mapNotNull { it.selection(trail) }.ifEmpty { listOf(TYPENAME) }.block()
+        else -> shape.fields.mapNotNull { it.selection(trail) }.ifEmpty { listOf(TYPENAME) }.block()
     }
 
     private fun Union.selection(trail: Trail): String = entries

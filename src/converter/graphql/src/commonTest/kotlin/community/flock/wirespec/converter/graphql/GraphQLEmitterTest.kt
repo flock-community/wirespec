@@ -385,41 +385,37 @@ class GraphQLEmitterTest {
         """.trimMargin()
 
         GraphQLEmitter.validate(parse(user)).map { it.message } shouldBe listOf(
-            "@GraphQLArgument on friends of User: a field that takes arguments refers to an rpc, so write an rpc that takes the arguments as its parameters, and make it the type of the field",
+            "@GraphQLArgument on friends of User: a field that takes arguments is an rpc, so write it as an rpc marked @GraphQLField(\"User\") that takes the arguments as its parameters",
         )
     }
 
     @Test
-    fun aFieldThatRefersToAnRpcTakesItsParametersAsArguments() {
+    fun anRpcIsAFieldOfTheTypeItsAnnotationNames() {
         """
             |type User {
             |  name: String,
-            |  @Description("The friends of the user")
-            |  friends: Friends,
-            |  email: String,
-            |  bestFriends: Friends
+            |  email: String
             |}
             |
-            |rpc Friends {
+            |@GraphQLField("User", before: "email")
+            |rpc UserFriends {
             |  first: Integer32? = 10
             |} -> User[]
             |
-            |rpc CountUsers {} -> Integer32
+            |@GraphQLField("User")
+            |rpc Avatar {
+            |  size: Integer32
+            |} -> String?
         """.trimMargin().toGraphQL() shouldBe """
             |type User {
             |  name: String!
-            |  "The friends of the user"
             |  friends(
             |    first: Int = 10
             |  ): [User!]!
             |  email: String!
-            |  bestFriends(
-            |    first: Int = 10
-            |  ): [User!]!
-            |}
-            |
-            |type Query {
-            |  countUsers: Int!
+            |  avatar(
+            |    size: Int!
+            |  ): String
             |}
             |
         """.trimMargin()

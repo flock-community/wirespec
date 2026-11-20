@@ -11,7 +11,6 @@ import community.flock.wirespec.compiler.core.emit.HasEmitters
 import community.flock.wirespec.compiler.core.emit.ensureDefaultsSupportedBy
 import community.flock.wirespec.compiler.core.emit.ensureValidFor
 import community.flock.wirespec.compiler.core.emit.withoutDefaults
-import community.flock.wirespec.compiler.core.emit.withoutRpcFields
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.ir.emit.ensureEmittableBy
 import community.flock.wirespec.compiler.core.parse.Parser.parse
@@ -62,7 +61,7 @@ public fun EmitContext.emit(
     .flatMap { it.ensureDefaultsSupportedBy(emitters) }
     .flatMap { it.ensureEmittableBy(emitters) }
     .flatMap { it.ensureValidFor(emitters) }
-    .map { emitters.flatMap { emitter -> emitter.emit(if (emitter.emitsRpcFields) it else it.withoutRpcFields(), logger) } }
+    .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 
 public fun CompilationContext.compile(

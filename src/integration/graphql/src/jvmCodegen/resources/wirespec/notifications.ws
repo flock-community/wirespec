@@ -3,13 +3,8 @@
 
 type Notification {
   id: String,
-  text: String,
-  related: RelatedNotifications
+  text: String
 }
-
-rpc RelatedNotifications {
-  first: Integer32? = 10
-} -> Notification[]
 
 @GraphQLQuery("NotificationsQuery")
 rpc Inbox {

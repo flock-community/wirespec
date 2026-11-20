@@ -5,14 +5,11 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.emit.withoutRpcFields
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.DefaultValue
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
-import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
@@ -82,43 +79,6 @@ class ParseRpcTest {
             "enum Order { ASC, DESC } rpc ListTodos { order: Order = UP } -> String[]" to "Invalid default value UP for field order of type Order",
         ).forEach { (source, message) ->
             parser(source).shouldBeLeft().head.message shouldBe message
-        }
-    }
-
-    @Test
-    fun testFieldThatRefersToAnRpc() {
-        val source =
-            // language=ws
-            """
-            |type Todo { name: String, comments: TodoComments }
-            |part Paged { next: TodoComments }
-            |rpc TodoComments { first: Integer? = 10 } -> String[]
-            """.trimMargin()
-
-        val ast = object : ParseContext, NoLogger {
-            override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source))).shouldBeRight()
-
-        ast.modules.head.statements.head.shouldBeInstanceOf<Type>().shape.fields.map { it.identifier.value } shouldBe listOf("name", "comments")
-        ast.withoutRpcFields().modules.head.statements.toList().take(2).map { definition ->
-            when (definition) {
-                is Type -> definition.shape.fields
-                is Part -> definition.shape.fields
-                else -> emptyList()
-            }.map { it.identifier.value }
-        } shouldBe listOf(listOf("name"), emptyList())
-    }
-
-    @Test
-    fun testRpcReferenceThatIsNoField() {
-        mapOf(
-            "type Todo { comments: TodoComments[] } rpc TodoComments {} -> String" to "Todo cannot refer to rpc TodoComments here",
-            "type Todo { comments: TodoComments? } rpc TodoComments {} -> String" to "Todo cannot refer to rpc TodoComments here",
-            "type Todo { comments: { TodoComments } } rpc TodoComments {} -> String" to "Todo cannot refer to rpc TodoComments here",
-            "rpc Search { by: TodoComments } -> String rpc TodoComments {} -> String" to "Search cannot refer to rpc TodoComments here",
-            "rpc Search {} -> TodoComments rpc TodoComments {} -> String" to "Search cannot refer to rpc TodoComments here",
-        ).forEach { (source, message) ->
-            parser(source).shouldBeLeft().head.message shouldBe "$message: an rpc can only be the type of a field of a type or part, as in `name: TodoComments`"
         }
     }
 
