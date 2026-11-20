@@ -22,7 +22,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_DEFINITION
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.SCHEMA
 import community.flock.wirespec.converter.graphql.GraphQLDocumentPrinter.print
 
@@ -41,6 +40,8 @@ public object GraphQLEmitter : Emitter {
 
     /** How a field held its arguments before a field with arguments became an rpc. */
     private const val ARGUMENT = "GraphQLArgument"
+
+    private const val QUERY = "GraphQLQuery"
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .also { it.modules.forEach { module -> logger.info("Emitting GraphQL from ${module.fileUri.value}") } }
@@ -72,7 +73,7 @@ public object GraphQLEmitter : Emitter {
                     EmitterException(
                         fileUri,
                         "@$ARGUMENT on ${field.identifier.value} of ${definition.identifier.value}: a field that takes arguments is an rpc, " +
-                            "so write it as an rpc marked @$FIELD(\"${definition.identifier.value}\") that takes the arguments as its parameters",
+                            "so write it as an rpc that names the type, @$QUERY(\"${definition.identifier.value}\"), and takes the arguments as its parameters",
                     )
                 }
         }

@@ -35,8 +35,8 @@ import community.flock.wirespec.converter.graphql.GraphQLPrinter.print
  * Such a field is left out when it is nullable; when it is not, the rpc has no document and [document] throws an
  * [IllegalStateException] that names the field.
  *
- * An rpc marked `@GraphQLField` is a field with arguments of a type that many fields can lead to, so it is no operation
- * of its own and has no document.
+ * An rpc that names a type that holds data, `@GraphQLQuery("User")`, is a field with arguments of a type that many
+ * fields can lead to, so it is no operation of its own and has no document.
  */
 public class GraphQLOperations(ast: AST) {
 
@@ -58,7 +58,7 @@ public class GraphQLOperations(ast: AST) {
      * the document is this text, a space and the selection between braces, and [close]. Null when [rpc] has no document.
      */
     public fun open(rpc: Rpc, alias: String): String? = schema.operation(rpc)
-        .takeUnless { it == Operation.SUBSCRIPTION || schema.isFieldOfType(rpc) }
+        .takeUnless { it == Operation.SUBSCRIPTION || schema.isFunction(rpc) }
         ?.let { operation ->
             val field = schema.fieldDefinition(rpc)
             "${operation.keyword} ${rpc.identifier.value}${field.arguments.variables()} { ${path(rpc).joinToString("") { "$it { " }}$alias: ${field.name}${field.arguments.passed()}"

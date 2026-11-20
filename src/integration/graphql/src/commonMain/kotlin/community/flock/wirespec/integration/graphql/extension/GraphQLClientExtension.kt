@@ -47,7 +47,7 @@ import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 /**
  * Generates a typed GraphQL client for every `rpc` marked `@GraphQLQuery` or `@GraphQLMutation`, as the GraphQL
  * converter marks the fields of the root operation types and of the types nested in them. Any other rpc gets no client:
- * a subscription, a field of a type marked `@GraphQLField`, or one without a GraphQL annotation.
+ * a subscription, a field of a type that holds data, or one without a GraphQL annotation.
  *
  * ```kotlin
  * val client = GraphQLClient(serialization, transportation)

@@ -50,7 +50,7 @@ GraphQL types are nullable unless marked with `!`; Wirespec references are requi
 | `scalar`                                      | refined `type X = String`                                                                       |
 | fields of `Query`, `Mutation`, `Subscription` | [`rpc`](#operations), one per field                                                             |
 | fields of a type nested in one of those       | [`rpc`](#nested-types) that names the type, one per field, with its `path` in the file header   |
-| any other field with arguments                | [`rpc`](#fields-with-arguments) with `@GraphQLField`                                            |
+| any other field with arguments                | [`rpc`](#fields-with-arguments) that names the type                                             |
 | `schema`                                      | `@spec:GraphQLSchema(query: "...", ...)` in the [file header](#schema-and-directives)           |
 | `directive @x`                                | `@spec:GraphQLDirectiveDefinition(name: "x", ...)` in the [file header](#schema-and-directives) |
 | `extend ...`                                  | a definition named `...Extension` with `@GraphQLExtend`                                         |
@@ -170,8 +170,8 @@ A type is nested when all of this holds, so that one path leads to it and nothin
 
 #### Fields with arguments
 
-Any other field that takes arguments is an rpc of its type, marked with `@GraphQLField`. The type keeps its other
-fields:
+Any other field that takes arguments is an rpc too. Its annotation names the type it is a field of, just as it names a
+nested type. The type keeps its other fields:
 
 ```graphql
 type User {
@@ -187,13 +187,13 @@ type User {
   email: String
 }
 
-@GraphQLField("User", before: "email")
+@GraphQLQuery("User", before: "email")
 rpc UserFriends {
   first: Integer32? = 10
 } -> User[]
 ```
 
-- `@GraphQLField` names the Wirespec definition the field belongs to: a type, the union of an
+- The annotation names the Wirespec definition the field belongs to: a type, the union of an
   [interface](#interfaces), or the `...Extension` of an `extend` block.
 - `before` names the field that follows it, so the field comes back in its place. Without it, the field comes after the
   others.
@@ -202,6 +202,12 @@ rpc UserFriends {
 
 Many fields can lead to such a type, so the rpc is no operation of its own, and the
 [GraphQL client](../integration/integration-graphql.mdx) does not call it.
+
+So an rpc is always a field of the type its annotation names. That type is, in this order:
+
+1. a [nested type](#nested-types) that a `path` in the header of the file leads to;
+2. a type that holds data, defined in Wirespec;
+3. the root operation type, also when the annotation names none.
 
 ### Interfaces
 
@@ -445,7 +451,7 @@ Wirespec converted by earlier versions has them, on a `type Schema` or `type ...
 | `@GraphQLQuery`, `@GraphQLMutation`, `@GraphQLSubscription`                    | rpcs                | an `rpc` that is a field of a root operation type; takes the root type when it is not the default (`@GraphQLQuery("QueryRoot")`) and `extend: "1"` for the fields of an `extend type` block |
 | `@GraphQLQuery(path: { notifications: "NotificationsQuery!" })`                | `@file:`            | a [type nested](#nested-types) in a root operation type: the fields that lead to it, each with its type, or with its `type`, `description`, `directives` and `before`; also for `@GraphQLMutation` and `@GraphQLSubscription`                    |
 | `@GraphQLQuery("NotificationsQuery")`                                          | rpcs                | an `rpc` that is a field of the nested type that a path in the header of its file leads to                                                                                                  |
-| `@GraphQLField("User", before: "email")`                                       | rpcs                | an `rpc` that is a [field with arguments](#fields-with-arguments) of the named type, and the field it comes before                                                                          |
+| `@GraphQLQuery("User", before: "email")`                                       | rpcs                | an `rpc` that is a [field with arguments](#fields-with-arguments) of the named type that holds data, and the field it comes before                                                          |
 | `@GraphQLName("todo")`                                                         | rpcs                | the field name of an `rpc` whose name does not read back as that field name                                                                                                                 |
 | `@GraphQLEnumValue(value: "ADMIN", description: "...", directives: [...])`     | enums               | the description and directives of an enum value; one for every such value                                                                                                                   |
 | `@GraphQLInterface("NodeInterface")`                                           | unions, types       | an interface, with the fields of the named part, implemented by the types that spread it; without a part, the fields of the type itself, or those all members of the union share            |
@@ -544,11 +550,11 @@ counterpart:
 - A `type` becomes an object type, and a refined type a custom `scalar`. A comment becomes the description.
 - A union or type marked `@GraphQLInterface` becomes an interface, as described in
   [Writing interfaces in Wirespec](#writing-interfaces-in-wirespec). A part only adds its fields.
-- An `rpc` becomes a field of `Query`, unless it is marked `@GraphQLMutation`, `@GraphQLSubscription` or
-  `@GraphQLField`. When it names a type that a `path` in the header of its file leads to, it becomes a field of that
-  type, and the fields and types of the path are written with it. Its error type is not written, because GraphQL returns errors next to the data.
+- An `rpc` becomes a field of `Query`, unless it is marked `@GraphQLMutation` or `@GraphQLSubscription`. When it names
+  a type that a `path` in the header of its file leads to, it becomes a field of that type, and the fields and types of
+  the path are written with it. When it names a type that holds data, it becomes a field of that type. Its error type is not written, because GraphQL returns errors next to the data.
 - A field cannot take arguments: `@GraphQLArgument` on a field, where Wirespec converted by earlier versions has them,
-  is an error. Write the field as an rpc marked `@GraphQLField`.
+  is an error. Write the field as an rpc that names the type: `@GraphQLQuery("User")`.
 - GraphQL only takes input objects as arguments. A type that an `rpc` takes, directly or through its fields, becomes an
   `input`. When the type is also returned, it is written twice: once as an object type and once as an input object
   named `...Input`.

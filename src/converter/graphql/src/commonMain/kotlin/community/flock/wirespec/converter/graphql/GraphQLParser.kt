@@ -34,7 +34,6 @@ import community.flock.wirespec.converter.graphql.GraphQLAnnotations.DIRECTIVE_D
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.ENUM_VALUE
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.EXTEND
-import community.flock.wirespec.converter.graphql.GraphQLAnnotations.FIELD
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.IMPLEMENTS
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INPUT
 import community.flock.wirespec.converter.graphql.GraphQLAnnotations.INTERFACE
@@ -73,8 +72,8 @@ import community.flock.wirespec.converter.graphql.GraphQLModel.Directive as Grap
  * Objects and input objects become types, scalars become refined types, and enums and unions map onto their Wirespec
  * counterparts. A field is a function when it takes arguments, and a function is an `rpc`: every field of a root
  * operation type (`Query`, `Mutation`, `Subscription`), every field of a type that only nests operations in one, and
- * every other field with arguments. An annotation of the rpc says which type it is a field of. For a type nested in a
- * root operation type, a `@file:` annotation names the fields that lead to the type, and its rpcs name the type.
+ * every other field with arguments. The annotation of an rpc names the type it is a field of. For a type nested in a
+ * root operation type, a `@file:` annotation names the fields that lead to the type.
  * An interface becomes the union of the types implementing it, which spread the part holding its fields. Whatever
  * Wirespec cannot express natively —
  * descriptions, directives, default values, extensions — is kept in annotations, so the schema can
@@ -321,8 +320,8 @@ private class GraphQLConverter(private val document: Document) {
         .any { field -> field.arguments.isNotEmpty() || (field.isNesting() && nestedIn[field.type.leaf()] == this && field.type.leaf().hasOperations()) }
 
     /**
-     * A field with arguments is an rpc of its type, named after both. `before` names the field that follows it, so
-     * the field comes back in its place.
+     * A field with arguments is an rpc that names its type, as an operation names the type it is a field of, and is
+     * named after both. `before` names the field that follows it, so the field comes back in its place.
      */
     private fun ImplementingTypeDefinition.functions(identifier: String): List<Rpc> = (names[name] ?: name.sanitize()).let { prefix ->
         fields.mapIndexedNotNull { index, field ->
@@ -331,7 +330,7 @@ private class GraphQLConverter(private val document: Document) {
                     field.toRpc(
                         identifier = rpc,
                         annotation = annotation(
-                            FIELD,
+                            Operation.QUERY.annotationName,
                             parameter(DEFAULT_PARAMETER, identifier),
                             fields.drop(index + 1).firstOrNull { it.arguments.isEmpty() }?.let { parameter(BEFORE_PARAMETER, it.name) },
                         ),

@@ -21,7 +21,6 @@ internal object GraphQLAnnotations {
     const val IMPLEMENTS = "GraphQLImplements"
     const val DIRECTIVE = "GraphQLDirective"
     const val DIRECTIVE_DEFINITION = "GraphQLDirectiveDefinition"
-    const val FIELD = "GraphQLField"
     const val DEFAULT = "GraphQLDefault"
     const val ENUM_VALUE = "GraphQLEnumValue"
     const val TYPE = "GraphQLType"
@@ -37,7 +36,7 @@ internal object GraphQLAnnotations {
     val GraphQLModel.Operation.annotationName: String get() = "GraphQL$defaultTypeName"
 
     /**
-     * The field an rpc is named after. An rpc of a type, marked `@GraphQLField`, is named after that [type] and the field:
+     * The field an rpc is named after. An rpc of a type that holds data is named after that [type] and the field:
      * `UserFriends` is the field `friends` of `User`. Any other rpc is named after the field alone.
      */
     fun fieldName(rpc: String, type: String?): String = (type?.let { rpc.removePrefix(it) }?.takeIf { it.firstOrNull()?.isUpperCase() == true } ?: rpc)

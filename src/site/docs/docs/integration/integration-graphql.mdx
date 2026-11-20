@@ -122,7 +122,8 @@ no GraphQL annotation.
 
 Only rpcs marked `@GraphQLQuery` or `@GraphQLMutation` get a client. `TodoAdded`, a subscription, and `CountTodos`,
 without a GraphQL annotation, are left out, so a contract can mix GraphQL operations with rpcs served another way. So is
-an rpc marked `@GraphQLField`, a [field with arguments](../converters/graphql.md#fields-with-arguments) of a type. An rpc
+an rpc that names a type that holds data, a [field with arguments](../converters/graphql.md#fields-with-arguments) of
+that type. An rpc
 you write yourself needs `@GraphQLName` when the GraphQL field is not named after the rpc, as with `@GraphQLName("todo")`
 on `QueryTodo`.
 
@@ -473,7 +474,7 @@ left out. Configure the serialization to leave out null values to use the defaul
 ## Limitations
 
 - Subscriptions get no client, because they are not a single request and response.
-- A field with arguments of a type that is not nested in a root type, an rpc marked `@GraphQLField`, gets no client and
+- A field with arguments of a type that is not nested in a root type, an rpc that names a type that holds data, gets no client and
   cannot be selected: only the fields of a root type and of the types nested in it are operations.
 - A partial result cannot tell a field that was not selected from a field that is `null`: both read as empty.
 - A typed call returns a union as the Wirespec union of its models, which the serialization has to read by

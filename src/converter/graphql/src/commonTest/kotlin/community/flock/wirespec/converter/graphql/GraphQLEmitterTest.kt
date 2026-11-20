@@ -385,24 +385,24 @@ class GraphQLEmitterTest {
         """.trimMargin()
 
         GraphQLEmitter.validate(parse(user)).map { it.message } shouldBe listOf(
-            "@GraphQLArgument on friends of User: a field that takes arguments is an rpc, so write it as an rpc marked @GraphQLField(\"User\") that takes the arguments as its parameters",
+            "@GraphQLArgument on friends of User: a field that takes arguments is an rpc, so write it as an rpc that names the type, @GraphQLQuery(\"User\"), and takes the arguments as its parameters",
         )
     }
 
     @Test
-    fun anRpcIsAFieldOfTheTypeItsAnnotationNames() {
+    fun anRpcIsAFieldOfTheTypeThatHoldsDataItNames() {
         """
             |type User {
             |  name: String,
             |  email: String
             |}
             |
-            |@GraphQLField("User", before: "email")
+            |@GraphQLQuery("User", before: "email")
             |rpc UserFriends {
             |  first: Integer32? = 10
             |} -> User[]
             |
-            |@GraphQLField("User")
+            |@GraphQLQuery("User")
             |rpc Avatar {
             |  size: Integer32
             |} -> String?

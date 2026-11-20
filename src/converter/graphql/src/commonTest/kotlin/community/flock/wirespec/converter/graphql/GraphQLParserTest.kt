@@ -287,7 +287,7 @@ class GraphQLParserTest {
     }
 
     @Test
-    fun convertsAFieldWithArgumentsToAnRpcOfItsType() {
+    fun convertsAFieldWithArgumentsToAnRpcThatNamesItsType() {
         val source = """
             |interface Node {
             |  id: ID!
@@ -319,7 +319,7 @@ class GraphQLParserTest {
             |@GraphQLInterface("NodeInterface")
             |type Node = Todo
             |
-            |@GraphQLField("Node")
+            |@GraphQLQuery("Node")
             |rpc NodeRelated {
             |  first: Integer32?
             |} -> Node[]?
@@ -329,19 +329,19 @@ class GraphQLParserTest {
             |  title: String
             |}
             |
-            |@GraphQLField("Todo", before: "title")
+            |@GraphQLQuery("Todo", before: "title")
             |rpc TodoRelated {
             |  first: Integer32?
             |} -> Node[]?
             |
-            |@GraphQLField("Todo", before: "title")
+            |@GraphQLQuery("Todo", before: "title")
             |@GraphQLDirective("@deprecated")
             |rpc TodoComments {
             |  @Description("How many to return")
             |  first: Integer32? = 10
             |} -> String[]
             |
-            |@GraphQLField("Todo")
+            |@GraphQLQuery("Todo")
             |rpc TodoHistory {
             |  since: String
             |} -> String[]?
@@ -351,7 +351,7 @@ class GraphQLParserTest {
             |
             |}
             |
-            |@GraphQLField("TodoExtension")
+            |@GraphQLQuery("TodoExtension")
             |rpc TodoTags {
             |  prefix: String?
             |} -> String[]?
@@ -374,9 +374,9 @@ class GraphQLParserTest {
         val rpcs = convert("type User { name(short: Boolean): String, userName(short: Boolean): String, _id(raw: Boolean): ID } type UserName { a: Int } type Query { user: User, users: [User] }")
             .filterIsInstance<Rpc>()
         rpcs.map { rpc -> rpc.identifier.value to rpc.annotations.map { it.name } } shouldContainExactly listOf(
-            "UserName2" to listOf("GraphQLField", "GraphQLName"),
-            "UserUserName" to listOf("GraphQLField"),
-            "UserId" to listOf("GraphQLField", "GraphQLName"),
+            "UserName2" to listOf("GraphQLQuery", "GraphQLName"),
+            "UserUserName" to listOf("GraphQLQuery"),
+            "UserId" to listOf("GraphQLQuery", "GraphQLName"),
             "QueryUser" to listOf("GraphQLQuery", "GraphQLName"),
             "Users" to listOf("GraphQLQuery"),
         )
