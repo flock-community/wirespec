@@ -30,14 +30,14 @@ private fun buildApiObject(endpoint: Endpoint): RawElement {
         }
     }
     return """
-        |object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-        |  override val pathTemplate = "$pathTemplate"
-        |  override val method = "${endpoint.method}"
-        |  override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+        |public object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        |  override val pathTemplate: String = "$pathTemplate"
+        |  override val method: String = "${endpoint.method}"
+        |  override fun server(serialization: Wirespec.Serialization): Wirespec.ServerEdge<Request, Response<*>> = object : Wirespec.ServerEdge<Request, Response<*>> {
         |    override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
         |    override fun to(response: Response<*>) = toRawResponse(serialization, response)
         |  }
-        |  override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+        |  override fun client(serialization: Wirespec.Serialization): Wirespec.ClientEdge<Request, Response<*>> = object : Wirespec.ClientEdge<Request, Response<*>> {
         |    override fun to(request: Request) = toRawRequest(serialization, request)
         |    override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
         |  }

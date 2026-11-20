@@ -292,7 +292,7 @@ public object KotlinGenerator :
             "this($args)" to body.filter { it !is Assignment || it.name.value() !in fieldNames }
         }
 
-        val signature = "constructor($params) : $delegationStr"
+        val signature = "${visibility.prefix()}constructor($params) : $delegationStr"
         return if (otherStatements.isEmpty()) {
             "$signature\n".indentCode(indent)
         } else {

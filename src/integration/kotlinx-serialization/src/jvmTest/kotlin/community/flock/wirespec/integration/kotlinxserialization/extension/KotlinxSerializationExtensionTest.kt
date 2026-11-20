@@ -57,7 +57,7 @@ class KotlinxSerializationExtensionTest {
         assertContains(
             todo,
             """@kotlinx.serialization.SerialName("Todo")
-            |data class Todo(
+            |public data class Todo(
             """.trimMargin(),
         )
     }
@@ -71,7 +71,7 @@ class KotlinxSerializationExtensionTest {
             todoId,
             """@kotlinx.serialization.SerialName("TodoId")
             |@kotlin.jvm.JvmInline
-            |value class TodoId(
+            |public value class TodoId(
             """.trimMargin(),
         )
     }
@@ -83,7 +83,7 @@ class KotlinxSerializationExtensionTest {
         assertContains(
             union,
             """@kotlinx.serialization.Serializable
-            |sealed interface UserAccount
+            |public sealed interface UserAccount
             """.trimMargin(),
         )
         assertFalse("@kotlinx.serialization.SerialName" in union, "Unions should not get a @SerialName annotation")
@@ -96,7 +96,7 @@ class KotlinxSerializationExtensionTest {
         assertContains(
             member,
             """@kotlinx.serialization.SerialName("UserAccountPassword")
-            |data class UserAccountPassword(
+            |public data class UserAccountPassword(
             """.trimMargin(),
         )
     }
@@ -108,7 +108,7 @@ class KotlinxSerializationExtensionTest {
         assertContains(
             color,
             """@kotlinx.serialization.Serializable
-            |enum class Color
+            |public enum class Color
             """.trimMargin(),
         )
         assertFalse("@kotlinx.serialization.SerialName" in color, "Enums should not get a @SerialName annotation")

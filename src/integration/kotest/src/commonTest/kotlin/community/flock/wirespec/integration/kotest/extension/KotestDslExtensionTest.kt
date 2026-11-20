@@ -226,7 +226,7 @@ class KotestDslExtensionTest {
         output shouldContain "public var description: Gen<String>? = null"
         output shouldContain "public fun description(value: String) {"
 
-        output shouldContain "companion object"
+        output shouldContain "public companion object"
     }
 
     @Test

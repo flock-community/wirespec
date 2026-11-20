@@ -7,26 +7,26 @@ import community.flock.wirespec.generated.model.PotentialTodoDto
 import community.flock.wirespec.generated.model.TodoDto
 import community.flock.wirespec.generated.model.Error
 
-object PutTodo : Wirespec.Endpoint {
-  data class Path(
+public object PutTodo : Wirespec.Endpoint {
+  public data class Path(
       val id: String
     ) : Wirespec.Path
-  data class Queries(
+  public data class Queries(
       val done: Boolean,
       val name: String?
     ) : Wirespec.Queries
-  data class RequestHeaders(
+  public data class RequestHeaders(
       val token: Token,
       val refreshToken: Token?
     ) : Wirespec.Request.Headers
-  data class Request(
+  public data class Request(
       override val path: Path,
       override val method: Wirespec.Method,
       override val queries: Queries,
       override val headers: RequestHeaders,
       override val body: PotentialTodoDto
     ) : Wirespec.Request<PotentialTodoDto> {
-      constructor(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto) : this(Path(id = id), Wirespec.Method.PUT, Queries(
+      public constructor(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto) : this(Path(id = id), Wirespec.Method.PUT, Queries(
         done = done,
         name = name
       ), RequestHeaders(
@@ -34,48 +34,48 @@ object PutTodo : Wirespec.Endpoint {
         refreshToken = refreshToken
       ), body)
     }
-  sealed interface Response<T: Any> : Wirespec.Response<T>
-  sealed interface Response2XX<T: Any> : Response<T>
-  sealed interface Response5XX<T: Any> : Response<T>
-  sealed interface ResponseTodoDto : Response<TodoDto>
-  sealed interface ResponseError : Response<Error>
-  object Response200Headers : Wirespec.Response.Headers
-  data class Response200(
+  public sealed interface Response<T: Any> : Wirespec.Response<T>
+  public sealed interface Response2XX<T: Any> : Response<T>
+  public sealed interface Response5XX<T: Any> : Response<T>
+  public sealed interface ResponseTodoDto : Response<TodoDto>
+  public sealed interface ResponseError : Response<Error>
+  public object Response200Headers : Wirespec.Response.Headers
+  public data class Response200(
       override val status: Int,
       override val headers: Response200Headers,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(body: TodoDto) : this(200, Response200Headers, body)
+      public constructor(body: TodoDto) : this(200, Response200Headers, body)
     }
-  data class Response201Headers(
+  public data class Response201Headers(
       val token: Token,
       val refreshToken: Token?
     ) : Wirespec.Response.Headers
-  data class Response201(
+  public data class Response201(
       override val status: Int,
       override val headers: Response201Headers,
       override val body: TodoDto
     ) : Response2XX<TodoDto>, ResponseTodoDto {
-      constructor(token: Token, refreshToken: Token?, body: TodoDto) : this(201, Response201Headers(
+      public constructor(token: Token, refreshToken: Token?, body: TodoDto) : this(201, Response201Headers(
         token = token,
         refreshToken = refreshToken
       ), body)
     }
-  object Response500Headers : Wirespec.Response.Headers
-  data class Response500(
+  public object Response500Headers : Wirespec.Response.Headers
+  public data class Response500(
       override val status: Int,
       override val headers: Response500Headers,
       override val body: Error
     ) : Response5XX<Error>, ResponseError {
-      constructor(body: Error) : this(500, Response500Headers, body)
+      public constructor(body: Error) : this(500, Response500Headers, body)
     }
-  fun interface Handler : Wirespec.Handler {
-      suspend fun putTodo(request: Request): Response<*>
+  public fun interface Handler : Wirespec.Handler {
+      public suspend fun putTodo(request: Request): Response<*>
   }
-  fun interface Call : Wirespec.Call {
-      suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): Response<*>
+  public fun interface Call : Wirespec.Call {
+      public suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto): Response<*>
   }
-  fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+  public fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       method = request.method.name,
       path = listOf<String>("todos", serialization.serializePath<String>(request.path.id, typeOf<String>())),
@@ -83,7 +83,7 @@ object PutTodo : Wirespec.Endpoint {
       headers = mapOf<String, List<String>>("token" to serialization.serializeParam<Token>(request.headers.token, typeOf<Token>()), "Refresh-Token" to (request.headers.refreshToken?.let { serialization.serializeParam<Token>(it, typeOf<Token>()) } ?: emptyList<String>())),
       body = serialization.serializeBody<PotentialTodoDto>(request.body, typeOf<PotentialTodoDto>())
     )
-  fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+  public fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       id = serialization.deserializePath<String>(request.path[1], typeOf<String>()),
       done = (request.queries["done"]?.let { serialization.deserializeParam<Boolean>(it, typeOf<Boolean>()) } ?: error("Param done cannot be null")),
@@ -92,7 +92,7 @@ object PutTodo : Wirespec.Endpoint {
       refreshToken = (request.headers.entries.find { it.key.equals("Refresh-Token", ignoreCase = true) }?.value?.let { serialization.deserializeParam<Token>(it, typeOf<Token>()) }),
       body = (request.body?.let { serialization.deserializeBody<PotentialTodoDto>(it, typeOf<PotentialTodoDto>()) } ?: error("body is null"))
     )
-  fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
+  public fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
     when(val r = response) {
         is Response200 -> {
           return Wirespec.RawResponse(
@@ -120,7 +120,7 @@ object PutTodo : Wirespec.Endpoint {
         }
     }
   }
-  fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> {
+  public fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> {
     when (response.statusCode) {
         200 -> {
           return Response200(body = (response.body?.let { serialization.deserializeBody<TodoDto>(it, typeOf<TodoDto>()) } ?: error("body is null")))
@@ -140,14 +140,14 @@ object PutTodo : Wirespec.Endpoint {
         }
     }
   }
-  object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-    override val pathTemplate = "/todos/{id}"
-    override val method = "PUT"
-    override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
+  public object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+    override val pathTemplate: String = "/todos/{id}"
+    override val method: String = "PUT"
+    override fun server(serialization: Wirespec.Serialization): Wirespec.ServerEdge<Request, Response<*>> = object : Wirespec.ServerEdge<Request, Response<*>> {
       override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
       override fun to(response: Response<*>) = toRawResponse(serialization, response)
     }
-    override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
+    override fun client(serialization: Wirespec.Serialization): Wirespec.ClientEdge<Request, Response<*>> = object : Wirespec.ClientEdge<Request, Response<*>> {
       override fun to(request: Request) = toRawRequest(serialization, request)
       override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
     }
@@ -159,7 +159,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class PotentialTodoDto(
+public data class PotentialTodoDto(
   val name: String,
   val done: Boolean
 ) : Wirespec.Shape {
@@ -172,7 +172,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class Token(
+public data class Token(
   val iss: String
 ) : Wirespec.Shape {
   override fun validate(): List<String> =
@@ -184,7 +184,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class TodoDto(
+public data class TodoDto(
   val id: String,
   val name: String,
   val done: Boolean
@@ -198,7 +198,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class Error(
+public data class Error(
   val code: Long,
   val description: String
 ) : Wirespec.Shape {
@@ -216,7 +216,7 @@ import community.flock.wirespec.generated.model.TodoDto
 import community.flock.wirespec.generated.model.Error
 import community.flock.wirespec.generated.endpoint.PutTodo
 
-data class PutTodoClient(
+public data class PutTodoClient(
   val serialization: Wirespec.Serialization,
   val transportation: Wirespec.Transportation
 ) : PutTodo.Call {
@@ -241,8 +241,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.PotentialTodoDto
 
-object PotentialTodoDtoGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): PotentialTodoDto =
+public object PotentialTodoDtoGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): PotentialTodoDto =
     PotentialTodoDto(
       name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
@@ -258,8 +258,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Token
 
-object TokenGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Token =
+public object TokenGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Token =
     Token(iss = generator.generate(path + listOf<String>("iss"), Wirespec.GeneratorFieldString(
       regex = null,
       annotations = emptyList<Map<String, Any>>()
@@ -272,8 +272,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.TodoDto
 
-object TodoDtoGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): TodoDto =
+public object TodoDtoGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): TodoDto =
     TodoDto(
       id = generator.generate(path + listOf<String>("id"), Wirespec.GeneratorFieldString(
         regex = null,
@@ -293,8 +293,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Error
 
-object ErrorGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Error =
+public object ErrorGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Error =
     Error(
       code = generator.generate(path + listOf<String>("code"), Wirespec.GeneratorFieldInteger64(
         min = null,
@@ -319,7 +319,7 @@ import community.flock.wirespec.generated.model.Error
 import community.flock.wirespec.generated.endpoint.PutTodo
 import community.flock.wirespec.generated.client.PutTodoClient
 
-data class Client(
+public data class Client(
   val serialization: Wirespec.Serialization,
   val transportation: Wirespec.Transportation
 ) : PutTodo.Call {

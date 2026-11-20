@@ -3,14 +3,14 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-sealed interface UserAccount
+public sealed interface UserAccount
 
 package community.flock.wirespec.generated.model
 
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class UserAccountPassword(
+public data class UserAccountPassword(
   val username: String,
   val password: String
 ) : Wirespec.Shape, UserAccount {
@@ -23,7 +23,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class UserAccountToken(
+public data class UserAccountToken(
   val token: String
 ) : Wirespec.Shape, UserAccount {
   override fun validate(): List<String> =
@@ -35,7 +35,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class User(
+public data class User(
   val username: String,
   val account: UserAccount
 ) : Wirespec.Shape {
@@ -49,8 +49,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.UserAccount
 
-object UserAccountGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): UserAccount {
+public object UserAccountGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): UserAccount {
     val variant = generator.generate(path + listOf<String>("variant"), Wirespec.GeneratorFieldUnion(
       variants = listOf<String>("UserAccountPassword", "UserAccountToken"),
       annotations = emptyList<Map<String, Any>>(),
@@ -74,8 +74,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.UserAccountPassword
 
-object UserAccountPasswordGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): UserAccountPassword =
+public object UserAccountPasswordGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): UserAccountPassword =
     UserAccountPassword(
       username = generator.generate(path + listOf<String>("username"), Wirespec.GeneratorFieldString(
         regex = null,
@@ -94,8 +94,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.UserAccountToken
 
-object UserAccountTokenGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): UserAccountToken =
+public object UserAccountTokenGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): UserAccountToken =
     UserAccountToken(token = generator.generate(path + listOf<String>("token"), Wirespec.GeneratorFieldString(
       regex = null,
       annotations = emptyList<Map<String, Any>>()
@@ -109,8 +109,8 @@ import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.User
 import community.flock.wirespec.generated.model.UserAccount
 
-object UserGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): User =
+public object UserGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): User =
     User(
       username = generator.generate(path + listOf<String>("username"), Wirespec.GeneratorFieldString(
         regex = null,

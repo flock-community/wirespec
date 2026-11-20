@@ -107,7 +107,7 @@ class JvmBuilderExtensionTest {
                     file.copy(
                         elements = file.elements.map { element ->
                             (element as? Struct)
-                                ?.let { struct -> struct.copy(elements = struct.elements + RawElement("companion object")) }
+                                ?.let { struct -> struct.copy(elements = struct.elements + RawElement("public companion object")) }
                                 ?: element
                         },
                     )
@@ -120,7 +120,7 @@ class JvmBuilderExtensionTest {
             .file("model/Todo.kt")
 
         assertEquals(1, Regex("companion object").findAll(todo).count())
-        assertContains(todo, "fun builder(): Builder = Builder()")
+        assertContains(todo, "public fun builder(): Builder = Builder()")
     }
 
     @Test

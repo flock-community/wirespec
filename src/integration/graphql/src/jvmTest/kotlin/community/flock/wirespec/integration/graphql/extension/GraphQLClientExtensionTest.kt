@@ -410,7 +410,7 @@ class GraphQLClientExtensionTest {
 
         assertEquals(setOf("graphql/GetTodoGraphQL.kt", "graphql/ListTodosGraphQL.kt"), files.keys.filter { it.startsWith("graphql/") }.toSet())
         assertEquals(setOf("Client.kt", "GraphQLClient.kt"), files.keys.filterNot { "/" in it }.toSet())
-        listOf("data class GraphQLClient(", "object Api : Wirespec.GraphQLClient<", "data class ClientEdge(", ") : Wirespec.GraphQLResponse<Todo, GraphQLError>", ") : Wirespec.GraphQLRequest", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
+        listOf("public object GetTodoGraphQL {", "public annotation class GraphQLDsl", "data class GraphQLClient(", "object Api : Wirespec.GraphQLClient<", "data class ClientEdge(", ") : Wirespec.GraphQLResponse<Todo, GraphQLError>", ") : Wirespec.GraphQLRequest", "data class GraphQLResponse(", "data class GraphQLError(", "data class TodoSelection(", "data class UserResult(")
             .forEach { assertTrue(it in files.getValue("graphql/GetTodoGraphQL.kt"), "GetTodoGraphQL.kt misses $it") }
         listOf("package community.flock.wirespec.generated\n", "GetTodoGraphQL.GraphQLClient(", "ListTodosGraphQL.GraphQLClient(")
             .forEach { assertTrue(it in files.getValue("GraphQLClient.kt"), "GraphQLClient.kt misses $it") }

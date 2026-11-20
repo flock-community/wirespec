@@ -89,27 +89,48 @@ public class JvmBuilderExtension(
         fieldList().isNotEmpty() &&
         elements.none { it is Struct && it.name == BUILDER }
 
-    private fun Struct.withBuilder(target: Target): List<Element> = name.pascalCase().let { pascal ->
-        // Scala resolves `Builder` inside the case class only through its companion.
-        val builder = when (target) {
-            Target.Java, Target.Kotlin -> Type.Custom(BUILDER.value())
-            Target.Scala -> Type.Custom("$pascal.${BUILDER.value()}")
-        }
-        val model = Model(Type.Custom(pascal), builder, fieldList())
-        when (target) {
-            Target.Java -> listOf(copy(elements = elements + model.entryPoint() + model.toBuilder() + model.builder(target)))
-            // An extension that ran earlier may have added an empty companion; ours replaces it.
-            Target.Kotlin -> listOf(
-                copy(
-                    elements = elements.filterNot { it is RawElement && it.code.trim() == "companion object" } +
-                        KOTLIN_COMPANION + model.toBuilder() + model.builder(target),
-                ),
-            )
-            Target.Scala -> listOf(
-                copy(elements = elements + model.toBuilder()),
-                Namespace(name = name, elements = listOf(model.entryPoint(), model.builder(target))),
-            )
-        }
+    private fun Struct.withBuilder(target: Target): List<Element> = buildList {
+        addAll(
+            buildList buildList1@{
+                addAll(
+                    buildList buildList2@{
+                        addAll(
+                            this@withBuilder.name.pascalCase().let { pascal ->
+                                // Scala resolves `Builder` inside the case class only through its companion.
+                                val builder = when (target) {
+                                    Target.Java, Target.Kotlin -> Type.Custom(BUILDER.value())
+                                    Target.Scala -> Type.Custom("$pascal.${BUILDER.value()}")
+                                }
+                                val model = Model(Type.Custom(pascal), builder, this@withBuilder.fieldList())
+                                when (target) {
+                                    Target.Java -> listOf(
+                                        this@withBuilder.copy(
+                                            elements = this@withBuilder.elements + model.entryPoint() + model.toBuilder() + model.builder(
+                                                target,
+                                            ),
+                                        ),
+                                    )
+                                    // An extension that ran earlier may have added an empty companion; ours replaces it.
+                                    Target.Kotlin -> listOf(
+                                        this@withBuilder.copy(
+                                            elements = this@withBuilder.elements.filterNot {
+                                                it is RawElement && it.code.trim().removePrefix("public ") == "companion object"
+                                            } +
+                                                KOTLIN_COMPANION + model.toBuilder().visibleIn(target) + model.builder(target),
+                                        ),
+                                    )
+
+                                    Target.Scala -> listOf(
+                                        this@withBuilder.copy(elements = this@withBuilder.elements + model.toBuilder()),
+                                        Namespace(name = this@withBuilder.name, elements = listOf(model.entryPoint(), model.builder(target))),
+                                    )
+                                }
+                            },
+                        )
+                    },
+                )
+            },
+        )
     }
 
     private fun Model.entryPoint(): Function = Function(
@@ -137,7 +158,7 @@ public class JvmBuilderExtension(
     private fun Model.builder(target: Target): Struct = Struct(
         name = BUILDER,
         fields = fields.map { Field(name = it.name, type = it.type.optional(), initializer = NullableEmpty) },
-        elements = fields.map { wither(it) } + build(target),
+        elements = (fields.map { wither(it) } + build(target)).map { it.visibleIn(target) },
         visibility = Visibility.PUBLIC,
     )
 
@@ -189,6 +210,15 @@ public class JvmBuilderExtension(
             }
         }
 
+    /**
+     * A Kotlin library compiles under explicit API mode, so the Kotlin builder says its methods are public. The Kotlin
+     * generator writes the name of a function with a visibility verbatim, so the name is camelCased here.
+     */
+    private fun Function.visibleIn(target: Target): Function = when (target) {
+        Target.Kotlin -> copy(name = Name(listOf(name.camelCase())), visibility = Visibility.PUBLIC)
+        Target.Java, Target.Scala -> this
+    }
+
     private fun Field.self(): Expression = FieldCall(receiver = RawExpression("this"), field = name)
 
     private fun Type.optional(): Type = this as? Type.Nullable ?: Type.Nullable(this)
@@ -198,6 +228,6 @@ public class JvmBuilderExtension(
     private companion object {
         val BUILDER = Name.of("Builder")
         val VALUE = Name.of("value")
-        val KOTLIN_COMPANION = RawElement("companion object {\n  fun builder(): Builder = Builder()\n}")
+        val KOTLIN_COMPANION = RawElement("public companion object {\n  public fun builder(): Builder = Builder()\n}")
     }
 }

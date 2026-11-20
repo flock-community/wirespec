@@ -3,7 +3,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class DutchPostalCode(
+public data class DutchPostalCode(
   override val value: String
 ) : Wirespec.Refined<String> {
   override fun validate(): Boolean =
@@ -17,7 +17,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class Address(
+public data class Address(
   val street: String,
   val houseNumber: Long,
   val postalCode: DutchPostalCode
@@ -31,7 +31,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class Person(
+public data class Person(
   val name: String,
   val address: Address,
   val tags: List<String>
@@ -46,8 +46,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.DutchPostalCode
 
-object DutchPostalCodeGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): DutchPostalCode =
+public object DutchPostalCodeGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): DutchPostalCode =
     DutchPostalCode(value = generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldString(
       regex = "^([0-9]{4}[A-Z]{2})\$",
       annotations = emptyList<Map<String, Any>>()
@@ -61,8 +61,8 @@ import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Address
 import community.flock.wirespec.generated.model.DutchPostalCode
 
-object AddressGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Address =
+public object AddressGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Address =
     Address(
       street = generator.generate(path + listOf<String>("street"), Wirespec.GeneratorFieldString(
         regex = null,
@@ -88,8 +88,8 @@ import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Person
 import community.flock.wirespec.generated.model.Address
 
-object PersonGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Person =
+public object PersonGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Person =
     Person(
       name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
