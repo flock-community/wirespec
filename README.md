@@ -70,7 +70,7 @@ designers and teams that already have a specification.
 | [Emitters](https://wirespec.io/docs/emitters)         | The code and specifications generated for each target                              |
 | [Plugins](https://wirespec.io/docs/plugins)           | Installing and configuring the CLI, Gradle, Maven and npm plugins; IR extensions   |
 | [Converters](https://wirespec.io/docs/converters)     | Converting existing specifications to Wirespec                                     |
-| [Integration](https://wirespec.io/docs/integration)   | Spring, Jackson, kotlinx.serialization, Avro, WireMock, Kotest and model builders  |
+| [Integration](https://wirespec.io/docs/integration)   | Spring, Jackson, kotlinx.serialization, Serde, Avro, WireMock, Kotest and builders  |
 | [IDE](https://wirespec.io/docs/ide)                   | The IntelliJ IDEA and VS Code plugins, and the language server for other editors   |
 | [Architecture](https://wirespec.io/docs/architecture) | How the compiler works, for contributors and extension authors                     |
 

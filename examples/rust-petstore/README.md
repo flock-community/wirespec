@@ -128,6 +128,11 @@ to work out which concrete type it got:
 When the contract changes, update `petstore_types!` and the `object!` mappings. If a type is missing,
 `Json` panics with `... is not a Petstore type`.
 
+This example shows the generated code without any extension. With the
+[Serde extension](https://wirespec.io/docs/integration/serde) (`-e Serde`) the models derive `Serialize` and
+`Deserialize` under their contract names and the body arrives with a serde bound, so `serialize_body` and
+`deserialize_body` become one call to `serde_json` each, and the macros above are not needed for bodies.
+
 Query parameters and headers arrive as strings and carry no type information. `deserialize_param` therefore tries
 each value as a list, then as a string, then as a literal such as `42`.
 

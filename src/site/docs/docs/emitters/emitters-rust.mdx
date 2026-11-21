@@ -28,7 +28,8 @@ File and field names are converted to snake case, so `dueDate` becomes `due_date
 
 ## Type
 
-A type becomes a `struct` with a `validate` method:
+A type becomes a `struct` with a `validate` method. Every model has a `Default`, so a value can be built with
+`..Default::default()`:
 
 ```rust wirespec file=model/todo.rs
 ```
@@ -58,8 +59,9 @@ field name as a prefix:
 
 ## Refined
 
-A refined type becomes a `struct` that wraps the value. `validate` checks the regular expression, and `to_string`
-returns the plain value. A refined `Integer` or `Number` checks its bounds instead.
+A refined type becomes a `struct` that wraps the value. `validate` checks the regular expression; a refined `Integer`
+or `Number` checks its bounds instead. `Display` prints the plain value and `FromStr` parses it, without validating, so
+a refined type can be a path parameter:
 
 ```rust wirespec file=model/todo_id.rs
 ```
@@ -67,14 +69,16 @@ returns the plain value. A refined `Integer` or `Number` checks its bounds inste
 ## Enum
 
 An enum becomes an `enum` that implements the `Enum` trait, which converts between a variant and its label, the value
-as it is written in Wirespec. `Display` prints the label:
+as it is written in Wirespec. `Display` prints the label and `FromStr` parses it, so an enum can be a path parameter.
+The first entry is the `Default`:
 
 ```rust wirespec file=model/priority.rs
 ```
 
 ## Union
 
-A union becomes an `enum` with a variant for every member, so a `match` over a `TodoEvent` is exhaustive:
+A union becomes an `enum` with a variant for every member, so a `match` over a `TodoEvent` is exhaustive. Its
+`Default` is the default of its first member:
 
 ```rust wirespec file=model/todo_event.rs
 ```
@@ -101,6 +105,10 @@ request and its responses:
 
 ```rust wirespec file=endpoint/update_todo.rs
 ```
+
+A path parameter is written with `Display` and read with `FromStr`. For the bodies you provide a `BodySerializer` and
+a `BodyDeserializer`: the models have no serialization of their own. The [Serde](../integration/integration-serde.mdx)
+extension adds it, so both can hand every body to `serde_json`.
 
 ## Channel
 
