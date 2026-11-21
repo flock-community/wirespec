@@ -56,6 +56,7 @@ import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.TypeParameter
 import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.annotatedFields
 import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.ir.Function as AstFunction
 
@@ -191,7 +192,7 @@ public object RustGenerator :
         val body = if (fields.isEmpty() && constructors.isEmpty()) {
             ";\n"
         } else {
-            " {\n${fields.joinToString("") { "pub ${it.name.snakeCase().sanitize()}: ${it.type.emit()},\n".indentCode(1) }}}\n"
+            " {\n${annotatedFields().joinToString("") { (field, attributes) -> (attributes.joinToString("") { "$it\n" } + "pub ${field.name.snakeCase().sanitize()}: ${field.type.emit()},\n").indentCode(1) }}}\n"
         }
         val definition = "pub struct $rustName${typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emit() }}$body"
         val implementations = constructors.joinToString("") { it.emit(rustName, fields) } +

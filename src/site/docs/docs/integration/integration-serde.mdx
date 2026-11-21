@@ -1,0 +1,125 @@
+---
+title: Serde
+slug: /integration/serde
+---
+
+import { Languages } from "@site/src/components/Languages";
+
+<Languages languages={["Rust"]} />
+
+The generated Rust models have no serialization of their own: Wirespec hands every body to the `BodySerializer` and
+`BodyDeserializer` you provide. If you serialize with [serde](https://serde.rs), this integration ships an
+[IR extension](../plugins/plugins.md#ir-extensions) that makes every generated model a serde type, so one small
+serializer covers all of them.
+
+## What it does
+
+The extension adds serde to the models in the `model` directory, in the JSON form of the contract:
+
+- a type derives `Serialize` and `Deserialize`, and every field is renamed to its Wirespec name;
+- a refined type is `#[serde(transparent)]`, so it is written as the value it wraps;
+- an enum is written as its label, the Wirespec name of the entry;
+- a union is `#[serde(tag = "type")]`: the name of the member goes into a `type` property, like the
+  [Jackson](./integration-jackson.mdx) and [kotlinx.serialization](./integration-kotlinx-serialization.mdx) integrations do.
+
+For example, this definition:
+
+```wirespec
+type ItemId = String(/^[a-z0-9-]+$/g)
+enum Role { USER, ASSISTANT }
+type Item { itemId: ItemId, role: Role }
+type UserMessage { role: Role, text: String }
+type AssistantMessage { role: Role, text: String }
+type Message = UserMessage | AssistantMessage
+```
+
+is emitted as:
+
+```rust
+#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Item {
+    #[serde(rename = "itemId")]
+    pub item_id: ItemId,
+    #[serde(rename = "role")]
+    pub role: Role,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(transparent)]
+pub struct ItemId {
+    pub value: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type")]
+#[derive(Debug, Clone, PartialEq)]
+pub enum Message {
+    UserMessage(UserMessage),
+    AssistantMessage(AssistantMessage),
+}
+```
+
+An `Item` is written as `{"itemId":"abc","role":"ASSISTANT"}`, and a `Message` as
+`{"type":"UserMessage","role":"USER","text":"hi"}`.
+
+In the shared `wirespec.rs`, the body serializers get a serde bound on the body they take:
+
+```rust
+pub trait BodySerializer {
+    fn serialize_body<T: serde::Serialize + 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+}
+pub trait BodyDeserializer {
+    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
+}
+```
+
+:::note
+- The structs of an endpoint (`Path`, `Queries`, `Request`, `Response200`) are left as they are. Paths, queries and
+  headers still go through the `PathSerializer` and `ParamSerializer` you provide.
+- Serde can only add the `type` property to a union member that is a type. A union with an enum or a refined type as
+  member compiles, but writing that member fails.
+- With the serde bound, every body must be a serde type. A body of type `Any` is not, so an endpoint with such a body
+  does not compile with this extension.
+:::
+
+## Setup
+
+The extension applies to the **Rust** target only. It is bundled with every Wirespec plugin as `Serde`:
+
+```shell
+wirespec compile -i ./wirespec -o ./src/generated -l Rust -p '' --shared -e Serde
+```
+
+The attributes are fully qualified, so no import is added. Your crate needs `serde` with its `derive` feature, and
+the data format you serialize to:
+
+```toml title="Cargo.toml"
+[dependencies]
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
+
+## Serializing bodies
+
+With the serde bound, the body serialization is the same for every model:
+
+```rust
+use std::any::TypeId;
+
+struct Json;
+
+impl BodySerializer for Json {
+    fn serialize_body<T: serde::Serialize + 'static>(&self, t: &T, _: TypeId) -> Vec<u8> {
+        serde_json::to_vec(t).expect("body is serializable")
+    }
+}
+
+impl BodyDeserializer for Json {
+    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], _: TypeId) -> T {
+        serde_json::from_slice(raw).expect("body matches the contract")
+    }
+}
+```

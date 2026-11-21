@@ -13,6 +13,7 @@ import community.flock.wirespec.integration.jackson.extension.JacksonExtension
 import community.flock.wirespec.integration.jvm.extension.JvmBuilderExtension
 import community.flock.wirespec.integration.kotest.extension.KotestDslExtension
 import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
+import community.flock.wirespec.integration.serde.extension.SerdeExtension
 import community.flock.wirespec.integration.spring.extension.SpringMappingAnnotationsExtension
 import community.flock.wirespec.integration.spring.extension.SpringNativeHintsExtension
 import kotlin.reflect.KClass
@@ -24,6 +25,7 @@ public enum class Extension(private val type: KClass<out IrExtension>, private v
     JvmBuilder(JvmBuilderExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala)),
     KotestDsl(KotestDslExtension::class, setOf(FileExtension.Kotlin)),
     KotlinxSerialization(KotlinxSerializationExtension::class, setOf(FileExtension.Kotlin)),
+    Serde(SerdeExtension::class, setOf(FileExtension.Rust)),
     SpringMappingAnnotations(SpringMappingAnnotationsExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
     SpringNativeHints(SpringNativeHintsExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
     ;
@@ -49,6 +51,7 @@ public fun Extension.toIrExtension(packageName: PackageName, language: FileExten
         Extension.JvmBuilder -> JvmBuilderExtension(language)
         Extension.KotestDsl -> KotestDslExtension(packageName)
         Extension.KotlinxSerialization -> KotlinxSerializationExtension()
+        Extension.Serde -> SerdeExtension()
         Extension.SpringMappingAnnotations -> SpringMappingAnnotationsExtension(language)
         Extension.SpringNativeHints -> SpringNativeHintsExtension(packageName, language)
     }
