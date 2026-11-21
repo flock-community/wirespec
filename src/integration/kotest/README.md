@@ -205,6 +205,62 @@ it with the record's `copy`. A nested block hands its record to the nested build
 the wrapping of a refined field's inner value (also in a list, dict or nullable field).
 The generator overrides of Part 1 are not involved.
 
+### Outside the contract
+
+The typed entry points only draw what the contract allows, and an endpoint's `call()`
+fails on an undeclared response. To test past the contract, `modify { … }` changes a
+drawn value before it goes out. It hangs off the operation's own `Gen`, so a test reads
+through the operation's name and breaks only what it is about:
+
+```kotlin
+// A request outside the contract; call() returns the RawResponse unchecked.
+val response = PutTodo.generate.request { path { id("42") } }
+    .modify {
+        headers -= "token"
+        body("done" to "maybe")   // fields, or an input of any type, serialized as its type
+    }
+    .call()
+response.status shouldBe 401
+
+// A mocked downstream answering outside its contract.
+GetStock.generate.response200()
+    .modify {
+        status = 503
+        body("reason" to "maintenance")
+    }
+    .mock { req -> req.path.sku == "SKU-001" }
+
+// A message outside the contract.
+CampaignEvents.generate.message().modify { body("not json".encodeToByteArray()) }.send("campaign-events")
+
+// An rpc has no wire format: modify works on the <Rpc>Request the Service receives.
+GetUser.generate.request().modify { copy(id = UserId("not-a-user-id")) }.call()
+```
+
+| Starts from                     | Block receiver                  | Changes                                        | Then                       |
+|---------------------------------|---------------------------------|------------------------------------------------|----------------------------|
+| `<Endpoint>.generate.request`   | `RawRequestScope`               | `method`, `path`, `queries`, `headers`, `body` | `call()` → `RawResponse`   |
+| `<Endpoint>.generate.response*` | `RawResponseScope`              | `status`, `headers`, `body`                    | `mock { request -> … }`    |
+| `<Channel>.generate.message`    | `RawMessageScope`               | `body`                                         | `send(topic, key)`         |
+| `<Rpc>.generate.request`        | `<Rpc>Request` (returns a copy) | its parameters                                 | `call()` → service answer  |
+
+For endpoints and channels the scope starts from the value serialized as the typed
+terminal would send it, so an empty block changes nothing but skips the response check.
+`body(input)` takes any type (reified): a `ByteArray` goes over the wire as it is,
+`null` sends none, and anything else is serialized as its type with the context's
+serialization. `body("name" to 42, "done" to "maybe")` sends a map of the fields. The
+scopes, `RawResponse` and the `Modified*` holders are this integration's own types (in
+`…kotest.dsl`); they turn into `Wirespec.RawRequest`/`RawResponse` only at the
+`Wirespec.Transportation` and the `MockStub`.
+
+`modify` is generated per operation; its result is a `ModifiedRequest`, `ModifiedResponse`
+or `ModifiedMessage` holding the `Gen` and the block, and the terminal after it is
+generated too, so it is imported with the typed one. An rpc's `modify` maps the `Gen`
+instead, and the typed `call()` follows. The request's and the response's `modify` erase
+to the same JVM signature in one file, so the response one carries
+`@JvmName("modifyResponse")`. Channels sharing a payload get one `modify`, as they get
+one `send`; an rpc without parameters gets none.
+
 ### Wiring the transport
 
 The DSL resolves its transport and per-test `RandomSource` from an ambient
@@ -220,7 +276,7 @@ class MySpec : FunSpec({
 ```
 
 `WirespecEndpointExtension` backs an endpoint's `call()`, `WirespecChannelExtension` backs
-`send()`, `WirespecMockExtension` backs `mock { … }` and `WirespecRpcExtension` backs an rpc's `call()`, which runs on
+`send()`, `WirespecMockExtension` backs `mock { … }` (each also after `modify`) and `WirespecRpcExtension` backs an rpc's `call()`, which runs on
 the one registered service implementing that rpc's `Service`; supply whichever the spec needs. A call into a missing
 context fails with a message naming the extension to add. Responses are
 validated against the contract — an

@@ -13,6 +13,12 @@ import kotlin.reflect.typeOf
 
 public inline fun <reified P : Any> channelCall(channelClass: KClass<*>): ChannelCallBuilder<P> = ChannelCallBuilder(channelClass, typeOf<P>(), P::class.java)
 
+/** A message [Gen], and what changes in its raw form before it is published. */
+public class ModifiedMessage<P : Any>(
+    internal val messageGen: Gen<P>,
+    internal val modification: RawMessageScope.() -> Unit,
+)
+
 @WirespecScenarioDsl
 public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
     @PublishedApi internal val channelClass: KClass<*>,
@@ -27,11 +33,11 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
 
     public fun messageGen(): Arb<P> = arbitrary { rs -> buildPayload(rs) }
 
-    public suspend fun send(gen: Gen<P>): P {
-        val payload = gen.draw(currentRandomSource())
-        publish(payload)
-        return payload
-    }
+    public suspend fun send(gen: Gen<P>): P = gen.draw(currentRandomSource()).also { payload -> publish(serialize(payload)) }
+
+    public suspend fun send(message: ModifiedMessage<P>): Unit = serialize(message.messageGen.draw(currentRandomSource()))
+        .let { body -> RawMessageScope(body).apply(message.modification).serialized(currentChannelContext().serialization) }
+        .let { body -> publish(body) }
 
     @Suppress("UNCHECKED_CAST")
     private fun buildPayload(rs: RandomSource): P = when (val primitive = PrimitiveArbs.forTypeOrNull(payloadClass)) {
@@ -39,11 +45,9 @@ public class ChannelCallBuilder<P : Any> @PublishedApi internal constructor(
         else -> primitive.draw(rs) as P
     }
 
-    private suspend fun publish(payload: P) {
-        val ctx = currentChannelContext()
-        val body = ctx.serialization.serializeBody(payload, payloadType)
-        ctx.transport.publish(resolveTopic(), key, body)
-    }
+    private suspend fun serialize(payload: P): ByteArray = currentChannelContext().serialization.serializeBody(payload, payloadType)
+
+    private suspend fun publish(body: ByteArray): Unit = currentChannelContext().transport.publish(resolveTopic(), key, body)
 
     private fun resolveTopic(): String = topic ?: channelClass.simpleName
         ?: error("$channelClass: cannot resolve a topic — pin one with topic(...).")

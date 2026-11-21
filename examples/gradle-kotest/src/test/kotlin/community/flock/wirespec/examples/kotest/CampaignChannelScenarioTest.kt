@@ -5,6 +5,7 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.ActivateCampa
 import community.flock.wirespec.examples.kotest.generated.endpoint.CreateCampaign
 import community.flock.wirespec.examples.kotest.generated.kotest.call
 import community.flock.wirespec.examples.kotest.generated.kotest.generate
+import community.flock.wirespec.examples.kotest.generated.kotest.modify
 import community.flock.wirespec.examples.kotest.generated.kotest.send
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEvent
 import community.flock.wirespec.examples.kotest.generated.model.CampaignEventType
@@ -18,11 +19,13 @@ import io.kotest.extensions.spring.testContextManager
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.property.RandomSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -100,6 +103,19 @@ class CampaignChannelScenarioTest :
                 awaitEvent<CampaignEvent>(CAMPAIGN_EVENTS_TOPIC) { it.campaignId == sent.campaignId && it.eventType == CampaignEventType.ENDED }
             received shouldBe sent
         }
+
+        test("a message outside the contract goes over the topic as it is given") {
+            val campaignId = UUID.randomUUID().toString()
+            val cancelled = mapOf("campaignId" to campaignId, "eventType" to "CANCELLED", "discountPercentage" to 10L)
+
+            CampaignEvents.generate
+                .message()
+                .modify { body(cancelled) }
+                .send(CAMPAIGN_EVENTS_TOPIC)
+
+            val received = awaitRecord(CAMPAIGN_EVENTS_TOPIC) { record -> record.value().decodeToString().takeIf { campaignId in it } }
+            received shouldContain "\"eventType\":\"CANCELLED\""
+        }
     })
 
 private suspend inline fun <reified T : Any> awaitEvent(
@@ -107,19 +123,26 @@ private suspend inline fun <reified T : Any> awaitEvent(
     timeout: Duration = 10.seconds,
     crossinline predicate: (T) -> Boolean,
 ): T {
-    val applicationContext = testContextManager().testContext.applicationContext
-    val serialization = applicationContext.getBean(Wirespec.Serialization::class.java)
-    val bootstrapServers = applicationContext.environment.getProperty("spring.kafka.bootstrap-servers")
+    val serialization = testContextManager().testContext.applicationContext.getBean(Wirespec.Serialization::class.java)
+    // The topic also carries a message outside the contract, which doesn't read as a T: skip it.
+    return awaitRecord(topic, timeout) { record ->
+        runCatching { serialization.deserializeBody<T>(record.value(), typeOf<T>()) }.getOrNull()?.takeIf { predicate(it) }
+    }
+}
+
+private suspend fun <T : Any> awaitRecord(
+    topic: String,
+    timeout: Duration = 10.seconds,
+    read: (ConsumerRecord<String, ByteArray>) -> T?,
+): T {
+    val bootstrapServers = testContextManager().testContext.applicationContext.environment.getProperty("spring.kafka.bootstrap-servers")
         ?: error("spring.kafka.bootstrap-servers is not set in the test context")
 
     return withContext(Dispatchers.IO) {
         eventConsumer(bootstrapServers).use { consumer ->
             consumer.subscribe(listOf(topic))
             eventually(timeout) {
-                consumer.poll(ofMillis(500))
-                    .map { serialization.deserializeBody<T>(it.value(), typeOf<T>()) }
-                    .firstOrNull { predicate(it) }
-                    .shouldNotBeNull()
+                consumer.poll(ofMillis(500)).firstNotNullOfOrNull(read).shouldNotBeNull()
             }
         }
     }

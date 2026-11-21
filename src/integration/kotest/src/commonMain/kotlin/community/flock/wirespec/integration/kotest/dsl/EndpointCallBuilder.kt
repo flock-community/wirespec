@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.kotest.dsl
 
+import community.flock.wirespec.integration.kotest.extension.currentEndpointContext
 import community.flock.wirespec.integration.kotest.runtime.CallExecutor
 import community.flock.wirespec.integration.kotest.runtime.currentRandomSource
 import community.flock.wirespec.integration.kotest.validation.EndpointReflection
@@ -24,6 +25,22 @@ public suspend fun <BodyT : Any, Req : Wirespec.Request<BodyT>, Resp : Wirespec.
     val request = requestGen.draw(currentRandomSource())
     @Suppress("UNCHECKED_CAST")
     return CallExecutor.executeRequest(client, endpointObject, request) as Resp
+}
+
+/** A request [Gen], and what changes in its raw form before it is sent. */
+public class ModifiedRequest<Req : Wirespec.Request<*>>(
+    internal val requestGen: Gen<Req>,
+    internal val modification: RawRequestScope.() -> Unit,
+)
+
+public suspend fun <Req : Wirespec.Request<*>> modifiedRequestCall(
+    client: Wirespec.Client<Req, *>,
+    request: ModifiedRequest<Req>,
+): RawResponse = currentEndpointContext().let { ctx ->
+    client.client(ctx.serialization).to(request.requestGen.draw(currentRandomSource()))
+        .let { raw -> RawRequestScope(raw).apply(request.modification).toWirespec(ctx.serialization) }
+        .let { raw -> ctx.transportation.transport(raw) }
+        .toKotest()
 }
 
 @WirespecScenarioDsl
