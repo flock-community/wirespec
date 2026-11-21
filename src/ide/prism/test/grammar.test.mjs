@@ -149,6 +149,22 @@ describe("endpoints", () => {
     ]);
   });
 
+  it("highlights every path character of RFC 3986 as the path", () => {
+    expectTypes("endpoint E GET /v1.0/~me/!$&'()*+,;=:@/caf%C3%A9/Users -> {}", [
+      ["/v1.0/~me/!$&'()*+,;=:@/caf%C3%A9/Users", "path/string"],
+      ["->", "operator"],
+    ]);
+  });
+
+  it("highlights the root path and a trailing slash", () => {
+    expectTypes("endpoint E GET / -> {}", [["/", "path/string"]]);
+    expectTypes("endpoint E GET /todos/{id: TodoId}/ -> {}", [
+      ["/todos/", "path/string"],
+      ["TodoId", "path/string > class-name"],
+      ["/", "path/string"],
+    ]);
+  });
+
   it("highlights the responses", () => {
     expectTypes(source, [
       ["@Deprecated", "annotation > annotation-name/attr-name"],

@@ -62,6 +62,23 @@ class SpringKotlinExtensionTest {
     }
 
     @Test
+    fun `Should escape a dollar sign in the path of a mapping annotation`() {
+        val ast = parse(
+            """
+            |endpoint GetMetadata GET /odata/${'$'}metadata -> {
+            |  200 -> Unit
+            |}
+            """.trimMargin(),
+        )
+        val emitted = springEmitter(PackageName.Companion("community.flock.wirespec.spring.test"))
+            .emit(ast, noLogger)
+
+        val endpoint = emitted.single { it.file.endsWith("GetMetadata.kt") }.result
+
+        assertContains(endpoint, """@org.springframework.web.bind.annotation.GetMapping("/odata/\${'$'}metadata")""")
+    }
+
+    @Test
     fun `Should emit a WirespecNativeHints file with registrations for all models and endpoints`() {
         val path = kotlinx.io.files.Path("src/jvmTest/resources/todo.ws")
         val text = SystemFileSystem.source(path).buffered().readString()

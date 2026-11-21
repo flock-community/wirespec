@@ -193,6 +193,24 @@ type After {}`;
     ]);
   });
 
+  it("highlights every path character of RFC 3986 as the path", () => {
+    expectScopes("endpoint E GET /v1.0/~me/!$&'()*+,;=:@/caf%C3%A9 -> {}", [
+      ["v1.0", "string.unquoted.path.wirespec"],
+      ["~me", "string.unquoted.path.wirespec"],
+      ["!$&'()*+,;=:@", "string.unquoted.path.wirespec"],
+      ["caf%C3%A9", "string.unquoted.path.wirespec"],
+      ["->", "keyword.operator.arrow.wirespec"],
+    ]);
+  });
+
+  it("highlights the root path and a trailing slash", () => {
+    expectScopes("endpoint E GET / -> {}", [["/", "punctuation.separator.path.wirespec"]]);
+    expectScopes("endpoint E GET /todos/ -> {}", [
+      ["todos", "string.unquoted.path.wirespec"],
+      ["/", "punctuation.separator.path.wirespec", 1],
+    ]);
+  });
+
   it("highlights the responses", () => {
     expectScopes(source, [
       ["Deprecated", "storage.type.annotation.wirespec"],
