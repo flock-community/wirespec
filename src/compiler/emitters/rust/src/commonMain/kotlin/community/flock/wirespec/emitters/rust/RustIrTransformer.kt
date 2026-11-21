@@ -20,6 +20,7 @@ import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.Switch
 import community.flock.wirespec.compiler.core.ir.Transformer
 import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertConstraint
 import community.flock.wirespec.compiler.core.ir.findElement
 import community.flock.wirespec.compiler.core.ir.function
@@ -27,7 +28,6 @@ import community.flock.wirespec.compiler.core.ir.transform
 import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.transformer
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
-import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
 import community.flock.wirespec.compiler.core.ir.Type as LanguageType
@@ -156,7 +156,7 @@ internal fun <T : Element> T.stripWirespecPrefix(): T = transform {
 
 internal fun File.replaceStructWithRefinedFunctions(refined: Refined): File = transform {
     matchingElements { s: Struct ->
-        s.copy(elements = listOf(refined.validateFunction(), refined.toStringFunction()))
+        s.copy(elements = listOf(refined.validateFunction(), RawElement(refined.stringConversions())))
     }
 }
 
@@ -166,17 +166,24 @@ private fun Refined.validateFunction(): LanguageFunction = function("validate") 
     returns(reference.convertConstraint(FieldCall(VariableReference(Name.of("self")), Name.of("value"))))
 }
 
-private fun Refined.toStringFunction(): LanguageFunction = function("to_string") {
-    arg("&self", LanguageType.Custom(""))
-    returnType(LanguageType.String)
-    returns(
-        RawExpression(
-            when (reference.type) {
-                is Reference.Primitive.Type.String -> "self.value.clone()"
-                else -> "format!(\"{}\", self.value)"
-            },
-        ),
-    )
+/**
+ * `Display` and `FromStr`, which the path (de)serializers require of a path parameter. Both delegate to the wrapped
+ * value, so `from_str` parses without validating, like constructing the struct does.
+ */
+private fun Refined.stringConversions(): String = identifier.value.let { name ->
+    """
+    impl std::fmt::Display for $name {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(f, "{}", self.value)
+        }
+    }
+    impl std::str::FromStr for $name {
+        type Err = <${reference.convert().rustName()} as std::str::FromStr>::Err;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            s.parse().map(|value| $name { value })
+        }
+    }
+    """.trimIndent()
 }
 
 internal fun File.flattenForRust(): File {

@@ -53,6 +53,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.sortKey
 import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
 import community.flock.wirespec.compiler.core.ir.Type as LanguageType
+import community.flock.wirespec.compiler.core.ir.Union as LanguageUnion
 
 private const val STRUCT_DERIVE = "#[derive(Debug, Clone, Default, PartialEq)]"
 
@@ -189,6 +190,8 @@ public open class RustEmitter(
         .sanitizeEnumEntries(sanitizeEntry = { it.sanitizeEnum().sanitizeKeywords() })
 
     override fun emit(union: Union): File = union.convert()
+        .withImports(union.importReferences().toImports("super::"))
+        .withDefaultOfFirstMember()
 
     override fun emit(refined: Refined): File = refined
         .convert()
@@ -302,6 +305,15 @@ private fun List<Reference.Custom>.toImports(path: String): List<Element> = dist
     .map { import("$path${it.value.toSnakeCase()}", Name.of(it.value).pascalCase()) }
 
 private fun File.withImports(imports: List<Element>): File = copy(elements = imports + elements)
+
+/**
+ * Structs derive `Default`, so a union they hold needs one too. `#[default]` is only allowed on a unit variant, so the
+ * union gets a hand-written `Default` that takes its first member.
+ */
+private fun File.withDefaultOfFirstMember(): File = findElement<LanguageUnion>()
+    ?.let { union -> union.members.firstOrNull()?.let { "${union.name.pascalCase()}::${it.name.pascalCase()}" } }
+    ?.let { copy(elements = elements + RawElement("impl Default for ${name.pascalCase()} { fn default() -> Self { $it(Default::default()) } }")) }
+    ?: this
 
 private fun List<Element>.withStructDerives(): List<Element> = flatMap { if (it is Struct) listOf(RawElement(STRUCT_DERIVE), it) else listOf(it) }
 

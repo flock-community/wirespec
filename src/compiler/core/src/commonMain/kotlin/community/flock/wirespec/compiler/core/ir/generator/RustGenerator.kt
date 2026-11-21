@@ -56,6 +56,7 @@ import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.TypeParameter
 import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.annotatedFields
 import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.ir.Function as AstFunction
 
@@ -144,7 +145,10 @@ public object RustGenerator :
 
     private fun Enum.emit(indent: Int): String {
         val rustName = name.pascalCase()
-        val definition = "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName {\n${entries.joinToString("") { "${it.name.value()},\n".indentCode(1) }}}\n"
+        // An enum without entries has no value to default to.
+        val derive = if (entries.isEmpty()) "#[derive(Debug, Clone, PartialEq)]" else "#[derive(Debug, Clone, Default, PartialEq)]"
+        val variants = entries.mapIndexed { index, entry -> (if (index == 0) "#[default]\n" else "") + "${entry.name.value()},\n" }
+        val definition = "$derive\npub enum $rustName {\n${variants.joinToString("") { it.indentCode(1) }}}\n"
         val labelArms = entries.joinToString("\n") { "$rustName::${it.name.value()} => \"${it.wireValue()}\",".indentCode(3) }
         val fromLabelArms = entries.joinToString("\n") { "\"${it.wireValue()}\" => Some($rustName::${it.name.value()}),".indentCode(3) }
         val implementation = if (entries.isEmpty()) {
@@ -169,6 +173,12 @@ public object RustGenerator :
             |        write!(f, "{}", self.label())
             |    }
             |}
+            |impl std::str::FromStr for $rustName {
+            |    type Err = String;
+            |    fn from_str(s: &str) -> Result<Self, Self::Err> {
+            |        Self::from_label(s).ok_or_else(|| format!("Unknown $rustName: {}", s))
+            |    }
+            |}
             |
             """.trimMargin()
         }
@@ -182,7 +192,7 @@ public object RustGenerator :
         val body = if (fields.isEmpty() && constructors.isEmpty()) {
             ";\n"
         } else {
-            " {\n${fields.joinToString("") { "pub ${it.name.snakeCase().sanitize()}: ${it.type.emit()},\n".indentCode(1) }}}\n"
+            " {\n${annotatedFields().joinToString("") { (field, attributes) -> (attributes.joinToString("") { "$it\n" } + "pub ${field.name.snakeCase().sanitize()}: ${field.type.emit()},\n").indentCode(1) }}}\n"
         }
         val definition = "pub struct $rustName${typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emit() }}$body"
         val implementations = constructors.joinToString("") { it.emit(rustName, fields) } +

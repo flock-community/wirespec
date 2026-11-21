@@ -42,12 +42,15 @@ impl User {
 
 use super::super::wirespec::*;
 use regex;
+use super::user_account_password::UserAccountPassword;
+use super::user_account_token::UserAccountToken;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UserAccount {
     UserAccountPassword(UserAccountPassword),
     UserAccountToken(UserAccountToken),
 }
+impl Default for UserAccount { fn default() -> Self { UserAccount::UserAccountPassword(Default::default()) } }
 
 use super::super::wirespec::*;
 use regex;

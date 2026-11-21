@@ -1,8 +1,9 @@
 use super::super::wirespec::*;
 use regex;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub enum MyAwesomeEnum {
+    #[default]
     ONE,
     Two,
     THREEMORE,
@@ -45,6 +46,12 @@ impl Enum for MyAwesomeEnum {
 impl std::fmt::Display for MyAwesomeEnum {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.label())
+    }
+}
+impl std::str::FromStr for MyAwesomeEnum {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_label(s).ok_or_else(|| format!("Unknown MyAwesomeEnum: {}", s))
     }
 }
 

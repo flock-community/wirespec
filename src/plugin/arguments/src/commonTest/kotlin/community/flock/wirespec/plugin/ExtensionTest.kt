@@ -15,13 +15,14 @@ class ExtensionTest {
 
     @Test
     fun testExtensions() {
-        Extension.toString() shouldBe "Avro, GraphQLClient, Jackson, JvmBuilder, KotestDsl, KotlinxSerialization, SpringMappingAnnotations, SpringNativeHints"
+        Extension.toString() shouldBe "Avro, GraphQLClient, Jackson, JvmBuilder, KotestDsl, KotlinxSerialization, RustSerde, SpringMappingAnnotations, SpringNativeHints"
     }
 
     @Test
     fun testNamesAreTheClassNames() {
         Extension.entries.forEach { extension ->
-            val type = extension.toIrExtension(packageName, FileExtension.Kotlin).shouldNotBeNull()::class
+            val language = FileExtension.entries.first { extension.supports(it) }
+            val type = extension.toIrExtension(packageName, language).shouldNotBeNull()::class
             type.simpleName shouldBe "${extension.name}Extension"
             Extension.of(type) shouldBe extension
         }
@@ -32,14 +33,15 @@ class ExtensionTest {
         FileExtension.entries.associateWith { language -> Extension.entries.filter { it.supports(language) } }
             .filterValues { it.isNotEmpty() } shouldBe mapOf(
             FileExtension.Java to listOf(Extension.Avro, Extension.GraphQLClient, Extension.Jackson, Extension.JvmBuilder, Extension.SpringMappingAnnotations, Extension.SpringNativeHints),
-            FileExtension.Kotlin to Extension.entries,
+            FileExtension.Kotlin to Extension.entries - Extension.RustSerde,
             FileExtension.Scala to listOf(Extension.GraphQLClient, Extension.JvmBuilder),
+            FileExtension.Rust to listOf(Extension.RustSerde),
         )
     }
 
     @Test
     fun testUnsupportedLanguagesAreLeftOut() {
-        Extension.entries.toIrExtensions(packageName, FileExtension.Kotlin) shouldHaveSize Extension.entries.size
+        Extension.entries.toIrExtensions(packageName, FileExtension.Kotlin) shouldHaveSize Extension.entries.size - 1
         Extension.entries.toIrExtensions(packageName, FileExtension.TypeScript).shouldBeEmpty()
         Extension.Avro.toIrExtension(packageName, FileExtension.TypeScript).shouldBeNull()
     }
