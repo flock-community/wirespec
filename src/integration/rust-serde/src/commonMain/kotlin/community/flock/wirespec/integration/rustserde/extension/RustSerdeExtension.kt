@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.serde.extension
+package community.flock.wirespec.integration.rustserde.extension
 
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.Enum
@@ -43,7 +43,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
  * `serde` crate with its `derive` feature. Register on a Rust
  * [community.flock.wirespec.compiler.core.ir.emit.IrEmitter].
  */
-public class SerdeExtension : IrExtension {
+public class RustSerdeExtension : IrExtension {
 
     override fun extend(ir: IR, ast: AST): IR = ast.modules.flatMap { it.statements }
         .filterIsInstance<Model>()

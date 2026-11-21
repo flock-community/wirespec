@@ -72,7 +72,7 @@ Options:
   --spec-version=<text>                                                       The version of the spec, instead of the one it declares: for OpenAPI and AsyncAPI
   -l, --language=(Java|Kotlin|TypeScript|Python|Rust|Scala|Wirespec|OpenAPIV2|OpenAPIV3|Avro|AsyncAPI)
                                                                               Language
-  -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|Serde|SpringMappingAnnotations|SpringNativeHints)
+  -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|RustSerde|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 ```
@@ -99,7 +99,7 @@ Options:
   --spec-version=<text>                                                       The version of the spec, instead of the one it declares: for OpenAPI and AsyncAPI
   -l, --language=(Java|Kotlin|TypeScript|Python|Rust|Scala|Wirespec|OpenAPIV2|OpenAPIV3|Avro|AsyncAPI)
                                                                               Language
-  -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|Serde|SpringMappingAnnotations|SpringNativeHints)
+  -e, --extension=(Avro|GraphQLClient|Jackson|JvmBuilder|KotestDsl|KotlinxSerialization|RustSerde|SpringMappingAnnotations|SpringNativeHints)
                                                                               Extension, applied to the languages it supports
   -h, --help                                                                  Show this message and exit
 

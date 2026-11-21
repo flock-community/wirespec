@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.serde.extension
+package community.flock.wirespec.integration.rustserde.extension
 
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
@@ -17,7 +17,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
 
-class SerdeExtensionTest {
+class RustSerdeExtensionTest {
 
     private val source =
         """
@@ -38,7 +38,7 @@ class SerdeExtensionTest {
     }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
     private val emitted = RustEmitter(PackageName("generated"), EmitShared(true))
-        .applyExtensions(nonEmptyListOf(SerdeExtension()))
+        .applyExtensions(nonEmptyListOf(RustSerdeExtension()))
         .emit(parse(), noLogger)
 
     private fun file(path: String): String = emitted.single { it.file == "generated/$path.rs" }.result

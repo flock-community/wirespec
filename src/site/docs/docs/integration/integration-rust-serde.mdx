@@ -1,6 +1,6 @@
 ---
 title: Serde
-slug: /integration/serde
+slug: /integration/rust-serde
 ---
 
 import { Languages } from "@site/src/components/Languages";
@@ -86,10 +86,10 @@ pub trait BodyDeserializer {
 
 ## Setup
 
-The extension applies to the **Rust** target only. It is bundled with every Wirespec plugin as `Serde`:
+The extension applies to the **Rust** target only. It is bundled with every Wirespec plugin as `RustSerde`:
 
 ```shell
-wirespec compile -i ./wirespec -o ./src/generated -l Rust -p '' --shared -e Serde
+wirespec compile -i ./wirespec -o ./src/generated -l Rust -p '' --shared -e RustSerde
 ```
 
 The attributes are fully qualified, so no import is added. Your crate needs `serde` with its `derive` feature, and

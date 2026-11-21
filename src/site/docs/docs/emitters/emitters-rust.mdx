@@ -107,8 +107,8 @@ request and its responses:
 ```
 
 A path parameter is written with `Display` and read with `FromStr`. For the bodies you provide a `BodySerializer` and
-a `BodyDeserializer`: the models have no serialization of their own. The [Serde](../integration/integration-serde.mdx)
-extension adds it, so both can hand every body to `serde_json`.
+a `BodyDeserializer`: the models have no serialization of their own. The
+[RustSerde](../integration/integration-rust-serde.mdx) extension adds it, so both can hand every body to `serde_json`.
 
 ## Channel
 
