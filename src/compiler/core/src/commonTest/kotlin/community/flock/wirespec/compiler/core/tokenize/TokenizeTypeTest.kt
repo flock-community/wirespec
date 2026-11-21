@@ -121,6 +121,16 @@ class TokenizeTypeTest {
     )
 
     @Test
+    fun testRegexStartingWithAPathCharacter() = testTokenizer(
+        """String(/abc.+/)""",
+        WsString,
+        LeftParenthesis,
+        RegExp,
+        RightParenthesis,
+        EndOfProgram,
+    )
+
+    @Test
     fun testLiteralSimple() = testTokenizer(
         """String(datetime)""",
         WsString,

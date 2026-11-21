@@ -53,6 +53,32 @@ type Todo {
 }
 ```
 
+## Path
+
+The path of an endpoint follows [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-3.3). Every segment
+starts with a `/`, and holds letters, digits, the characters `-._~!$&'()*+,;=:@`, and octets that are percent-encoded as
+`%` and two hexadecimal digits. A segment may be empty, so `/` is the root path and `/todos/` ends with a slash:
+
+```wirespec
+endpoint GetRoot GET / -> {
+    200 -> Unit
+}
+
+endpoint GetPhoto GET /v1.0/~me/photo.jpg -> {
+    200 -> Bytes
+}
+
+endpoint GetCafe GET /places/caf%C3%A9 -> {
+    200 -> Unit
+}
+```
+
+Comments take two forms that a path would otherwise allow: `/*` opens a block comment and `//` a line comment. So a
+segment cannot start with `*`, written `%2A` instead, and an empty segment cannot come right before another `/`.
+
+The generated code keeps the path as written in its path template, and decodes a percent-encoded segment in the request
+it sends, which the transport encodes again: `caf%C3%A9` is the segment `café`.
+
 ## Path parameters
 
 Endpoint parameters are defined using Pascal notation - **name: type.** Path parameters can simply be embedded in the

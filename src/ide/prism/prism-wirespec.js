@@ -4,7 +4,10 @@
 })(function wirespec(Prism) {
   const methods = /\b(?:GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\b/;
   const field = /`[\w-]+`|\b[a-z][\w-]*/;
-  const segment = /\/(?:[\w-]+|\{[^{}\n]*\})/;
+  // The path characters of RFC 3986. A segment cannot start with `*`, because `/*` opens a comment, and a bare `/`
+  // is an empty segment, as in `/` and `/todos/`.
+  const pathCharacter = /[\w.~!$&'()*+,;=:@-]|%[\dA-Fa-f]{2}/;
+  const segment = RegExp(`\\/(?:(?!\\*)(?:${pathCharacter.source})+|\\{[^{}\\n]*\\})?`);
 
   const string = { pattern: /"(?:\\.|[^"\\])*"/, greedy: true };
   const regex = {
@@ -23,6 +26,8 @@
   const number = { pattern: /(^|[^\w.-])-?\d+(?:\.\d+)?(?![\w.])/, lookbehind: true };
   const operator = /->|\.\.\.|\[\]|[=|!?#]/;
   const punctuation = /[{}()[\],:]/;
+  // In a path only a parameter, between braces, holds names, types and operators: the rest is literal segments.
+  const inParameter = (pattern) => RegExp(`(?:${pattern.source})(?=[^{}\\n]*\\})`);
 
   Prism.languages.wirespec = {
     comment: { pattern: /\/\*[\s\S]*?\*\/|\/\/.*/, greedy: true },
@@ -67,10 +72,10 @@
       alias: "string",
       inside: {
         parameter: { pattern: RegExp(`(\\{\\s*)(?:${field.source})`), lookbehind: true, alias: "variable" },
-        builtin,
-        "class-name": className,
-        operator,
-        punctuation: /[{}:,]/,
+        builtin: inParameter(builtin),
+        "class-name": inParameter(className),
+        operator: inParameter(operator),
+        punctuation: RegExp(`[{}]|${inParameter(/[:,]/).source}`),
       },
     },
     function: { pattern: /(\b(?:endpoint|rpc)\s+)[A-Za-z_]\w*/, lookbehind: true },

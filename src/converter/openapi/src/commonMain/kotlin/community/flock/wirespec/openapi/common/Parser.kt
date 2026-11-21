@@ -57,7 +57,7 @@ internal fun PathItem.toOperationList() = Endpoint.Method.entries
     }
     .filterNotNullValues()
 
-internal fun String.isParam() = this[0] == '{' && this[length - 1] == '}'
+internal fun String.isParam() = startsWith('{') && endsWith('}')
 
 internal fun OpenAPIModel.flatMapRequests(f: FlattenRequest.() -> List<Definition>) = paths.orEmpty()
     .flatMap { (path, pathItem) ->
