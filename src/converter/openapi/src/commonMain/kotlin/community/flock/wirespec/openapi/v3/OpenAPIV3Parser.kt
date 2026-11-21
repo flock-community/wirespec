@@ -296,7 +296,7 @@ private fun OpenAPIV3Model.toSegments(
     path: Path,
     parameters: List<Parameter>,
     name: String,
-) = path.value.split("/").drop(1).filter { it.isNotBlank() }.map { segment ->
+) = path.value.split("/").drop(1).map { segment ->
     when (segment.isParam()) {
         true -> {
             val param = segment.substring(1, segment.length - 1)

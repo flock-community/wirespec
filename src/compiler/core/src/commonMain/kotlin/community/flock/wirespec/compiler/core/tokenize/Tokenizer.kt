@@ -40,6 +40,9 @@ private fun LanguageSpec.scanStep(source: String, index: Int, previous: Token): 
  * Returns the tokens to append — the whitespace it consumed, plus the regex literal if it
  * found one — and the position to carry on from. When there is no regex the lookahead is
  * given back untouched, so the scan re-reads it.
+ *
+ * The matchers read that `/` as a [ForwardSlash], or as the start of a [Path] when a path
+ * character follows it, as in `/.+/` or `/abc/`.
  */
 private tailrec fun LanguageSpec.potentialRegex(
     source: String,
@@ -50,7 +53,7 @@ private tailrec fun LanguageSpec.potentialRegex(
     val (token, next) = extractToken(source, index, previous.coordinates)
     return when (token.type) {
         is WhiteSpaceExceptNewLine -> potentialRegex(source, next, token, whitespace + token)
-        is ForwardSlash -> extractRegex(source, index, index + 1, previous).let { (regex, resume) -> (whitespace + regex) to resume }
+        is ForwardSlash, is Path -> extractRegex(source, index, index + 1, previous).let { (regex, resume) -> (whitespace + regex) to resume }
         else -> whitespace to index
     }
 }

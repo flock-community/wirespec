@@ -100,12 +100,20 @@ internal object EndpointParser {
     private fun TokenProvider.parseEndpointSegments() = either {
         when (token.type) {
             is Path -> Endpoint.Segment.Literal(token.value.drop(1)).also { eatToken().bind() }
-            is ForwardSlash -> parseEndpointSegmentParam().bind()
+            is ForwardSlash -> parseParamOrEmptySegment().bind()
             else -> raiseWrongToken<Path>().bind()
         }
     }
 
-    private fun TokenProvider.parseEndpointSegmentParam() = parseToken {
+    /** A `/` without a path character after it opens a parameter, or ends an empty segment, as in `/` and `/todos/`. */
+    private fun TokenProvider.parseParamOrEmptySegment() = parseToken {
+        when (token.type) {
+            is LeftCurly -> parseEndpointSegmentParam().bind()
+            else -> Endpoint.Segment.Literal("")
+        }
+    }
+
+    private fun TokenProvider.parseEndpointSegmentParam() = either {
         expect<LeftCurly>().bind()
         val identifier = when (token.type) {
             is WirespecIdentifier -> FieldIdentifier(token.value).also { eatToken().bind() }

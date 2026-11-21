@@ -1599,6 +1599,52 @@ class OpenAPIV3ParserTest {
     }
 
     @Test
+    fun rootPathAndTrailingSlash() {
+        val json =
+            """
+            |{
+            |    "openapi": "3.0.0",
+            |    "info": {
+            |        "title": "Test API",
+            |        "version": "1.0.0"
+            |    },
+            |    "paths": {
+            |        "/": {
+            |            "get": {
+            |                "operationId": "GetRoot",
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "Ok"
+            |                    }
+            |                }
+            |            }
+            |        },
+            |        "/pets/": {
+            |            "get": {
+            |                "operationId": "GetPets",
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "Ok"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
+
+        val endpoints = OpenAPIV3Parser.parse(ModuleContent(FileUri("test.json"), json), false)
+            .modules.head.statements
+            .filterIsInstance<Endpoint>()
+            .associate { it.identifier.value to it.path }
+
+        endpoints shouldBe mapOf(
+            "GetRoot" to listOf(Endpoint.Segment.Literal("")),
+            "GetPets" to listOf(Endpoint.Segment.Literal("pets"), Endpoint.Segment.Literal("")),
+        )
+    }
+
+    @Test
     fun links() {
         val path = Path("src/commonTest/resources/v3/links.json")
         val json = SystemFileSystem.source(path).buffered().readString()

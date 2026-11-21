@@ -181,7 +181,7 @@
         },
         { "include": "#path-parameter" },
         {
-          "match": "(/)([A-Za-z0-9_-]+)",
+          "match": "(/)((?!\\*)(?:[A-Za-z0-9._~!$&'()*+,;=:@-]|%[0-9A-Fa-f]{2})+)",
           "captures": {
             "1": { "name": "punctuation.separator.path.wirespec" },
             "2": { "name": "string.unquoted.path.wirespec" }

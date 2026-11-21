@@ -85,6 +85,70 @@ class ParseEndpointTest {
     }
 
     @Test
+    fun testEndpointPathWithEveryPathCharacterOfRfc3986() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetTodos GET /v1.0/~me/!$&'()*+,;=:@/caf%C3%A9 -> {
+            |    200 -> Unit
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .path shouldBe listOf(Literal("v1.0"), Literal("~me"), Literal("!$&'()*+,;=:@"), Literal("caf%C3%A9"))
+    }
+
+    @Test
+    fun testRootPathParser() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetRoot GET / -> {
+            |    200 -> Unit
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .path shouldBe listOf(Literal(""))
+    }
+
+    @Test
+    fun testTrailingSlashParser() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetTodo GET /todos/{id: String}/ ? {done: Boolean} -> {
+            |    200 -> Unit
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .run {
+                path shouldBe listOf(
+                    Literal("todos"),
+                    Endpoint.Segment.Param(
+                        identifier = FieldIdentifier("id"),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(null),
+                            isNullable = false,
+                        ),
+                    ),
+                    Literal(""),
+                )
+                queries.fields.map { it.identifier } shouldBe listOf(FieldIdentifier("done"))
+            }
+    }
+
+    @Test
     fun testPathParamsParser() {
         val source =
             // language=ws
