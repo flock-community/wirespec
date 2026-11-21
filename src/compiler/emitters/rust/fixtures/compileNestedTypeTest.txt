@@ -9,8 +9,16 @@ impl DutchPostalCode {
     pub fn validate(&self) -> bool {
         return regex::Regex::new(r"^([0-9]{4}[A-Z]{2})$").unwrap().is_match(&self.value);
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for DutchPostalCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for DutchPostalCode {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| DutchPostalCode { value })
     }
 }
 

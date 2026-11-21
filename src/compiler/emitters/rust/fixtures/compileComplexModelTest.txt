@@ -9,8 +9,16 @@ impl Email {
     pub fn validate(&self) -> bool {
         return regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap().is_match(&self.value);
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for Email {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for Email {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| Email { value })
     }
 }
 
@@ -25,8 +33,16 @@ impl PhoneNumber {
     pub fn validate(&self) -> bool {
         return regex::Regex::new(r"^\+[1-9]\d{1,14}$").unwrap().is_match(&self.value);
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for PhoneNumber {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for PhoneNumber {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| PhoneNumber { value })
     }
 }
 
@@ -41,8 +57,16 @@ impl Tag {
     pub fn validate(&self) -> bool {
         return regex::Regex::new(r"^[a-z][a-z0-9-]{0,19}$").unwrap().is_match(&self.value);
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for Tag {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for Tag {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| Tag { value })
     }
 }
 
@@ -57,8 +81,16 @@ impl EmployeeAge {
     pub fn validate(&self) -> bool {
         return 18 <= self.value && self.value <= 65;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for EmployeeAge {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for EmployeeAge {
+    type Err = <i64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| EmployeeAge { value })
     }
 }
 

@@ -144,7 +144,10 @@ public object RustGenerator :
 
     private fun Enum.emit(indent: Int): String {
         val rustName = name.pascalCase()
-        val definition = "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName {\n${entries.joinToString("") { "${it.name.value()},\n".indentCode(1) }}}\n"
+        // An enum without entries has no value to default to.
+        val derive = if (entries.isEmpty()) "#[derive(Debug, Clone, PartialEq)]" else "#[derive(Debug, Clone, Default, PartialEq)]"
+        val variants = entries.mapIndexed { index, entry -> (if (index == 0) "#[default]\n" else "") + "${entry.name.value()},\n" }
+        val definition = "$derive\npub enum $rustName {\n${variants.joinToString("") { it.indentCode(1) }}}\n"
         val labelArms = entries.joinToString("\n") { "$rustName::${it.name.value()} => \"${it.wireValue()}\",".indentCode(3) }
         val fromLabelArms = entries.joinToString("\n") { "\"${it.wireValue()}\" => Some($rustName::${it.name.value()}),".indentCode(3) }
         val implementation = if (entries.isEmpty()) {
@@ -167,6 +170,12 @@ public object RustGenerator :
             |impl std::fmt::Display for $rustName {
             |    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
             |        write!(f, "{}", self.label())
+            |    }
+            |}
+            |impl std::str::FromStr for $rustName {
+            |    type Err = String;
+            |    fn from_str(s: &str) -> Result<Self, Self::Err> {
+            |        Self::from_label(s).ok_or_else(|| format!("Unknown $rustName: {}", s))
             |    }
             |}
             |

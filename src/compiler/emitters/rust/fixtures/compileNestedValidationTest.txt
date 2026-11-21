@@ -9,8 +9,16 @@ impl Tag {
     pub fn validate(&self) -> bool {
         return regex::Regex::new(r"^[a-z]+$").unwrap().is_match(&self.value);
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for Tag {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for Tag {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| Tag { value })
     }
 }
 
@@ -25,8 +33,16 @@ impl Score {
     pub fn validate(&self) -> bool {
         return 0 <= self.value && self.value <= 100;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for Score {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for Score {
+    type Err = <i64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| Score { value })
     }
 }
 

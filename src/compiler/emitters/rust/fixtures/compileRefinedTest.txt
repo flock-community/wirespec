@@ -9,8 +9,16 @@ impl TodoId {
     pub fn validate(&self) -> bool {
         return regex::Regex::new(r"^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$").unwrap().is_match(&self.value);
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for TodoId {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TodoId {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TodoId { value })
     }
 }
 
@@ -25,8 +33,16 @@ impl TodoNoRegex {
     pub fn validate(&self) -> bool {
         return true;
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for TodoNoRegex {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TodoNoRegex {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TodoNoRegex { value })
     }
 }
 
@@ -41,8 +57,16 @@ impl TestInt {
     pub fn validate(&self) -> bool {
         return true;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestInt {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestInt {
+    type Err = <i64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestInt { value })
     }
 }
 
@@ -57,8 +81,16 @@ impl TestInt0 {
     pub fn validate(&self) -> bool {
         return true;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestInt0 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestInt0 {
+    type Err = <i64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestInt0 { value })
     }
 }
 
@@ -73,8 +105,16 @@ impl TestInt1 {
     pub fn validate(&self) -> bool {
         return 0 <= self.value;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestInt1 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestInt1 {
+    type Err = <i64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestInt1 { value })
     }
 }
 
@@ -89,8 +129,16 @@ impl TestInt2 {
     pub fn validate(&self) -> bool {
         return 1 <= self.value && self.value <= 3;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestInt2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestInt2 {
+    type Err = <i64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestInt2 { value })
     }
 }
 
@@ -105,8 +153,16 @@ impl TestNum {
     pub fn validate(&self) -> bool {
         return true;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestNum {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestNum {
+    type Err = <f64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestNum { value })
     }
 }
 
@@ -121,8 +177,16 @@ impl TestNum0 {
     pub fn validate(&self) -> bool {
         return true;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestNum0 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestNum0 {
+    type Err = <f64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestNum0 { value })
     }
 }
 
@@ -137,8 +201,16 @@ impl TestNum1 {
     pub fn validate(&self) -> bool {
         return self.value <= 0.5;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestNum1 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestNum1 {
+    type Err = <f64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestNum1 { value })
     }
 }
 
@@ -153,8 +225,16 @@ impl TestNum2 {
     pub fn validate(&self) -> bool {
         return -0.2 <= self.value && self.value <= 0.5;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for TestNum2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for TestNum2 {
+    type Err = <f64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| TestNum2 { value })
     }
 }
 
