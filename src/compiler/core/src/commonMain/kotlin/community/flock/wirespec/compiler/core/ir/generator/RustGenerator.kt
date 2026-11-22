@@ -298,8 +298,9 @@ public object RustGenerator :
         }
         is Literal -> emit()
         is LiteralList -> if (values.isEmpty()) "Vec::<${type.emit()}>::new()" else "vec![${values.joinToString(", ") { it.emit() }}]"
+        // An empty map names its types, like an empty list: nothing else tells Rust what a boxed map holds.
         is LiteralMap -> if (values.isEmpty()) {
-            "std::collections::HashMap::new()"
+            "std::collections::HashMap::<${keyType.emit()}, ${valueType.emit()}>::new()"
         } else {
             "std::collections::HashMap::from([${values.entries.joinToString(", ") { (key, value) -> "(${Literal(key, keyType).emit()}, ${value.emit()})" }}])"
         }

@@ -2,20 +2,26 @@ package community.flock.wirespec.emitters.rust
 
 import community.flock.wirespec.compiler.core.ir.ArrayIndexCall
 import community.flock.wirespec.compiler.core.ir.Case
+import community.flock.wirespec.compiler.core.ir.Cast
 import community.flock.wirespec.compiler.core.ir.ConstructorStatement
 import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.ErrorStatement
 import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.File
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Interface
 import community.flock.wirespec.compiler.core.ir.Literal
+import community.flock.wirespec.compiler.core.ir.LiteralList
+import community.flock.wirespec.compiler.core.ir.LiteralMap
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.Precision
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
+import community.flock.wirespec.compiler.core.ir.ReturnStatement
+import community.flock.wirespec.compiler.core.ir.Statement
 import community.flock.wirespec.compiler.core.ir.Struct
 import community.flock.wirespec.compiler.core.ir.Switch
 import community.flock.wirespec.compiler.core.ir.Transformer
@@ -28,10 +34,15 @@ import community.flock.wirespec.compiler.core.ir.transform
 import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.transformer
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
 import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 import community.flock.wirespec.compiler.core.ir.Union as LanguageUnion
+import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumDefinition
+import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedDefinition
+import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
+import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
 
 private val rustSelfParam = Parameter(Name.of("&self"), LanguageType.Custom(""))
 private val rustResponsePattern = Regex("Response(\\d+|Default)")
@@ -316,3 +327,104 @@ private fun Endpoint.apiStruct(): String {
         }
     """.trimIndent()
 }
+
+/**
+ * The generator of a model is converted for languages with objects: it takes a `Wirespec.Generator`, calls the
+ * generator of another model on an object, looks an enum up with `valueOf` and switches on a string. In Rust it
+ * borrows any `Generator`, calls the associated function of the other generator, and a union wraps what the
+ * generator of its member returns.
+ */
+internal fun File.toRustGenerator(model: Model): File = stripWirespecPrefix()
+    .transform {
+        parametersWhere({ it.type.isGenerator() }) { it.copy(type = LanguageType.Custom(Name(listOf("&impl Generator")))) }
+        apply(associatedGeneratorCalls)
+        apply(boxedAnnotationValues)
+    }
+    .let { file ->
+        when (model) {
+            is EnumDefinition -> file.transform { apply(enumFromLabel(model)) }
+            is UnionDefinition -> file.transform { apply(unionOfMembers(model)) }
+            is TypeDefinition, is RefinedDefinition -> file
+        }
+    }
+
+private fun LanguageType.isGenerator(): Boolean = this is LanguageType.Custom && name.pascalCase() == "Generator"
+
+private fun Expression.isGeneratorOfModel(): Boolean = this is RawExpression && code.endsWith("Generator")
+
+internal val associatedGeneratorCalls: Transformer = transformer {
+    statementAndExpression { statement, transformer ->
+        val generator = ((statement as? FunctionCall)?.receiver as? RawExpression)?.takeIf { it.isGeneratorOfModel() }
+        if (statement is FunctionCall && generator != null) {
+            statement.copy(receiver = null, name = Name(listOf("${generator.code}::${statement.name.snakeCase()}"))).transformChildren(transformer)
+        } else {
+            statement.transformChildren(transformer)
+        }
+    }
+}
+
+// An annotation holds values of any type, a `Box<dyn Any>` in Rust, and a value does not turn into a box by itself.
+private val boxedAnnotationValues: Transformer = transformer {
+    statementAndExpression { statement, transformer ->
+        when (val transformed = statement.transformChildren(transformer)) {
+            is LiteralMap if transformed.valueType == LanguageType.Any -> transformed.copy(values = transformed.values.mapValues { it.value.boxed() })
+            is LiteralList if transformed.type == LanguageType.Any -> transformed.copy(values = transformed.values.map { it.boxed() })
+            else -> transformed
+        }
+    }
+}
+
+private fun Expression.boxed(): Expression = Cast(FunctionCall(name = Name(listOf("Box::new")), arguments = mapOf(Name.of("value") to this)), LanguageType.Any)
+
+private fun Expression.asStr(): Expression = FunctionCall(receiver = this, name = Name.of("as_str"))
+
+/** A Rust enum is looked up with `from_label`. An enum without entries has no `from_label` and no value to generate. */
+private fun enumFromLabel(enum: EnumDefinition): Transformer = Name.of(enum.identifier.value).pascalCase().let { name ->
+    transformer {
+        statementAndExpression { statement, transformer ->
+            when {
+                statement is ReturnStatement && enum.entries.isEmpty() -> ErrorStatement(Literal("$name has no entries", LanguageType.String))
+                statement is FunctionCall && statement.name == Name.of("valueOf") -> FunctionCall(
+                    receiver = FunctionCall(
+                        name = Name(listOf("$name::from_label")),
+                        arguments = statement.arguments.mapValues { transformer.transformExpression(it.value).asStr() },
+                    ),
+                    name = Name.of("expect"),
+                    arguments = mapOf(Name.of("message") to RawExpression("\"Unknown $name\"")),
+                )
+                else -> statement.transformChildren(transformer)
+            }
+        }
+    }
+}
+
+/**
+ * A `match` takes a string slice with string literals as patterns and needs a catch-all arm, which replaces the error
+ * after the switch. Every arm wraps the member it generates in the variant of the union.
+ */
+private fun unionOfMembers(union: UnionDefinition): Transformer = Name.of(union.identifier.value).pascalCase().let { name ->
+    transformer {
+        element { element, transformer ->
+            if (element is LanguageFunction) element.copy(body = element.body.filterNot { it is ErrorStatement }).transformChildren(transformer) else element.transformChildren(transformer)
+        }
+        statement { statement, transformer ->
+            if (statement is Switch) {
+                statement.copy(
+                    expression = statement.expression.asStr(),
+                    cases = statement.cases.map { it.wrappedInVariantOf(name) },
+                    default = listOf(ErrorStatement(Literal("Unknown variant of $name", LanguageType.String))),
+                )
+            } else {
+                statement.transformChildren(transformer)
+            }
+        }
+    }
+}
+
+private fun Case.wrappedInVariantOf(union: String): Case = (value as? Literal)?.value?.toString()
+    ?.let { member -> copy(value = RawExpression("\"$member\""), body = body.map { it.wrappedIn("$union::${Name.of(member).pascalCase()}") }) }
+    ?: this
+
+private fun Statement.wrappedIn(variant: String): Statement = (this as? ReturnStatement)
+    ?.let { ReturnStatement(FunctionCall(name = Name(listOf(variant)), arguments = mapOf(Name.of("value") to it.expression))) }
+    ?: this

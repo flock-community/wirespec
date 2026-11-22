@@ -51,12 +51,14 @@ use super::super::model::user::User;
 
 pub struct UserGenerator;
 impl UserGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> User {
-        return User { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> User {
+        return User { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
+pub mod rpc;
+pub mod generator;
 pub mod wirespec;

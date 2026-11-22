@@ -58,8 +58,8 @@ use super::super::model::user_account_password::UserAccountPassword;
 
 pub struct UserAccountPasswordGenerator;
 impl UserAccountPasswordGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccountPassword {
-        return UserAccountPassword { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), password: generator.generate(vec![path.as_slice(), vec![String::from("password")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> UserAccountPassword {
+        return UserAccountPassword { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), password: generator.generate(vec![path.as_slice(), vec![String::from("password")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -69,8 +69,8 @@ use super::super::model::user_account_token::UserAccountToken;
 
 pub struct UserAccountTokenGenerator;
 impl UserAccountTokenGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccountToken {
-        return UserAccountToken { token: generator.generate(vec![path.as_slice(), vec![String::from("token")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> UserAccountToken {
+        return UserAccountToken { token: generator.generate(vec![path.as_slice(), vec![String::from("token")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -82,8 +82,8 @@ use super::user_account_generator::UserAccountGenerator;
 
 pub struct UserGenerator;
 impl UserGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> User {
-        return User { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), account: generator.generate(vec![path.as_slice(), vec![String::from("account")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| UserAccountGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<UserAccount>() }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> User {
+        return User { username: generator.generate(vec![path.as_slice(), vec![String::from("username")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), account: generator.generate(vec![path.as_slice(), vec![String::from("account")].as_slice()].concat(), GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p0| UserAccountGenerator::generate(generator, p0)), r#type: std::any::TypeId::of::<UserAccount>() }) };
     }
 }
 
@@ -95,21 +95,24 @@ use super::user_account_token_generator::UserAccountTokenGenerator;
 
 pub struct UserAccountGenerator;
 impl UserAccountGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> UserAccount {
-        let variant = generator.generate(vec![path.as_slice(), vec![String::from("variant")].as_slice()].concat(), Wirespec.GeneratorFieldUnion { variants: vec![String::from("UserAccountPassword"), String::from("UserAccountToken")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<UserAccount>() });
-        match variant {
-            String::from("UserAccountPassword") => {
-                return UserAccountPasswordGenerator.generate(generator, vec![path.as_slice(), vec![String::from("UserAccountPassword")].as_slice()].concat());
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> UserAccount {
+        let variant = generator.generate(vec![path.as_slice(), vec![String::from("variant")].as_slice()].concat(), GeneratorFieldUnion { variants: vec![String::from("UserAccountPassword"), String::from("UserAccountToken")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<UserAccount>() });
+        match variant.as_str() {
+            "UserAccountPassword" => {
+                return UserAccount::UserAccountPassword(UserAccountPasswordGenerator::generate(generator, vec![path.as_slice(), vec![String::from("UserAccountPassword")].as_slice()].concat()));
             }
-            String::from("UserAccountToken") => {
-                return UserAccountTokenGenerator.generate(generator, vec![path.as_slice(), vec![String::from("UserAccountToken")].as_slice()].concat());
+            "UserAccountToken" => {
+                return UserAccount::UserAccountToken(UserAccountTokenGenerator::generate(generator, vec![path.as_slice(), vec![String::from("UserAccountToken")].as_slice()].concat()));
+            }
+            _ => {
+                panic!("Unknown variant of UserAccount");
             }
         }
-        panic!("Unknown variant");
     }
 }
 
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
+pub mod generator;
 pub mod wirespec;

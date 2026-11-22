@@ -149,6 +149,46 @@ expression of a refined type:
 ```rust wirespec file=generator/todo_id_generator.rs
 ```
 
+A `Generator` has a function for each kind of field. The fields of a generated value, such as an element of a list or
+a field of another type, come with a `generate` function that builds the value for a path. A generator that always
+returns the same values looks like this:
+
+```rust
+use std::collections::HashMap;
+
+struct Fixed;
+
+impl Generator for Fixed {
+    fn generate_string(&self, _: Vec<String>, field: &GeneratorFieldString) -> String {
+        String::from(if field.regex.is_some() { "1234AB" } else { "string" })
+    }
+    fn generate_integer64(&self, _: Vec<String>, field: &GeneratorFieldInteger64) -> i64 { field.min.unwrap_or(42) }
+    fn generate_integer32(&self, _: Vec<String>, field: &GeneratorFieldInteger32) -> i32 { field.min.unwrap_or(42) }
+    fn generate_number64(&self, _: Vec<String>, field: &GeneratorFieldNumber64) -> f64 { field.min.unwrap_or(4.2) }
+    fn generate_number32(&self, _: Vec<String>, field: &GeneratorFieldNumber32) -> f32 { field.min.unwrap_or(4.2) }
+    fn generate_boolean(&self, _: Vec<String>, _: &GeneratorFieldBoolean) -> bool { true }
+    fn generate_bytes(&self, _: Vec<String>, _: &GeneratorFieldBytes) -> Vec<u8> { Vec::new() }
+    fn generate_enum(&self, _: Vec<String>, field: &GeneratorFieldEnum) -> String { field.values[0].clone() }
+    fn generate_union(&self, _: Vec<String>, field: &GeneratorFieldUnion) -> String { field.variants[0].clone() }
+    fn generate_array<T>(&self, path: Vec<String>, field: &GeneratorFieldArray<T>) -> Vec<T> {
+        vec![(field.generate)([path, vec![String::from("0")]].concat())]
+    }
+    fn generate_nullable<T>(&self, path: Vec<String>, field: &GeneratorFieldNullable<T>) -> Option<T> {
+        Some((field.generate)(path))
+    }
+    fn generate_dict<T>(&self, path: Vec<String>, field: &GeneratorFieldDict<T>) -> HashMap<String, T> {
+        HashMap::from([(String::from("key"), (field.generate)([path, vec![String::from("key")]].concat()))])
+    }
+    fn generate_shape<T>(&self, path: Vec<String>, field: &GeneratorFieldShape<T>) -> T { (field.generate)(path) }
+}
+
+let todo = TodoGenerator::generate(&Fixed, Vec::new());
+```
+
+`generate_enum` returns one of the `values` of the field and `generate_union` one of its `variants`. A type that
+refers to itself, directly or through another type, is generated without end unless `generate_array` and
+`generate_nullable` stop at some depth of the path.
+
 ## Shared
 
 `wirespec.rs` is the same for every specification. It contains:

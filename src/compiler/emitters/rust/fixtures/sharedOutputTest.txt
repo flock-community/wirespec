@@ -87,63 +87,152 @@ pub struct RawResponse {
 pub trait Transportation {
     async fn transport(&self, request: &RawRequest) -> RawResponse;
 }
-pub trait GeneratorField<T> {}
+pub type Annotations = Vec<HashMap<String, Box<dyn std::any::Any>>>;
+pub trait GeneratorField<T> {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> T;
+}
 pub struct GeneratorFieldString {
     pub regex: Option<String>,
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub annotations: Annotations,
 }
 pub struct GeneratorFieldInteger64 {
     pub min: Option<i64>,
     pub max: Option<i64>,
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub annotations: Annotations,
 }
 pub struct GeneratorFieldInteger32 {
     pub min: Option<i32>,
     pub max: Option<i32>,
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub annotations: Annotations,
 }
 pub struct GeneratorFieldNumber64 {
     pub min: Option<f64>,
     pub max: Option<f64>,
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub annotations: Annotations,
 }
 pub struct GeneratorFieldNumber32 {
     pub min: Option<f32>,
     pub max: Option<f32>,
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub annotations: Annotations,
 }
 pub struct GeneratorFieldBoolean {
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub annotations: Annotations,
 }
 pub struct GeneratorFieldBytes {
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
+    pub annotations: Annotations,
 }
 pub struct GeneratorFieldEnum {
     pub values: Vec<String>,
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
-    pub r#type: std::any::TypeId,
+    pub annotations: Annotations,
+    pub r#type: TypeId,
 }
 pub struct GeneratorFieldUnion {
     pub variants: Vec<String>,
-    pub annotations: Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>,
-    pub r#type: std::any::TypeId,
+    pub annotations: Annotations,
+    pub r#type: TypeId,
 }
-pub struct GeneratorFieldArray<T> {
-    pub generate: Box<dyn Fn(Vec<String>) -> T>,
+pub struct GeneratorFieldArray<'a, T> {
+    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
 }
-pub struct GeneratorFieldNullable<T> {
-    pub generate: Box<dyn Fn(Vec<String>) -> T>,
+pub struct GeneratorFieldNullable<'a, T> {
+    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
 }
-pub struct GeneratorFieldShape<T> {
-    pub annotations: std::collections::HashMap<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>,
-    pub generate: Box<dyn Fn(Vec<String>) -> T>,
-    pub r#type: std::any::TypeId,
+pub struct GeneratorFieldDict<'a, T> {
+    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
 }
-pub struct GeneratorFieldDict<V> {
-    pub generate: Box<dyn Fn(Vec<String>) -> V>,
+pub struct GeneratorFieldShape<'a, T> {
+    pub annotations: HashMap<String, Annotations>,
+    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
+    pub r#type: TypeId,
 }
-pub trait Generator {
-    fn generate<T>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T;
+impl GeneratorField<String> for GeneratorFieldString {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> String {
+        generator.generate_string(path, self)
+    }
+}
+impl GeneratorField<i64> for GeneratorFieldInteger64 {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> i64 {
+        generator.generate_integer64(path, self)
+    }
+}
+impl GeneratorField<i32> for GeneratorFieldInteger32 {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> i32 {
+        generator.generate_integer32(path, self)
+    }
+}
+impl GeneratorField<f64> for GeneratorFieldNumber64 {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> f64 {
+        generator.generate_number64(path, self)
+    }
+}
+impl GeneratorField<f32> for GeneratorFieldNumber32 {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> f32 {
+        generator.generate_number32(path, self)
+    }
+}
+impl GeneratorField<bool> for GeneratorFieldBoolean {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> bool {
+        generator.generate_boolean(path, self)
+    }
+}
+impl GeneratorField<Vec<u8>> for GeneratorFieldBytes {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> Vec<u8> {
+        generator.generate_bytes(path, self)
+    }
+}
+impl GeneratorField<String> for GeneratorFieldEnum {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> String {
+        generator.generate_enum(path, self)
+    }
+}
+impl GeneratorField<String> for GeneratorFieldUnion {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> String {
+        generator.generate_union(path, self)
+    }
+}
+impl<'a, T> GeneratorField<Vec<T>> for GeneratorFieldArray<'a, T> {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> Vec<T> {
+        generator.generate_array(path, self)
+    }
+}
+impl<'a, T> GeneratorField<Option<T>> for GeneratorFieldNullable<'a, T> {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> Option<T> {
+        generator.generate_nullable(path, self)
+    }
+}
+impl<'a, T> GeneratorField<HashMap<String, T>> for GeneratorFieldDict<'a, T> {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> HashMap<String, T> {
+        generator.generate_dict(path, self)
+    }
+}
+impl<'a, T> GeneratorField<T> for GeneratorFieldShape<'a, T> {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> T {
+        generator.generate_shape(path, self)
+    }
+}
+// A field of type `Any` is generated as a string.
+impl GeneratorField<Box<dyn std::any::Any>> for GeneratorFieldString {
+    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> Box<dyn std::any::Any> {
+        Box::new(generator.generate_string(path, self))
+    }
+}
+pub trait Generator: Sized {
+    fn generate_string(&self, path: Vec<String>, field: &GeneratorFieldString) -> String;
+    fn generate_integer64(&self, path: Vec<String>, field: &GeneratorFieldInteger64) -> i64;
+    fn generate_integer32(&self, path: Vec<String>, field: &GeneratorFieldInteger32) -> i32;
+    fn generate_number64(&self, path: Vec<String>, field: &GeneratorFieldNumber64) -> f64;
+    fn generate_number32(&self, path: Vec<String>, field: &GeneratorFieldNumber32) -> f32;
+    fn generate_boolean(&self, path: Vec<String>, field: &GeneratorFieldBoolean) -> bool;
+    fn generate_bytes(&self, path: Vec<String>, field: &GeneratorFieldBytes) -> Vec<u8>;
+    fn generate_enum(&self, path: Vec<String>, field: &GeneratorFieldEnum) -> String;
+    fn generate_union(&self, path: Vec<String>, field: &GeneratorFieldUnion) -> String;
+    fn generate_array<T>(&self, path: Vec<String>, field: &GeneratorFieldArray<T>) -> Vec<T>;
+    fn generate_nullable<T>(&self, path: Vec<String>, field: &GeneratorFieldNullable<T>) -> Option<T>;
+    fn generate_dict<T>(&self, path: Vec<String>, field: &GeneratorFieldDict<T>) -> HashMap<String, T>;
+    fn generate_shape<T>(&self, path: Vec<String>, field: &GeneratorFieldShape<T>) -> T;
+    fn generate<T>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T {
+        field.generate(self, path)
+    }
 }
 pub trait Client {
     type Transport: Transportation;
