@@ -71,7 +71,7 @@ pub trait BodySerializer {
     fn serialize_body<T: serde::Serialize + 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
 }
 pub trait BodyDeserializer {
-    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
+    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], r#type: TypeId) -> Result<T, WirespecError>;
 }
 ```
 
@@ -135,8 +135,8 @@ impl BodySerializer for Json {
 }
 
 impl BodyDeserializer for Json {
-    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], _: TypeId) -> T {
-        serde_json::from_slice(raw).expect("body matches the contract")
+    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], _: TypeId) -> Result<T, WirespecError> {
+        serde_json::from_slice(raw).map_err(|error| WirespecError::Deserialization(error.to_string()))
     }
 }
 ```

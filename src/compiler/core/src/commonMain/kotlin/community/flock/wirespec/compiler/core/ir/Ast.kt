@@ -376,7 +376,7 @@ public data class NullCheck(
 ) : Statement,
     Expression
 
-internal data class NullableMap(
+public data class NullableMap(
     val expression: Expression,
     val body: Expression,
     val alternative: Expression,

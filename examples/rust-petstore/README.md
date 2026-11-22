@@ -138,7 +138,8 @@ each value as a list, then as a string, then as a literal such as `42`.
 
 ### Transportation: `src/transportation.rs`
 
-`Transportation` has a single method, `async fn transport(&self, request: &RawRequest) -> RawResponse`. `Http`
+`Transportation` has a single method,
+`async fn transport(&self, request: &RawRequest) -> Result<RawResponse, WirespecError>`. `Http`
 implements it with `reqwest`:
 
 1. It appends the path segments to the base URL, which percent-encodes them.
@@ -154,7 +155,7 @@ use get_pet_by_id::GetPetById::Call as _;
 
 let petstore = Client { serialization: Json, transportation: Http::new("http://localhost:8080") };
 
-match petstore.get_pet_by_id(1).await {
+match petstore.get_pet_by_id(1).await? {
     get_pet_by_id::Response::Response200(response) => println!("{:?}", response.body),
     get_pet_by_id::Response::Response400(_) => println!("Invalid id"),
     get_pet_by_id::Response::Response404(_) => println!("Not found"),
@@ -162,7 +163,8 @@ match petstore.get_pet_by_id(1).await {
 ```
 
 Because `Response` is an enum of the status codes in the contract, the `match` has to handle every status the contract
-defines.
+defines. A call returns a `Result`: the `WirespecError` says that the server could not be reached, that it answered
+with a status the contract does not list, or that the response could not be read.
 
 ### Server: `src/server.rs`
 
@@ -184,7 +186,8 @@ impl get_pet_by_id::GetPetById::Handler for PetStore {
 `Api.method()`. Actix-web uses the same `{petId}` syntax as Wirespec for path parameters. For each request, the route:
 
 1. converts the actix-web request to a `RawRequest`,
-2. turns it into a typed `Request` with `from_raw_request(&Json, ..)`,
+2. turns it into a typed `Request` with `from_raw_request(&Json, ..)`, and answers `400 Bad Request` with the
+   `WirespecError` when the request is not one the contract allows,
 3. calls the `PetStore` handler,
 4. converts the `Response` back with `to_raw_response(&Json, ..)` and returns it as an actix-web response.
 
@@ -195,7 +198,7 @@ worker on a single thread. Frameworks that require `Send` handlers, such as axum
 
 ### Good to know
 
-- The serialization and transport traits return plain values, not `Result`, so invalid input causes a panic. The
-  generated `from_raw_request` also panics when a required parameter is missing.
+- The serializers return plain values, not `Result`: a value of a generated type can always be written. The
+  deserializers and the transport return a `Result`, because their input comes from outside.
 - Every generated file has `use regex;` at the top, so `regex` is a dependency even though the Petstore has no refined
   types.

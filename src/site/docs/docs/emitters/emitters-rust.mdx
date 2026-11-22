@@ -105,12 +105,37 @@ request and its responses:
   `to_raw_response` and `from_raw_response`. They convert between the typed request and response and the
   `RawRequest` and `RawResponse` that go over the wire, and delegate the serialization of the path, parameters,
   headers and body to a `Serializer` or `Deserializer`.
-- **Client and Api**: every type that implements the shared `Client` trait, by providing a `Transportation` and a
-  `Serialization`, gets a `Handler` that sends the request. `Api` describes the endpoint for frameworks with its path
-  template and method.
+- **Api**: `Api` describes the endpoint for frameworks with its path template and method.
 
 ```rust wirespec file=endpoint/update_todo.rs
 ```
+
+### Errors
+
+A raw request or response comes from outside, so reading it can fail. `from_raw_request` and `from_raw_response`
+return a `Result` with a `WirespecError`, and do not panic:
+
+| `WirespecError`             | When                                                              |
+|-----------------------------|-------------------------------------------------------------------|
+| `MissingPathSegment(index)` | The path is shorter than the path of the endpoint                 |
+| `MissingParameter(name)`    | A required query parameter or header is missing                   |
+| `MissingBody`               | The request or response has no body, and the contract has one     |
+| `UnexpectedStatus(status)`  | The response has a status the contract does not list              |
+| `Deserialization(message)`  | A deserializer you provide could not read a value                 |
+| `Transport(message)`        | The `Transportation` you provide could not send the request       |
+
+The deserializers and the `Transportation` you provide return a `Result` as well, so they can report the last two. A
+server answers a request that gives an error with a `400 Bad Request`:
+
+```rust
+match UpdateTodo::from_raw_request(&serialization, raw_request) {
+    Ok(request) => UpdateTodo::to_raw_response(&serialization, handler.update_todo(request).await),
+    Err(error) => RawResponse { status_code: 400, headers: HashMap::new(), body: Some(error.to_string().into_bytes()) },
+}
+```
+
+A call of a client returns the same `Result`: the server could not be reached, it answered with a status the
+contract does not list, or its response could not be read.
 
 A path parameter is written with `Display` and read with `FromStr`. For the bodies you provide a `BodySerializer` and
 a `BodyDeserializer`: the models have no serialization of their own. The
@@ -135,7 +160,8 @@ directly:
 ## Client
 
 For every endpoint, a client implements its `Call` trait. It builds the `Request`, converts it with `to_raw_request`,
-sends it with a `Transportation` and converts the answer with `from_raw_response`:
+sends it with a `Transportation` and converts the answer with `from_raw_response`. It returns the response, or the
+[error](#errors) of the transport or of reading the response:
 
 ```rust wirespec file=client/update_todo_client.rs
 ```
@@ -208,7 +234,8 @@ refers to itself, directly or through another type, is generated without end unl
 | `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them            |
 | `Generator`, `GeneratorField` and its structs                 | Generate values for the generators                                |
 | `AnyValue`                                                    | A value of type `Any`                                             |
-| `Client`, `Server`                                            | Provide the transport and serialization, and describe an endpoint |
+| `WirespecError`                                               | What can go wrong with a message from outside                     |
+| `Server`                                                      | Describe an endpoint                                              |
 
 <details>
   <summary>The complete wirespec.rs</summary>
