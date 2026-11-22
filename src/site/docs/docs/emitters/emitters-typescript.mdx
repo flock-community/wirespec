@@ -77,10 +77,10 @@ A union becomes a union type of its members:
 
 The union type has no discriminator: a `TodoCreated` is written to JSON with its own fields and nothing else. So
 TypeScript cannot tell the members apart with a `switch`, and a client or server in another language may expect a
-property that names the member. The [Serde](../integration/integration-rust-serde.mdx),
-[Jackson](../integration/integration-jackson.mdx) and
-[kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) integrations all write the Wirespec name
-of the member into a `type` property. You add the discriminator in your own code, on top of the generated types. Take
+property that names the member. The [Jackson](../integration/integration-jackson.mdx) and
+[kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) integrations for Java and Kotlin write the
+Wirespec name of the member into a `type` property. You add the discriminator in your own code, on top of the
+generated types. Take
 this contract:
 
 ```wirespec
@@ -100,8 +100,8 @@ endpoint CreatePet POST Pet /pets -> {
 
 #### The `type` property of another integration
 
-A Rust server with the Serde integration writes a `Cat` as `{"type":"Cat","role":"CAT","name":"Tom"}`, and rejects a
-`Pet` without the `type` property. The generated `Pet` does not know that property, so declare a union that does:
+A Java or Kotlin server with the Jackson integration writes a `Cat` as `{"type":"Cat","role":"CAT","name":"Tom"}`, and
+rejects a `Pet` without the `type` property. The generated `Pet` does not know that property, so declare a union that does:
 
 ```typescript title="src/pet.ts"
 import { Cat, Dog } from "./gen/model";
