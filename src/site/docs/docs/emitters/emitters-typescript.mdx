@@ -79,8 +79,9 @@ The union type has no discriminator: a `TodoCreated` is written to JSON with its
 TypeScript cannot tell the members apart with a `switch`, and a client or server in another language may expect a
 property that names the member. The [Jackson](../integration/integration-jackson.mdx) and
 [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) integrations for Java and Kotlin write the
-Wirespec name of the member into a `type` property. You add the discriminator in your own code, on top of the
-generated types. Take
+Wirespec name of the member into a `type` property. The [Serde](../integration/integration-rust-serde.mdx#unions)
+integration for Rust writes a union like TypeScript does, without one. You add the discriminator in your own code, on
+top of the generated types. Take
 this contract:
 
 ```wirespec
