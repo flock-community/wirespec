@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.kotest.generator
 
 import community.flock.kotlinx.rgxgen.RgxGen
+import community.flock.wirespec.integration.kotest.dsl.draw
 import io.kotest.property.Arb
 import io.kotest.property.Gen
 import io.kotest.property.RandomSource
@@ -150,7 +151,7 @@ internal class KotestWirespecGenerator(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> applyOverride(factory: () -> Gen<*>, field: KotestField<T>, path: List<String>): T = refinedWrapper.wrap(factory().drawOne(rsFor(path)), field, path) as T
+    private fun <T> applyOverride(factory: () -> Gen<*>, field: KotestField<T>, path: List<String>): T = refinedWrapper.wrap(factory().draw(rsFor(path)), field, path) as T
 
     private fun captureSeedIfMatches(path: List<String>, field: KotestField<*>): Any? = captures.lastOrNull()
         ?.takeIf { it.seed == null }
@@ -274,8 +275,6 @@ internal class KotestWirespecGenerator(
 
     private fun KotestField<*>.fieldAnnotations(): List<Map<String, Any>> = (this as? KotestLeafField<*>)?.annotations ?: emptyList()
 }
-
-private fun <A> Gen<A>.drawOne(rs: RandomSource): A = generate(rs).first().value
 
 private inline fun <F, R> withFrame(stack: ArrayDeque<F>, frame: F, block: () -> R): R {
     val mark = stack.size
