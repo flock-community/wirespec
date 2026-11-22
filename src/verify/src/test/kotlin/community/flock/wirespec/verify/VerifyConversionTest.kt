@@ -102,7 +102,7 @@ class VerifyConversionTest : FunSpec({
 
                     // fromRawRequest
                     when {
-                        isRust -> raw("let from_raw = from_raw_request(&serialization, raw_request)")
+                        isRust -> raw("let from_raw = from_raw_request(&serialization, raw_request).unwrap()")
                         isTypeScript -> raw("const fromRaw = GetTodos.fromRawRequest(serialization, rawRequest)")
                         else -> assign("fromRaw", functionCall("fromRawRequest", receiver = endpointRef) {
                             arg("serialization", VariableReference("serialization"))
@@ -151,7 +151,7 @@ class VerifyConversionTest : FunSpec({
 
                     // fromRawResponse
                     when {
-                        isRust -> raw("let from_raw_resp = from_raw_response(&serialization, raw_response)")
+                        isRust -> raw("let from_raw_resp = from_raw_response(&serialization, raw_response).unwrap()")
                         isTypeScript -> raw("const fromRawResp = GetTodos.fromRawResponse(serialization, rawResponse)")
                         else -> assign("fromRawResp", functionCall("fromRawResponse", receiver = endpointRef) {
                             arg("serialization", VariableReference("serialization"))

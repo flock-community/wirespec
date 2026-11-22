@@ -30,11 +30,11 @@ impl BodySerializer for Json {
 }
 
 impl BodyDeserializer for Json {
-    fn deserialize_body<T: 'static>(&self, raw: &[u8], _: TypeId) -> T {
+    fn deserialize_body<T: 'static>(&self, raw: &[u8], _: TypeId) -> Result<T, WirespecError> {
         serde_json::from_slice(raw)
             .ok()
             .and_then(|json| from_json(&json))
-            .unwrap_or_else(|| panic!("body is not a valid {}", type_name::<T>()))
+            .ok_or_else(|| invalid::<T>("body"))
     }
 }
 
@@ -45,11 +45,11 @@ impl PathSerializer for Json {
 }
 
 impl PathDeserializer for Json {
-    fn deserialize_path<T: FromStr>(&self, raw: &str, _: TypeId) -> T
+    fn deserialize_path<T: FromStr>(&self, raw: &str, _: TypeId) -> Result<T, WirespecError>
     where
         T::Err: Debug,
     {
-        raw.parse().expect("invalid path parameter")
+        raw.parse().map_err(|_| invalid::<T>(raw))
     }
 }
 
@@ -65,13 +65,22 @@ impl ParamSerializer for Json {
 
 /// The strings do not say what they hold, so try them as a list, a string, and a literal such as `42`.
 impl ParamDeserializer for Json {
-    fn deserialize_param<T: 'static>(&self, values: &[String], _: TypeId) -> T {
+    fn deserialize_param<T: 'static>(
+        &self,
+        values: &[String],
+        _: TypeId,
+    ) -> Result<T, WirespecError> {
         let first = values.first().map(String::as_str).unwrap_or_default();
         from_json(&values.iter().cloned().map(Value::String).collect())
             .or_else(|| from_json(&Value::from(first)))
             .or_else(|| from_json(&serde_json::from_str(first).ok()?))
-            .unwrap_or_else(|| panic!("{values:?} is not a valid {}", type_name::<T>()))
+            .ok_or_else(|| invalid::<T>(&format!("{values:?}")))
     }
+}
+
+/// Input the contract does not allow is an error for the caller, not a panic.
+fn invalid<T>(input: &str) -> WirespecError {
+    WirespecError::Deserialization(format!("{input} is not a valid {}", type_name::<T>()))
 }
 
 fn text(json: &Value) -> String {

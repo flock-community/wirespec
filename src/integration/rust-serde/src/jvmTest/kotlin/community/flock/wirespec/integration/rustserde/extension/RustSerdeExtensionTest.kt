@@ -100,7 +100,7 @@ class RustSerdeExtensionTest {
     fun `The body serializers of the shared module take a serde body`() {
         file("wirespec").let {
             it shouldContain "fn serialize_body<T: serde::Serialize + 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;"
-            it shouldContain "fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], r#type: TypeId) -> T;"
+            it shouldContain "fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], r#type: TypeId) -> Result<T, WirespecError>;"
         }
     }
 

@@ -16,6 +16,8 @@ import community.flock.wirespec.compiler.core.ir.LiteralList
 import community.flock.wirespec.compiler.core.ir.LiteralMap
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.NullCheck
+import community.flock.wirespec.compiler.core.ir.NullableMap
 import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.Precision
 import community.flock.wirespec.compiler.core.ir.RawElement
@@ -298,28 +300,78 @@ internal fun <T : Element> T.stripResponseGenerics(): T = transform {
     }
 }
 
-internal fun <T : Element> T.injectHandlerImplForClient(): T = transform {
-    matchingElements<Namespace> { ns ->
-        ns.findElement<Interface> { it.name == Name.of("Handler") }
-            ?.findElement<LanguageFunction>()
-            ?.let { method ->
-                ns.copy(
-                    elements = ns.elements + RawElement(
-                        """
-                        impl<C: Client> Handler for C {
-                            async fn ${method.name.snakeCase()}(&self, request: Request) -> Response {
-                                let raw = to_raw_request(self.serialization(), request);
-                                let resp = self.transport().transport(&raw).await;
-                                from_raw_response(self.serialization(), resp)
-                            }
-                        }
-                        """.trimIndent(),
-                    ),
-                )
+/**
+ * A raw request or response comes from outside, so reading it can fail: a parameter or the body is missing, a value
+ * cannot be deserialized, or the status is not in the contract. The functions that read one return the error to the
+ * caller instead of panicking, and so does a `Call`, which also has a transport that can fail.
+ */
+internal fun File.withErrorsReturned(): File = transform {
+    apply(
+        transformer {
+            element { element, transformer ->
+                when {
+                    element is LanguageFunction && element.name.snakeCase() in readingFunctions -> element.copy(
+                        returnType = element.returnType?.orError(),
+                        body = element.body.map(returnedErrors::transformStatement),
+                    )
+                    element is Interface && element.name == Name.of("Call") -> element.copy(
+                        elements = element.elements.map { if (it is LanguageFunction) it.copy(returnType = it.returnType?.orError()) else it },
+                    )
+                    else -> element.transformChildren(transformer)
+                }
             }
-            ?: ns
+        },
+    )
+}
+
+private val readingFunctions = setOf("from_raw_request", "from_raw_response")
+
+private const val ERROR = "WirespecError"
+
+// Spelled out, so a model named `Result` cannot take its place.
+private fun LanguageType.orError(): LanguageType = LanguageType.Custom(Name(listOf("std::result::Result<${rustName()}, $ERROR>")))
+
+private fun Expression.orReturnError(): FunctionCall = FunctionCall(receiver = this, name = Name(listOf("?")))
+
+private fun Expression.isDeserialization(): Boolean = this is FunctionCall && name.snakeCase() in deserializationFunctions
+
+private val deserializationFunctions = setOf("deserialize_path", "deserialize_param", "deserialize_body")
+
+private val returnedErrors: Transformer = transformer {
+    statementAndExpression { statement, transformer ->
+        when {
+            statement is ReturnStatement -> ReturnStatement(FunctionCall(name = Name(listOf("Ok")), arguments = mapOf(Name.of("value") to transformer.transformExpression(statement.expression))))
+            statement is ErrorStatement -> ReturnStatement(RawExpression("Err($ERROR::UnexpectedStatus(response.status_code))"))
+            statement is NullCheck && statement.body.isDeserialization() -> statement.copy(alternative = null).orMissing(statement.alternative, statement.expression.missing())
+            statement is NullableMap && statement.body.isDeserialization() -> NullCheck(statement.expression, statement.body, alternative = null).orMissing(statement.alternative, statement.expression.missing())
+            statement is FunctionCall && statement.isDeserialization() -> statement.copy(arguments = statement.arguments.mapValues { it.value.orMissingSegment() }).orReturnError()
+            else -> statement.transformChildren(transformer)
+        }
     }
 }
+
+/**
+ * The value is read inside `map`, which gives an `Option<Result<..>>`: `transpose` turns it inside out, so a value that
+ * cannot be read is returned as an error. What is left is an `Option`, and an error when a required value is missing.
+ */
+private fun Expression.orMissing(alternative: Expression?, missing: String): Statement = FunctionCall(receiver = this, name = Name.of("transpose")).orReturnError()
+    .let { read ->
+        when (alternative) {
+            null -> read
+            is ErrorStatement -> FunctionCall(receiver = read, name = Name.of("ok_or"), arguments = mapOf(Name.of("error") to RawExpression(missing))).orReturnError()
+            else -> FunctionCall(receiver = read, name = Name.of("unwrap_or"), arguments = mapOf(Name.of("default") to alternative))
+        }
+    }
+
+private fun Expression.missing(): String = ((this as? ArrayIndexCall)?.index as? Literal)?.value
+    ?.let { "$ERROR::MissingParameter(String::from(\"$it\"))" }
+    ?: "$ERROR::MissingBody"
+
+// A segment of the path is read by its index, which panics on a path that is too short.
+private fun Expression.orMissingSegment(): Expression = (this as? ArrayIndexCall)
+    ?.takeIf { it.index is Literal }
+    ?.let { RawExpression("${it.receiver.toRawCode()}.get(${(it.index as Literal).value}).ok_or($ERROR::MissingPathSegment(${(it.index as Literal).value}))?") }
+    ?: this
 
 internal fun <T : Element> T.injectResponseFromImpls(): T = transform {
     matchingElements<File> { file ->

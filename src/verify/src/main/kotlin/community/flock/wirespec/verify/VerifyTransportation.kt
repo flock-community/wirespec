@@ -61,12 +61,12 @@ internal fun transportationCode(lang: Language): String = when (lang.emitter) {
         |    serialization: &'a S,
         |}
         |impl<'a, S: Serialization> Transportation for MockTransport<'a, S> {
-        |    async fn transport(&self, request: &RawRequest) -> RawResponse {
+        |    async fn transport(&self, request: &RawRequest) -> Result<RawResponse, generated::wirespec::WirespecError> {
         |        assert_eq!(request.method, "GET", "Method should be GET");
         |        assert_eq!(request.path[0], "todos", "Path should start with todos");
         |        let todo = TodoDto { description: "test".to_string() };
         |        let body = self.serialization.serialize_body(&vec![todo], std::any::TypeId::of::<Vec<TodoDto>>());
-        |        RawResponse { status_code: 200, headers: std::collections::HashMap::new(), body: Some(body) }
+        |        Ok(RawResponse { status_code: 200, headers: std::collections::HashMap::new(), body: Some(body) })
         |    }
         |}
         |#[allow(non_upper_case_globals)]

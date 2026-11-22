@@ -1,4 +1,5 @@
 use std::any::TypeId;
+use std::collections::HashMap;
 
 use actix_web::{App, HttpServer};
 use serde_json::{Value, json};
@@ -8,7 +9,8 @@ use wirespec_petstore::generated::model::{
     order::Order, order_status::OrderStatus, pet::Pet, pet_status::PetStatus,
 };
 use wirespec_petstore::generated::wirespec::{
-    BodyDeserializer, BodySerializer, ParamDeserializer, ParamSerializer,
+    BodyDeserializer, BodySerializer, ParamDeserializer, ParamSerializer, RawResponse,
+    WirespecError,
 };
 use wirespec_petstore::serialization::Json;
 use wirespec_petstore::server;
@@ -34,7 +36,10 @@ fn bodies_use_the_field_names_of_the_contract() {
         serde_json::from_slice::<Value>(&raw).unwrap(),
         json!({ "id": 1, "name": "Rex", "photoUrls": ["rex.jpg"], "status": "available" }),
     );
-    assert_eq!(Json.deserialize_body::<Pet>(&raw, TypeId::of::<Pet>()), pet);
+    assert_eq!(
+        Json.deserialize_body::<Pet>(&raw, TypeId::of::<Pet>()),
+        Ok(pet)
+    );
 }
 
 #[test]
@@ -48,15 +53,15 @@ fn parameters_are_strings() {
     assert_eq!(Json.serialize_param(&5000, TypeId::of::<i32>()), ["5000"]);
     assert_eq!(
         Json.deserialize_param::<Vec<String>>(&["sold".into()], TypeId::of::<Vec<String>>()),
-        ["sold"]
+        Ok(vec!["sold".to_string()])
     );
     assert_eq!(
         Json.deserialize_param::<String>(&["42".into()], TypeId::of::<String>()),
-        "42"
+        Ok("42".to_string())
     );
     assert_eq!(
         Json.deserialize_param::<i32>(&["42".into()], TypeId::of::<i32>()),
-        42
+        Ok(42)
     );
 }
 
@@ -72,7 +77,7 @@ async fn client_calls_server_over_http() {
     };
     actix_web::rt::spawn(server.run());
 
-    let find_pets_by_status::Response::Response200(sold) =
+    let Ok(find_pets_by_status::Response::Response200(sold)) =
         petstore.find_pets_by_status(vec!["sold".into()]).await
     else {
         panic!("expected sold pets")
@@ -85,7 +90,7 @@ async fn client_calls_server_over_http() {
         ["Tom"]
     );
 
-    let get_pet_by_id::Response::Response200(rex) = petstore.get_pet_by_id(1).await else {
+    let Ok(get_pet_by_id::Response::Response200(rex)) = petstore.get_pet_by_id(1).await else {
         panic!("expected Rex")
     };
     assert_eq!(
@@ -99,7 +104,7 @@ async fn client_calls_server_over_http() {
 
     assert!(matches!(
         petstore.get_pet_by_id(99).await,
-        get_pet_by_id::Response::Response404(_)
+        Ok(get_pet_by_id::Response::Response404(_))
     ));
 
     let order = Order {
@@ -109,11 +114,48 @@ async fn client_calls_server_over_http() {
     };
     assert_eq!(
         petstore.place_order(order.clone()).await,
-        place_order::Response200::new(Order {
+        Ok(place_order::Response200::new(Order {
             id: Some(1),
             status: Some(OrderStatus::Placed),
             ..order
         })
-        .into(),
+        .into()),
     );
+}
+
+#[actix_web::test]
+async fn bad_input_is_an_error() {
+    let server = HttpServer::new(|| App::new().configure(server::configure))
+        .workers(1)
+        .bind(("127.0.0.1", 0))
+        .unwrap();
+    let address = server.addrs()[0];
+    actix_web::rt::spawn(server.run());
+
+    // A request the contract does not allow is refused by the server, which keeps running.
+    let invalid = reqwest::get(format!("http://{address}/pet/not-a-number"))
+        .await
+        .unwrap();
+    assert_eq!(invalid.status(), 400);
+
+    // A status the contract does not list, such as the 502 of a proxy.
+    let raw = RawResponse {
+        status_code: 502,
+        headers: HashMap::new(),
+        body: None,
+    };
+    assert_eq!(
+        get_pet_by_id::GetPetById::from_raw_response(&Json, raw),
+        Err(WirespecError::UnexpectedStatus(502))
+    );
+
+    // A server that cannot be reached.
+    let unreachable = Client {
+        serialization: Json,
+        transportation: Http::new("http://127.0.0.1:1"),
+    };
+    assert!(matches!(
+        unreachable.get_pet_by_id(1).await,
+        Err(WirespecError::Transport(_))
+    ));
 }

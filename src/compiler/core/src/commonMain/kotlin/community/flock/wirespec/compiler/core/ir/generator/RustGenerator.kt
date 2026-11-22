@@ -309,8 +309,12 @@ public object RustGenerator :
         is NullLiteral, is NullableEmpty -> "None"
         is VariableReference -> name.snakeCase().sanitize()
         is FieldCall -> "${receiver?.let { "${it.emit()}." }.orEmpty()}${field.snakeCase().sanitize()}"
-        is FunctionCall -> {
-            val function = if ("::" in name.value()) name.value() else name.snakeCase().sanitize()
+        // The IR has no expression for `?`, which hands an error to the caller: it is written as a call of `?` on
+        // the value. `Ok`, `Err` and `Some` are variants, not functions in camel case.
+        is FunctionCall -> if (name.value() == TRY && receiver != null) {
+            "${receiver.emit()}?"
+        } else {
+            val function = if ("::" in name.value() || name.value() in variants) name.value() else name.snakeCase().sanitize()
             "${receiver?.let { "${it.emit()}." }.orEmpty()}$function(${arguments.values.joinToString(", ") { it.emit() }})${if (isAwait) ".await" else ""}"
         }
         is ArrayIndexCall -> when {
@@ -395,6 +399,10 @@ public object RustGenerator :
         else -> value.toString()
     }
 }
+
+private const val TRY = "?"
+
+private val variants = setOf("Ok", "Err", "Some")
 
 private val selfReceivers = setOf("self", "&self")
 

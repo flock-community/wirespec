@@ -50,21 +50,21 @@ pub trait BodySerializer {
     fn serialize_body<T: 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
 }
 pub trait BodyDeserializer {
-    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
+    fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> Result<T, WirespecError>;
 }
 pub trait BodySerialization: BodySerializer + BodyDeserializer {}
 pub trait PathSerializer {
     fn serialize_path<T: std::fmt::Display>(&self, t: &T, r#type: TypeId) -> String;
 }
 pub trait PathDeserializer {
-    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;
+    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> Result<T, WirespecError> where T::Err: std::fmt::Debug;
 }
 pub trait PathSerialization: PathSerializer + PathDeserializer {}
 pub trait ParamSerializer {
     fn serialize_param<T: 'static>(&self, value: &T, r#type: TypeId) -> Vec<String>;
 }
 pub trait ParamDeserializer {
-    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
+    fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> Result<T, WirespecError>;
 }
 pub trait ParamSerialization: ParamSerializer + ParamDeserializer {}
 pub trait Serializer: BodySerializer + PathSerializer + ParamSerializer {}
@@ -85,7 +85,7 @@ pub struct RawResponse {
     pub body: Option<Vec<u8>>,
 }
 pub trait Transportation {
-    async fn transport(&self, request: &RawRequest) -> RawResponse;
+    async fn transport(&self, request: &RawRequest) -> Result<RawResponse, WirespecError>;
 }
 pub type Annotations = Vec<HashMap<String, Box<dyn std::any::Any>>>;
 pub trait GeneratorField<T> {
@@ -254,12 +254,28 @@ impl PartialEq for AnyValue {
         std::sync::Arc::ptr_eq(&self.0, &other.0)
     }
 }
-pub trait Client {
-    type Transport: Transportation;
-    type Ser: Serialization;
-    fn transport(&self) -> &Self::Transport;
-    fn serialization(&self) -> &Self::Ser;
+#[derive(Debug, Clone, PartialEq)]
+pub enum WirespecError {
+    MissingPathSegment(usize),
+    MissingParameter(String),
+    MissingBody,
+    UnexpectedStatus(i32),
+    Deserialization(String),
+    Transport(String),
 }
+impl std::fmt::Display for WirespecError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            WirespecError::MissingPathSegment(index) => write!(f, "Path segment {} is missing", index),
+            WirespecError::MissingParameter(name) => write!(f, "Parameter {} is missing", name),
+            WirespecError::MissingBody => write!(f, "Body is missing"),
+            WirespecError::UnexpectedStatus(status) => write!(f, "Cannot match response with status: {}", status),
+            WirespecError::Deserialization(message) => write!(f, "Cannot deserialize: {}", message),
+            WirespecError::Transport(message) => write!(f, "Cannot transport: {}", message),
+        }
+    }
+}
+impl std::error::Error for WirespecError {}
 pub trait Server {
     type Req;
     type Res;

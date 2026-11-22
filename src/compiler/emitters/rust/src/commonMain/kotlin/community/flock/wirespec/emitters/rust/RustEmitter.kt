@@ -138,7 +138,7 @@ public open class RustEmitter(
                 else -> listOf(element)
             }
         }
-        .let { File(Name.of("Wirespec"), sharedImports + it + sharedAnyValue + sharedClientAndServer) }
+        .let { File(Name.of("Wirespec"), sharedImports + it + sharedAnyValue + sharedErrorAndServer) }
 
     /** The `mod.rs` files list the modules of every file of the specification, so they are written from all that is emitted. */
     override fun emitIndex(files: List<File>): List<File> {
@@ -229,7 +229,7 @@ public open class RustEmitter(
             apply(fixResponseSwitchPatterns())
             apply(fixConstructorCalls())
         }
-        .injectHandlerImplForClient()
+        .withErrorsReturned()
         .injectResponseFromImpls()
         .injectApiStruct(endpoint)
         .sanitizeNames(sanitizationConfig)
@@ -258,10 +258,10 @@ public open class RustEmitter(
                 pub transportation: &'a T,
             }
             impl<'a, S: Serialization, T: Transportation> $namespace::Call for ${endpoint.clientName}<'a, S, T> {
-                async fn $module(&self$params) -> $module::Response {
+                async fn $module(&self$params) -> Result<$module::Response, WirespecError> {
                     let request = $module::Request::new($args);
                     let raw_request = $namespace::to_raw_request(self.serialization, request);
-                    let raw_response = self.transportation.transport(&raw_request).await;
+                    let raw_response = self.transportation.transport(&raw_request).await?;
                     $namespace::from_raw_response(self.serialization, raw_response)
                 }
             }
@@ -288,7 +288,7 @@ public open class RustEmitter(
             val (params, args) = endpoint.clientParameters()
             """
             impl<S: Serialization, T: Transportation> $module::${endpoint.identifier.value}::Call for Client<S, T> {
-                async fn $module(&self$params) -> $module::Response {
+                async fn $module(&self$params) -> Result<$module::Response, WirespecError> {
                     ${endpoint.clientName} { serialization: &self.serialization, transportation: &self.transportation }
                         .$module($args).await
                 }
@@ -410,7 +410,7 @@ private val sharedTraits: Map<String, RawElement> = mapOf(
     """,
     "BodyDeserializer" to """
         pub trait BodyDeserializer {
-            fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> T;
+            fn deserialize_body<T: 'static>(&self, raw: &[u8], r#type: TypeId) -> Result<T, WirespecError>;
         }
     """,
     "PathSerializer" to """
@@ -420,7 +420,7 @@ private val sharedTraits: Map<String, RawElement> = mapOf(
     """,
     "PathDeserializer" to """
         pub trait PathDeserializer {
-            fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> T where T::Err: std::fmt::Debug;
+            fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, r#type: TypeId) -> Result<T, WirespecError> where T::Err: std::fmt::Debug;
         }
     """,
     "ParamSerializer" to """
@@ -430,12 +430,12 @@ private val sharedTraits: Map<String, RawElement> = mapOf(
     """,
     "ParamDeserializer" to """
         pub trait ParamDeserializer {
-            fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> T;
+            fn deserialize_param<T: 'static>(&self, values: &[String], r#type: TypeId) -> Result<T, WirespecError>;
         }
     """,
     "Transportation" to """
         pub trait Transportation {
-            async fn transport(&self, request: &RawRequest) -> RawResponse;
+            async fn transport(&self, request: &RawRequest) -> Result<RawResponse, WirespecError>;
         }
     """,
 ).mapValues { (_, code) -> RawElement(code.trimIndent()) }
@@ -586,15 +586,35 @@ private val sharedAnyValue = RawElement(
     """.trimMargin(),
 )
 
-private val sharedClientAndServer = listOf(
+/**
+ * What can go wrong with a message from outside. The generated code returns the first four when it reads a raw
+ * request or response. `Deserialization` and `Transport` are for the deserializers and the transport you provide.
+ */
+private val sharedErrorAndServer = listOf(
     RawElement(
         """
-        pub trait Client {
-            type Transport: Transportation;
-            type Ser: Serialization;
-            fn transport(&self) -> &Self::Transport;
-            fn serialization(&self) -> &Self::Ser;
+        #[derive(Debug, Clone, PartialEq)]
+        pub enum WirespecError {
+            MissingPathSegment(usize),
+            MissingParameter(String),
+            MissingBody,
+            UnexpectedStatus(i32),
+            Deserialization(String),
+            Transport(String),
         }
+        impl std::fmt::Display for WirespecError {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                match self {
+                    WirespecError::MissingPathSegment(index) => write!(f, "Path segment {} is missing", index),
+                    WirespecError::MissingParameter(name) => write!(f, "Parameter {} is missing", name),
+                    WirespecError::MissingBody => write!(f, "Body is missing"),
+                    WirespecError::UnexpectedStatus(status) => write!(f, "Cannot match response with status: {}", status),
+                    WirespecError::Deserialization(message) => write!(f, "Cannot deserialize: {}", message),
+                    WirespecError::Transport(message) => write!(f, "Cannot transport: {}", message),
+                }
+            }
+        }
+        impl std::error::Error for WirespecError {}
         """.trimIndent(),
     ),
     RawElement(
