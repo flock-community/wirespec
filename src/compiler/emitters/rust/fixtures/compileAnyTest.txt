@@ -3,10 +3,10 @@ use regex;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Message {
-    pub payload: Box<dyn std::any::Any>,
-    pub metadata: Option<Box<dyn std::any::Any>>,
-    pub attachments: Vec<Box<dyn std::any::Any>>,
-    pub extensions: std::collections::HashMap<String, Box<dyn std::any::Any>>,
+    pub payload: AnyValue,
+    pub metadata: Option<AnyValue>,
+    pub attachments: Vec<AnyValue>,
+    pub extensions: std::collections::HashMap<String, AnyValue>,
 }
 impl Message {
     pub fn validate(&self) -> Vec<String> {
@@ -20,12 +20,13 @@ use super::super::model::message::Message;
 
 pub struct MessageGenerator;
 impl MessageGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Message {
-        return Message { payload: generator.generate(vec![path.as_slice(), vec![String::from("payload")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), metadata: generator.generate(vec![path.as_slice(), vec![String::from("metadata")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), attachments: generator.generate(vec![path.as_slice(), vec![String::from("attachments")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), extensions: generator.generate(vec![path.as_slice(), vec![String::from("extensions")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> Message {
+        return Message { payload: generator.generate(vec![path.as_slice(), vec![String::from("payload")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), metadata: generator.generate(vec![path.as_slice(), vec![String::from("metadata")].as_slice()].concat(), GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), attachments: generator.generate(vec![path.as_slice(), vec![String::from("attachments")].as_slice()].concat(), GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }), extensions: generator.generate(vec![path.as_slice(), vec![String::from("extensions")].as_slice()].concat(), GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
     }
 }
 
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
+pub mod generator;
 pub mod wirespec;

@@ -79,7 +79,7 @@ pub mod GetTodos {
         async fn get_todos(&self) -> Response;
     }
     pub fn to_raw_request(serialization: &impl Serializer, request: Request) -> RawRequest {
-        return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("todos")], queries: std::collections::HashMap::new(), headers: std::collections::HashMap::new(), body: None };
+        return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("todos")], queries: std::collections::HashMap::<String, Vec<String>>::new(), headers: std::collections::HashMap::<String, Vec<String>>::new(), body: None };
     }
     pub fn from_raw_request(serialization: &impl Deserializer, request: RawRequest) -> Request {
         return Request::new();
@@ -87,7 +87,7 @@ pub mod GetTodos {
     pub fn to_raw_response(serialization: &impl Serializer, response: Response) -> RawResponse {
         match response {
             Response::Response200(r) => {
-                return RawResponse { status_code: r.status, headers: std::collections::HashMap::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Vec<TodoDto>>())) };
+                return RawResponse { status_code: r.status, headers: std::collections::HashMap::<String, Vec<String>>::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Vec<TodoDto>>())) };
             }
         }
     }
@@ -140,16 +140,10 @@ use super::super::model::todo_dto::TodoDto;
 
 pub struct TodoDtoGenerator;
 impl TodoDtoGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TodoDto {
-        return TodoDto { description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> TodoDto {
+        return TodoDto { description: generator.generate(vec![path.as_slice(), vec![String::from("description")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
-
-#![allow(warnings)]
-pub mod model;
-pub mod endpoint;
-pub mod client;
-pub mod wirespec;
 
 pub mod get_todos_client;
 use super::wirespec::*;
@@ -167,3 +161,10 @@ impl<S: Serialization, T: Transportation> get_todos::GetTodos::Call for Client<S
             .get_todos().await
     }
 }
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod client;
+pub mod generator;
+pub mod wirespec;

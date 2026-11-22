@@ -82,8 +82,8 @@ pub trait BodyDeserializer {
   member compiles, but writing that member fails.
 - The TypeScript emitter writes a union without the `type` property. A TypeScript client that talks to this
   integration adds it itself: see [the discriminator of a union](../emitters/emitters-typescript.mdx#discriminator).
-- With the serde bound, every body must be a serde type. A body of type `Any` is not, so an endpoint with such a body
-  does not compile with this extension.
+- With the serde bound, every body must be a serde type. An `Any` is an `AnyValue`, which is not, so a type with a
+  field of type `Any` and an endpoint with such a body do not compile with this extension.
 :::
 
 ## Setup

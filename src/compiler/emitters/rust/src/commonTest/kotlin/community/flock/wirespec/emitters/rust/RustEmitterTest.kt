@@ -1,6 +1,8 @@
 package community.flock.wirespec.emitters.rust
 
 import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.generator.RustGenerator
 import community.flock.wirespec.compiler.test.CompileAnyTest
 import community.flock.wirespec.compiler.test.CompileChannelTest
@@ -17,9 +19,11 @@ import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileRpcTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.compile
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.Test
 
@@ -134,5 +138,27 @@ class RustEmitterTest {
 
         val emitter = RustEmitter(emitShared = EmitShared(true))
         emitter.emitShared()?.let(RustGenerator::generate) shouldBe expected
+    }
+
+    @Test
+    fun modFilesListTheModulesOfEveryFile() {
+        val directory = "community/flock/wirespec/generated/"
+        val files = listOf("model/cat", "model/owner", "channel/cats", "generator/cat_generator")
+            .map { File(Name.of(directory + it), emptyList()) }
+
+        RustEmitter(emitShared = EmitShared(true)).emitIndex(files).associate { it.name.value().removePrefix(directory) to RustGenerator.generate(it) } shouldBe mapOf(
+            "mod" to "#![allow(warnings)]\npub mod model;\npub mod endpoint;\npub mod channel;\npub mod generator;\npub mod wirespec;\n",
+            "model/mod" to "pub mod cat;\npub mod owner;\n",
+            "endpoint/mod" to "\n",
+            "channel/mod" to "pub mod cats;\n",
+            "generator/mod" to "pub mod cat_generator;\n",
+        )
+    }
+
+    @Test
+    fun keywordWithoutRawIdentifierGetsAnUnderscore() {
+        compile("type Node { self: String, `type`: String }")
+            .invoke { RustEmitter() }
+            .shouldBeRight() shouldContain "pub self_: String,\n    pub r#type: String,"
     }
 }
