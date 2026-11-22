@@ -23,12 +23,12 @@ serde_json = "1"
 
 ## What it adds
 
-| Model   | Generated                                                              | JSON                                  |
-|---------|------------------------------------------------------------------------|---------------------------------------|
-| type    | `Serialize` and `Deserialize`, every field renamed to its Wirespec name | `{"itemId":"abc","role":"ASSISTANT"}` |
-| refined | `#[serde(transparent)]`                                                | `"abc"`                               |
-| enum    | written as its label                                                   | `"ASSISTANT"`                         |
-| union   | `#[serde(untagged)]`                                                   | the JSON of the member                |
+| Model   | Generated                                                                                  | JSON                                  |
+|---------|--------------------------------------------------------------------------------------------|---------------------------------------|
+| type    | `Serialize` and `Deserialize`, every field renamed to its Wirespec name, a `None` left out | `{"itemId":"abc","role":"ASSISTANT"}` |
+| refined | `#[serde(transparent)]`                                                                    | `"abc"`                               |
+| enum    | written as its label                                                                       | `"ASSISTANT"`                         |
+| union   | `#[serde(untagged)]`                                                                       | the JSON of the member                |
 
 In the shared `wirespec.rs`, `BodySerializer` and `BodyDeserializer` get a serde bound on the body, so one
 implementation hands every body to serde.

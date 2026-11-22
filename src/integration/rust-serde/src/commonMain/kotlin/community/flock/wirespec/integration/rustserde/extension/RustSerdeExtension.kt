@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumDefinition
+import community.flock.wirespec.compiler.core.parse.ast.Field as FieldDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeDefinition
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
 
@@ -29,7 +30,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
  * Makes the generated Rust models serializable with [serde](https://serde.rs), in the JSON form of the contract:
  *
  * - a type derives `Serialize` and `Deserialize`, and every field is renamed to its Wirespec name: `item_id` is
- *   written as `itemId`;
+ *   written as `itemId`. A nullable field without a value is left out, like the TypeScript emitter does, and not
+ *   written as `null`: a server may accept a missing field and reject `null`;
  * - a refined type derives them as `#[serde(transparent)]`, so it is written as the value it wraps;
  * - an enum is written as its label, the Wirespec name of the entry;
  * - a union derives them as `#[serde(untagged)]`: a member is written as it is, without a property that names it,
@@ -76,7 +78,7 @@ public class RustSerdeExtension : IrExtension {
     // The emitter writes a field in snake case, so the Wirespec name comes from the definition: both list the fields
     // in the same order.
     private fun Struct.withWirespecFieldNames(type: TypeDefinition): Struct = copy(
-        fields = fieldList().zip(type.shape.fields) { field, definition -> listOf(rename(definition.identifier.value), field) }.flatten(),
+        fields = fieldList().zip(type.shape.fields) { field, definition -> listOf(definition.serdeAttribute(), field) }.flatten(),
     )
 
     private fun Enum.labelSerialization(): RawElement = name.pascalCase().let { enum ->
@@ -117,6 +119,10 @@ public class RustSerdeExtension : IrExtension {
             "fn deserialize_body<T: 'static>" to "fn deserialize_body<T: serde::de::DeserializeOwned + 'static>",
         )
 
-        fun rename(name: String) = RawElement("#[serde(rename = \"${name.replace("\\", "\\\\").replace("\"", "\\\"")}\")]")
+        const val SKIP_NONE = "skip_serializing_if = \"Option::is_none\""
+
+        fun FieldDefinition.serdeAttribute() = RawElement("#[serde(${listOfNotNull(rename(identifier.value), SKIP_NONE.takeIf { reference.isNullable }).joinToString()})]")
+
+        fun rename(name: String) = "rename = \"${name.replace("\\", "\\\\").replace("\"", "\\\"")}\""
     }
 }

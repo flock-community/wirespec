@@ -16,7 +16,9 @@ serializer covers all of them.
 
 The extension adds serde to the models in the `model` directory, in the JSON form of the contract:
 
-- a type derives `Serialize` and `Deserialize`, and every field is renamed to its Wirespec name;
+- a type derives `Serialize` and `Deserialize`, and every field is renamed to its Wirespec name. A nullable field
+  without a value is left out, like the TypeScript emitter does, and not written as `null`. Reading accepts both a
+  missing field and `null`;
 - a refined type is `#[serde(transparent)]`, so it is written as the value it wraps;
 - an enum is written as its label, the Wirespec name of the entry;
 - a union is `#[serde(untagged)]`: a member is written as it is, without a property that names it, like the

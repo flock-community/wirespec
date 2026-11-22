@@ -44,7 +44,7 @@ class RustSerdeExtensionTest {
     private fun file(path: String): String = emitted.single { it.file == "generated/$path.rs" }.result
 
     @Test
-    fun `A type derives serde and renames every field to its Wirespec name`() {
+    fun `A type derives serde, renames every field to its Wirespec name and leaves out a nullable field without a value`() {
         file("model/item") shouldContain
             """
             |#[derive(Debug, Clone, Default, PartialEq)]
@@ -52,7 +52,7 @@ class RustSerdeExtensionTest {
             |pub struct Item {
             |    #[serde(rename = "itemId")]
             |    pub item_id: ItemId,
-            |    #[serde(rename = "first-name")]
+            |    #[serde(rename = "first-name", skip_serializing_if = "Option::is_none")]
             |    pub first_name: Option<String>,
             |}
             """.trimMargin()
