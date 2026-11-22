@@ -80,11 +80,11 @@ class RustSerdeExtensionTest {
     }
 
     @Test
-    fun `A union names its member in a type property`() {
+    fun `A union is written as its member`() {
         file("model/message") shouldContain
             """
             |#[derive(serde::Serialize, serde::Deserialize)]
-            |#[serde(tag = "type")]
+            |#[serde(untagged)]
             |#[derive(Debug, Clone, PartialEq)]
             |pub enum Message {
             """.trimMargin()

@@ -19,8 +19,8 @@ The extension adds serde to the models in the `model` directory, in the JSON for
 - a type derives `Serialize` and `Deserialize`, and every field is renamed to its Wirespec name;
 - a refined type is `#[serde(transparent)]`, so it is written as the value it wraps;
 - an enum is written as its label, the Wirespec name of the entry;
-- a union is `#[serde(tag = "type")]`: the name of the member goes into a `type` property, like the
-  [Jackson](./integration-jackson.mdx) and [kotlinx.serialization](./integration-kotlinx-serialization.mdx) integrations do.
+- a union is `#[serde(untagged)]`: a member is written as it is, without a property that names it, like the
+  [TypeScript emitter](../emitters/emitters-typescript.mdx#union) does. See [Unions](#unions).
 
 For example, this definition:
 
@@ -53,7 +53,7 @@ pub struct ItemId {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-#[serde(tag = "type")]
+#[serde(untagged)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Message {
     UserMessage(UserMessage),
@@ -62,7 +62,7 @@ pub enum Message {
 ```
 
 An `Item` is written as `{"itemId":"abc","role":"ASSISTANT"}`, and a `Message` as
-`{"type":"UserMessage","role":"USER","text":"hi"}`.
+`{"role":"USER","text":"hi"}`.
 
 In the shared `wirespec.rs`, the body serializers get a serde bound on the body they take:
 
@@ -78,10 +78,27 @@ pub trait BodyDeserializer {
 :::note
 - The structs of an endpoint (`Path`, `Queries`, `Request`, `Response200`) are left as they are. Paths, queries and
   headers still go through the `PathSerializer` and `ParamSerializer` you provide.
-- Serde can only add the `type` property to a union member that is a type. A union with an enum or a refined type as
-  member compiles, but writing that member fails.
 - With the serde bound, every body must be a serde type. An `Any` is an `AnyValue`, which is not, so a type with a
   field of type `Any` and an endpoint with such a body do not compile with this extension.
+:::
+
+## Unions
+
+A union is written as its member, so the JSON does not say which member it is. When serde reads a union, it tries
+the members in the order of the contract and takes the first one the JSON fits:
+
+- A property that a member does not know is ignored, and a nullable field may be missing. So a member also fits the
+  JSON of another member that has all its required fields.
+- Put the member with the most required fields first. With `type Pet = Cat | Dog`, where a `Cat` is a `Dog` with a
+  required `lives`, a cat is read as a `Cat` and a dog as a `Dog`. With `Dog | Cat`, a cat is read as a `Dog` and
+  loses its `lives`.
+- Members with the same required fields cannot be told apart: the `Message` above is always read as a
+  `UserMessage`. Give the members a required field of their own, or look at a field such as `role` after reading.
+
+:::warning
+The [Jackson](./integration-jackson.mdx) and [kotlinx.serialization](./integration-kotlinx-serialization.mdx)
+integrations write the name of the member into a `type` property. Rust reads their unions, because it ignores the
+property, but they cannot read a union that Rust writes.
 :::
 
 ## Setup
