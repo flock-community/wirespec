@@ -28,7 +28,7 @@ public fun Definition.importReferences(): List<Reference.Custom> = when (this) {
             .filterIsInstance<Reference.Custom>()
             .distinct()
     is Union -> entries.filterIsInstance<Reference.Custom>()
-    is Channel -> if (reference is Reference.Custom) listOf(reference) else emptyList()
+    is Channel -> listOfNotNull(reference.flatten() as? Reference.Custom)
     is Rpc -> (shape.fields.map { it.reference } + result + listOfNotNull(error))
         .map { it.flatten() }
         .filterIsInstance<Reference.Custom>()

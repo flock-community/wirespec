@@ -51,7 +51,8 @@ public interface IrEmitter : Emitter {
         val allEndpoints = ast.modules.toList().flatMap { it.statements.filterIsInstance<Endpoint>() }
         val mainClientFile = allEndpoints.takeIf { it.isNotEmpty() }?.let { emitClient(it, logger) }
 
-        val allFiles: IR = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
+        val definitionFiles = moduleFiles + listOfNotNull(sharedFile) + listOfNotNull(mainClientFile)
+        val allFiles: IR = definitionFiles + emitIndex(definitionFiles)
         val transformedFiles = extensions
             .fold(allFiles) { ir, extension -> extension.extend(ir, ast) }
             .filterIsInstance<File>()
@@ -80,6 +81,12 @@ public interface IrEmitter : Emitter {
     }
 
     public fun emitGenerator(definition: Definition, module: Module): File? = null
+
+    /**
+     * Files that list what is emitted, such as the `mod.rs` of a Rust module. They are emitted once, from the [files]
+     * of every module of the specification, so they also cover a specification that is split over several files.
+     */
+    public fun emitIndex(files: List<File>): List<File> = emptyList()
 
     public fun emit(definition: Definition, module: Module, logger: Logger): File {
         logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")

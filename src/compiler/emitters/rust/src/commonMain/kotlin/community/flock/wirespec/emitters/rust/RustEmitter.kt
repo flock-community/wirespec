@@ -57,6 +57,11 @@ import community.flock.wirespec.compiler.core.ir.Union as LanguageUnion
 
 private const val STRUCT_DERIVE = "#[derive(Debug, Clone, Default, PartialEq)]"
 
+private val requiredDirectories = listOf("model", "endpoint")
+
+// Only declared in `mod.rs` when the specification has a definition that is emitted there.
+private val optionalDirectories = listOf("channel", "rpc", "generator")
+
 private val wirespecImports = listOf(
     import("super::super::wirespec", "*"),
     import("", "regex"),
@@ -73,18 +78,25 @@ public open class RustEmitter(
 
     private val sanitizationConfig: SanitizationConfig by lazy {
         SanitizationConfig(
-            reservedKeywords = reservedKeywords - setOf("self", "Self"),
+            reservedKeywords = reservedKeywords - unescapableKeywords,
             escapeKeyword = { "r#$it" },
             escapeFieldKeywords = true,
             fieldNameCase = { name -> Name.of(Name(name.parts).snakeCase()) },
             parameterNameCase = { name ->
                 val value = name.value()
-                if (value == "self" || value == "&self") name
+                if (value == "&self") name
                 else Name.of(Name(name.parts).snakeCase())
             },
             // Rust identifiers may not start with a digit; prefix an underscore when they do
             // (e.g. a `1st-line` field becomes `_1st_line`).
-            sanitizeSymbol = { if (it.firstOrNull()?.isDigit() == true) "_$it" else it },
+            // A keyword that has no raw identifier gets a trailing underscore instead: `self` becomes `self_`.
+            sanitizeSymbol = { symbol ->
+                when {
+                    symbol.firstOrNull()?.isDigit() == true -> "_$symbol"
+                    symbol in unescapableKeywords -> "${symbol}_"
+                    else -> symbol
+                }
+            },
             extraStatementTransforms = { stmt, tr ->
                 when (stmt) {
                     is ConstructorStatement -> ConstructorStatement(
@@ -100,7 +112,10 @@ public open class RustEmitter(
     }
 
     override fun transformTestFile(file: File): File = file
-        .transform { apply(fixResponseSwitchPatterns()) }
+        .transform {
+            apply(fixResponseSwitchPatterns())
+            apply(associatedGeneratorCalls)
+        }
         .applyBorrowRules()
 
     override fun emitShared(): File? = if (emitShared.value) {
@@ -115,48 +130,54 @@ public open class RustEmitter(
         .flatMap { element ->
             when (element) {
                 is LanguageEnum if element.name == Name.of("Method") -> listOf(sharedMethod)
+                is Interface if element.name == Name.of("Generator") -> listOf(sharedGenerator)
+                is Interface if element.isGeneratorField() -> emptyList()
+                is Struct if element.isGeneratorField() -> emptyList()
                 is Interface -> listOf(sharedTraits[element.name.pascalCase()] ?: element.withSelfReceivers())
                 is Struct -> listOfNotNull(sharedDerive.takeIf { element.fieldList().all { it.type.isDerivable() } }, element)
                 else -> listOf(element)
             }
         }
-        .let { File(Name.of("Wirespec"), sharedImports + it + sharedClientAndServer) }
+        .let { File(Name.of("Wirespec"), sharedImports + it + sharedAnyValue + sharedClientAndServer) }
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<File> {
-        val files = super.emit(module.copy(statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!), logger)
-        val endpoints = module.statements.filterIsInstance<Endpoint>()
-        val clientMod = if (endpoints.isNotEmpty()) "\npub mod client;" else ""
-        val modRs = File(
-            Name.of(packageName.toDir() + "mod"),
-            listOf(RawElement("#![allow(warnings)]\npub mod model;\npub mod endpoint;${clientMod}\npub mod wirespec;")),
-        )
+    /** The `mod.rs` files list the modules of every file of the specification, so they are written from all that is emitted. */
+    override fun emitIndex(files: List<File>): List<File> {
+        val modules = (requiredDirectories + optionalDirectories).associateWith { files.modulesIn(it) }
+        val declared = requiredDirectories + listOfNotNull("client".takeIf { modules.getValue("endpoint").isNotEmpty() }) +
+            optionalDirectories.filter { modules.getValue(it).isNotEmpty() } + "wirespec"
+        val root = modFile("", "#![allow(warnings)]\n" + declared.declarations())
         return if (emitShared.value) {
-            files + modRs + modFile("endpoint/", endpoints) + modFile("model/", module.statements.filterIsInstance<Model>())
+            listOf(root) + modules.filter { (directory, names) -> directory in requiredDirectories || names.isNotEmpty() }
+                .map { (directory, names) -> modFile("$directory/", names.declarations()) }
         } else {
-            files + modRs
+            listOf(root)
         }
     }
 
-    private fun modFile(directory: String, definitions: List<Definition>): File = File(
-        Name.of(packageName.toDir() + directory + "mod"),
-        listOf(RawElement(definitions.joinToString("\n") { "pub mod ${it.identifier.moduleName()};" })),
-    )
+    private fun modFile(directory: String, content: String): File = File(Name.of("${packageName.toDir()}${directory}mod"), listOf(RawElement(content)))
+
+    private fun List<File>.modulesIn(directory: String): List<String> = map { it.name.value().removePrefix(packageName.toDir()) }
+        .filter { it.startsWith("$directory/") }
+        .map { it.removePrefix("$directory/") }
+
+    override fun emit(module: Module, logger: Logger): NonEmptyList<File> = super.emit(module.copy(statements = module.statements.sortedBy { it.sortKey() }.toNonEmptyListOrNull()!!), logger)
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
-        val file = super.emit(definition, module, logger).applyBorrowRules()
+        val file = super.emit(definition, module, logger).applyBorrowRules().withAnyValues()
         return File(
             name = Name.of((packageName + definition).toDir() + file.name.pascalCase().toSnakeCase()),
             elements = wirespecImports + file.elements.withStructDerives(),
         )
     }
 
-    override fun emitGenerator(definition: Definition, module: Module): File? = when (definition) {
-        is Type -> definition.convertToGenerator(module)
-        is Enum -> definition.convertToGenerator()
-        is Refined -> definition.convertToGenerator()
-        is Union -> definition.convertToGenerator()
-        is Endpoint, is Channel, is Rpc, is Part -> null
-    }?.sanitizeNames(sanitizationConfig)?.let { generatorFile ->
+    override fun emitGenerator(definition: Definition, module: Module): File? = (definition as? Model)?.let { emitGenerator(it, module) }
+
+    private fun emitGenerator(model: Model, module: Module): File = when (model) {
+        is Type -> model.convertToGenerator(module)
+        is Enum -> model.convertToGenerator()
+        is Refined -> model.convertToGenerator()
+        is Union -> model.convertToGenerator()
+    }.sanitizeNames(sanitizationConfig).let { generatorFile ->
         val generatorReferences = buildSet {
             generatorFile.transform {
                 expression { expr, t ->
@@ -170,14 +191,14 @@ public open class RustEmitter(
             .map { it.substringBefore('<') }
             .plus(generatorReferences)
             .distinct()
-            .filterNot { it == "${definition.identifier.value}Generator" }
+            .filterNot { it == "${model.identifier.value}Generator" }
             .partition { it.endsWith("Generator") }
         File(
             name = Name.of((packageName + "generator").toDir() + generatorFile.name.pascalCase().toSnakeCase()),
             elements = wirespecImports +
                 types.map { import("super::super::model::${it.toSnakeCase()}", it) } +
                 generators.map { import("super::${it.toSnakeCase()}", it) } +
-                generatorFile.elements,
+                generatorFile.toRustGenerator(model).elements,
         )
     }
 
@@ -212,11 +233,14 @@ public open class RustEmitter(
         .injectResponseFromImpls()
         .injectApiStruct(endpoint)
         .sanitizeNames(sanitizationConfig)
+        .withRenamedConstructorArguments()
         .withImports(endpoint.importReferences().toImports("super::super::model::"))
 
     override fun emit(channel: Channel): File = channel.convert()
+        .withSelfReceivers()
+        .withImports(channel.importReferences().toImports("super::super::model::"))
 
-    override fun emit(rpc: Rpc): File = rpc.convert().let { file ->
+    override fun emit(rpc: Rpc): File = rpc.convert().sanitizeNames(sanitizationConfig).withSelfReceivers().let { file ->
         file.copy(
             elements = rpc.importReferences().toImports("super::super::model::") + file.elements.map { element ->
                 if (element is Namespace) element.copy(elements = element.elements.withStructDerives()) else element
@@ -289,13 +313,7 @@ public open class RustEmitter(
     }
 }
 
-private fun Identifier.moduleName(): String = value
-    .split(".", " ")
-    .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
-    .joinToString("")
-    .filter { it.isLetterOrDigit() || it == '_' }
-    .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
-    .toSnakeCase()
+private fun List<String>.declarations(): String = joinToString("\n") { "pub mod $it;" }
 
 private fun String.sanitizeEnum(): String = split("-", ", ", ".", " ", "//", "_")
     .joinToString("") { s -> s.replaceFirstChar { it.uppercaseChar() } }
@@ -420,12 +438,153 @@ private val sharedTraits: Map<String, RawElement> = mapOf(
             async fn transport(&self, request: &RawRequest) -> RawResponse;
         }
     """,
-    "Generator" to """
-        pub trait Generator {
-            fn generate<T>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T;
-        }
-    """,
 ).mapValues { (_, code) -> RawElement(code.trimIndent()) }
+
+private fun Element.isGeneratorField(): Boolean = when (this) {
+    is Interface -> name.pascalCase().startsWith("GeneratorField")
+    is Struct -> name.pascalCase().startsWith("GeneratorField")
+    else -> false
+}
+
+private val generatorFields = mapOf(
+    "String" to "String",
+    "Integer64" to "i64",
+    "Integer32" to "i32",
+    "Number64" to "f64",
+    "Number32" to "f32",
+    "Boolean" to "bool",
+    "Bytes" to "Vec<u8>",
+    "Enum" to "String",
+    "Union" to "String",
+)
+
+private val generatorFieldsOfGenerated = mapOf(
+    "Array" to "Vec<T>",
+    "Nullable" to "Option<T>",
+    "Dict" to "HashMap<String, T>",
+    "Shape" to "T",
+)
+
+private fun generatorFieldImpl(field: String, value: String, generics: String = "", arguments: String = "") = """
+    |impl$generics GeneratorField<$value> for GeneratorField$field$arguments {
+    |    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> $value {
+    |        generator.generate_${field.lowercase()}(path, self)
+    |    }
+    |}
+""".trimMargin()
+
+/**
+ * The other languages hand every field to one `generate` function, which finds out what kind of field it got at
+ * runtime. Rust cannot, so a `Generator` has a function for each kind of field, and a field knows which one generates
+ * it: `generate` only passes the field on. A field of a generated value borrows the generator in its `generate`
+ * closure, hence the lifetime.
+ */
+private val sharedGenerator = RawElement(
+    """
+    |pub type Annotations = Vec<HashMap<String, Box<dyn std::any::Any>>>;
+    |pub trait GeneratorField<T> {
+    |    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> T;
+    |}
+    |pub struct GeneratorFieldString {
+    |    pub regex: Option<String>,
+    |    pub annotations: Annotations,
+    |}
+    |pub struct GeneratorFieldInteger64 {
+    |    pub min: Option<i64>,
+    |    pub max: Option<i64>,
+    |    pub annotations: Annotations,
+    |}
+    |pub struct GeneratorFieldInteger32 {
+    |    pub min: Option<i32>,
+    |    pub max: Option<i32>,
+    |    pub annotations: Annotations,
+    |}
+    |pub struct GeneratorFieldNumber64 {
+    |    pub min: Option<f64>,
+    |    pub max: Option<f64>,
+    |    pub annotations: Annotations,
+    |}
+    |pub struct GeneratorFieldNumber32 {
+    |    pub min: Option<f32>,
+    |    pub max: Option<f32>,
+    |    pub annotations: Annotations,
+    |}
+    |pub struct GeneratorFieldBoolean {
+    |    pub annotations: Annotations,
+    |}
+    |pub struct GeneratorFieldBytes {
+    |    pub annotations: Annotations,
+    |}
+    |pub struct GeneratorFieldEnum {
+    |    pub values: Vec<String>,
+    |    pub annotations: Annotations,
+    |    pub r#type: TypeId,
+    |}
+    |pub struct GeneratorFieldUnion {
+    |    pub variants: Vec<String>,
+    |    pub annotations: Annotations,
+    |    pub r#type: TypeId,
+    |}
+    |pub struct GeneratorFieldArray<'a, T> {
+    |    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
+    |}
+    |pub struct GeneratorFieldNullable<'a, T> {
+    |    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
+    |}
+    |pub struct GeneratorFieldDict<'a, T> {
+    |    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
+    |}
+    |pub struct GeneratorFieldShape<'a, T> {
+    |    pub annotations: HashMap<String, Annotations>,
+    |    pub generate: Box<dyn Fn(Vec<String>) -> T + 'a>,
+    |    pub r#type: TypeId,
+    |}
+    |${generatorFields.entries.joinToString("\n") { (field, value) -> generatorFieldImpl(field, value) }}
+    |${generatorFieldsOfGenerated.entries.joinToString("\n") { (field, value) -> generatorFieldImpl(field, value, generics = "<'a, T>", arguments = "<'a, T>") }}
+    |// A field of type `Any` is generated as a string.
+    |impl GeneratorField<AnyValue> for GeneratorFieldString {
+    |    fn generate(&self, generator: &impl Generator, path: Vec<String>) -> AnyValue {
+    |        AnyValue::new(generator.generate_string(path, self))
+    |    }
+    |}
+    |pub trait Generator: Sized {
+    |${generatorFields.entries.joinToString("\n") { (field, value) -> "    fn generate_${field.lowercase()}(&self, path: Vec<String>, field: &GeneratorField$field) -> $value;" }}
+    |${generatorFieldsOfGenerated.entries.joinToString("\n") { (field, value) -> "    fn generate_${field.lowercase()}<T>(&self, path: Vec<String>, field: &GeneratorField$field<T>) -> $value;" }}
+    |    fn generate<T>(&self, path: Vec<String>, field: impl GeneratorField<T>) -> T {
+    |        field.generate(self, path)
+    |    }
+    |}
+    """.trimMargin(),
+)
+
+/**
+ * A model derives `Clone`, `Default` and `PartialEq`, which a `Box<dyn Any>` has none of. So a value of type `Any` is
+ * shared instead of owned: a clone points to the same value, and two values are equal when they are the same value.
+ */
+private val sharedAnyValue = RawElement(
+    """
+    |#[derive(Debug, Clone)]
+    |pub struct AnyValue(pub std::sync::Arc<dyn std::any::Any + Send + Sync>);
+    |impl AnyValue {
+    |    pub fn new<T: std::any::Any + Send + Sync>(value: T) -> Self {
+    |        AnyValue(std::sync::Arc::new(value))
+    |    }
+    |    pub fn downcast_ref<T: std::any::Any>(&self) -> Option<&T> {
+    |        self.0.downcast_ref::<T>()
+    |    }
+    |}
+    |impl Default for AnyValue {
+    |    fn default() -> Self {
+    |        AnyValue::new(())
+    |    }
+    |}
+    |impl PartialEq for AnyValue {
+    |    fn eq(&self, other: &Self) -> bool {
+    |        std::sync::Arc::ptr_eq(&self.0, &other.0)
+    |    }
+    |}
+    """.trimMargin(),
+)
 
 private val sharedClientAndServer = listOf(
     RawElement(
