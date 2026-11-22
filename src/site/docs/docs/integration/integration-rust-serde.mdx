@@ -80,6 +80,8 @@ pub trait BodyDeserializer {
   headers still go through the `PathSerializer` and `ParamSerializer` you provide.
 - Serde can only add the `type` property to a union member that is a type. A union with an enum or a refined type as
   member compiles, but writing that member fails.
+- The TypeScript emitter writes a union without the `type` property. A TypeScript client that talks to this
+  integration adds it itself: see [the discriminator of a union](../emitters/emitters-typescript.mdx#discriminator).
 - With the serde bound, every body must be a serde type. A body of type `Any` is not, so an endpoint with such a body
   does not compile with this extension.
 :::

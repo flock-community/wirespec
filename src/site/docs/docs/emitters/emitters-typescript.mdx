@@ -73,6 +73,110 @@ A union becomes a union type of its members:
 ```typescript wirespec file=model/TodoEvent.ts
 ```
 
+### Discriminator
+
+The union type has no discriminator: a `TodoCreated` is written to JSON with its own fields and nothing else. So
+TypeScript cannot tell the members apart with a `switch`, and a client or server in another language may expect a
+property that names the member. The [Serde](../integration/integration-rust-serde.mdx),
+[Jackson](../integration/integration-jackson.mdx) and
+[kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) integrations all write the Wirespec name
+of the member into a `type` property. You add the discriminator in your own code, on top of the generated types. Take
+this contract:
+
+```wirespec
+type Cat { role: Kind, name: String, nickname: String? }
+type Dog { role: Kind, name: String }
+enum Kind { CAT, DOG }
+type Pet = Cat | Dog
+
+endpoint GetPet GET /pets/{id: String} -> {
+  200 -> Pet
+}
+
+endpoint CreatePet POST Pet /pets -> {
+  201 -> Pet
+}
+```
+
+#### The `type` property of another integration
+
+A Rust server with the Serde integration writes a `Cat` as `{"type":"Cat","role":"CAT","name":"Tom"}`, and rejects a
+`Pet` without the `type` property. The generated `Pet` does not know that property, so declare a union that does:
+
+```typescript title="src/pet.ts"
+import { Cat, Dog } from "./gen/model";
+
+type Tagged<T, Name extends string> = T & { type: Name };
+
+export type TaggedPet = Tagged<Cat, "Cat"> | Tagged<Dog, "Dog">;
+```
+
+The name is the name of the member in the contract. The serialization leaves the properties of a body as they are, so
+the `type` property the server sends is there at runtime. Cast the body of a response to read it:
+
+```typescript
+const response = await api.getPet({ id: "1" });
+const pet = response.body as TaggedPet;
+
+switch (pet.type) {
+  case "Cat":
+    console.log(pet.nickname);
+    break;
+  case "Dog":
+    console.log(pet.name);
+    break;
+}
+```
+
+A `TaggedPet` is also a `Pet`, so you can send it as it is, and the server gets the `type` property it needs:
+
+```typescript
+const tom: TaggedPet = { type: "Cat", role: "CAT", name: "Tom", nickname: undefined };
+
+await api.createPet({ body: tom });
+```
+
+Declare the value as a `TaggedPet` first, as above. TypeScript rejects the unknown `type` property in an object literal
+that is passed directly as a `Pet`.
+
+:::note
+Do not add `type` as a field to `Cat` and `Dog` in the contract. The integrations that write a `type` property add it
+themselves, and a field with the same name clashes with it.
+:::
+
+#### A field of the contract
+
+When the contract has a field of its own that tells the members apart, such as `role`, no extra property is needed.
+The generated `role` is a `Kind` in both members, so narrow it to one entry per member:
+
+```typescript title="src/pet.ts"
+import { Cat, Dog } from "./gen/model";
+
+export type RolePet = (Cat & { role: "CAT" }) | (Dog & { role: "DOG" });
+```
+
+```typescript
+const pet = response.body as RolePet;
+
+switch (pet.role) {
+  case "CAT":
+    console.log(pet.nickname);
+    break;
+  case "DOG":
+    console.log(pet.name);
+    break;
+}
+```
+
+A type guard does the same for a single member:
+
+```typescript
+const isCat = (pet: Pet): pet is Cat => pet.role === "CAT";
+```
+
+The contract does not say that a `Cat` always has the role `CAT`. That is an agreement with the other side, and the
+cast is where your code relies on it.
+
 ## Endpoint
 
 An endpoint becomes a `namespace` that holds everything that is needed to send and receive the request and its
