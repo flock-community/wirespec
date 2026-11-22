@@ -398,8 +398,8 @@ public object RustGenerator :
 
 private val selfReceivers = setOf("self", "&self")
 
-// `self` and `Self` cannot be escaped as raw identifiers (r#self is invalid Rust); the emitter's
+// `self`, `Self`, `super` and `crate` cannot be escaped as raw identifiers (r#self is invalid Rust); the emitter's
 // sanitization renames such fields instead, so the generator leaves them untouched.
-private val escapableKeywords = RustGenerator.reservedKeywords - setOf("self", "Self")
+private val escapableKeywords = RustGenerator.reservedKeywords - setOf("self", "Self", "super", "crate")
 
 private fun String.sanitize(): String = if (this in escapableKeywords) "r#$this" else this

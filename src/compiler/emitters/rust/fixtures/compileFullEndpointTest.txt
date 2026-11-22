@@ -298,13 +298,6 @@ impl ErrorGenerator {
     }
 }
 
-#![allow(warnings)]
-pub mod model;
-pub mod endpoint;
-pub mod client;
-pub mod generator;
-pub mod wirespec;
-
 pub mod put_todo_client;
 use super::wirespec::*;
 use super::model::token::Token;
@@ -324,3 +317,10 @@ impl<S: Serialization, T: Transportation> put_todo::PutTodo::Call for Client<S, 
             .put_todo(id, done, name, token, refresh_token, body).await
     }
 }
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod client;
+pub mod generator;
+pub mod wirespec;

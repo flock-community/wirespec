@@ -24,7 +24,8 @@ emitter does not support [default values](#default-values) yet, so the example i
 ```
 
 File and field names are converted to snake case, so `dueDate` becomes `due_date` and `requestId` becomes
-`request_id`.
+`request_id`. A name that is a Rust keyword becomes a raw identifier: `type` becomes `r#type`. The keywords `self`,
+`Self`, `super` and `crate` have no raw identifier and get an underscore instead: `self` becomes `self_`.
 
 ## Type
 
@@ -48,6 +49,11 @@ The fields map to Rust types as follows:
 | `T[]`       | `Vec<T>`                               |
 | `{ T }`     | `std::collections::HashMap<String, T>` |
 | `T?`        | `Option<T>`                            |
+| `Any`       | `AnyValue`                             |
+
+An `AnyValue` holds a value of any type behind a shared pointer: `AnyValue::new(value)` wraps one and
+`downcast_ref::<T>()` reads it. A clone points to the same value, and two `AnyValue`s are equal only when they are the
+same value, not when their contents are equal.
 
 `validate` returns the paths of the values that are not valid. Only refined values and constrained fields, such as
 `String(/^[A-Z]+$/g)`, can be invalid, so `Todo` checks `id`. Values in lists, dicts and nullables are checked at any
@@ -201,6 +207,7 @@ refers to itself, directly or through another type, is generated without end unl
 | `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters         |
 | `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them            |
 | `Generator`, `GeneratorField` and its structs                 | Generate values for the generators                                |
+| `AnyValue`                                                    | A value of type `Any`                                             |
 | `Client`, `Server`                                            | Provide the transport and serialization, and describe an endpoint |
 
 <details>

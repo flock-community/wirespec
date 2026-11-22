@@ -31,7 +31,7 @@ pub mod GetUser {
         pub value: String,
     }
     pub trait Service {
-        async fn get_user(id: &str) -> Response;
+        async fn get_user(&self, id: &str) -> Response;
     }
 }
 
@@ -41,7 +41,7 @@ use regex;
 pub mod Ping {
     use super::*;
     pub trait Service {
-        async fn ping() -> String;
+        async fn ping(&self) -> String;
     }
 }
 

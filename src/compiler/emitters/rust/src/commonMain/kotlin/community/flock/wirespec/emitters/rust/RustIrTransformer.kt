@@ -58,7 +58,14 @@ private val serializationFunctions = setOf(
 
 internal fun String.toSnakeCase(): String = Name.of(this).snakeCase()
 
-internal fun String.sanitizeKeywords(): String = if (this in RustEmitter.reservedKeywords) "r#$this" else this
+/** `self`, `Self`, `super` and `crate` cannot be written as a raw identifier such as `r#self`. */
+internal val unescapableKeywords = setOf("self", "Self", "super", "crate")
+
+internal fun String.sanitizeKeywords(): String = when (this) {
+    in unescapableKeywords -> "${this}_"
+    in RustEmitter.reservedKeywords -> "r#$this"
+    else -> this
+}
 
 /**
  * Function parameters borrow strings as `&str` and (de)serializers as `&impl`, and the value handed to a
@@ -128,7 +135,7 @@ internal fun LanguageType.rustName(): String = when (this) {
     is LanguageType.Nullable -> "Option<${type.rustName()}>"
     is LanguageType.Array -> "Vec<${elementType.rustName()}>"
     is LanguageType.Dict -> "std::collections::HashMap<${keyType.rustName()}, ${valueType.rustName()}>"
-    LanguageType.Any -> "Box<dyn std::any::Any>"
+    LanguageType.Any -> "AnyValue"
     LanguageType.Bytes -> "Vec<u8>"
     LanguageType.Unit -> "()"
     LanguageType.Boolean -> "bool"
@@ -146,6 +153,30 @@ internal fun LanguageType.rustName(): String = when (this) {
     is LanguageType.StringLiteral -> "String"
     is LanguageType.Function -> "Box<dyn Fn(${parameterTypes.joinToString(", ") { it.rustName() }}) -> ${returnType.rustName()}>"
 }
+
+/**
+ * A parameter such as `self` is renamed to `self_`, but a reference to it is not: it cannot be told apart from the
+ * receiver of a method. A constructor has no receiver, so there every such reference is to a parameter.
+ */
+internal fun <T : Element> T.withRenamedConstructorArguments(): T = transform {
+    apply(transformer { constructor { constructor, _ -> constructor.transformChildren(renamedUnescapableReferences) } })
+}
+
+private val renamedUnescapableReferences: Transformer = transformer {
+    statementAndExpression { statement, transformer ->
+        if (statement is VariableReference && statement.name.value() in unescapableKeywords) {
+            VariableReference(Name(listOf("${statement.name.value()}_")))
+        } else {
+            statement.transformChildren(transformer)
+        }
+    }
+}
+
+/** The traits of a channel and an rpc borrow their implementation, so it can hold a connection or other state. */
+internal fun File.withSelfReceivers(): File = transform { matchingElements<Interface> { it.withSelfReceivers() } }
+
+/** `AnyValue` is the shared type for a value of type `Any`: unlike `Box<dyn Any>` it can be cloned, defaulted and compared. */
+internal fun <T : Element> T.withAnyValues(): T = transform { matching<LanguageType.Any> { LanguageType.Custom("AnyValue") } }
 
 internal fun Interface.withSelfReceivers(): Interface = copy(
     elements = elements.map { if (it is LanguageFunction) it.copy(parameters = listOf(rustSelfParam) + it.parameters) else it },

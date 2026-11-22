@@ -145,13 +145,6 @@ impl TodoDtoGenerator {
     }
 }
 
-#![allow(warnings)]
-pub mod model;
-pub mod endpoint;
-pub mod client;
-pub mod generator;
-pub mod wirespec;
-
 pub mod get_todos_client;
 use super::wirespec::*;
 use super::model::todo_dto::TodoDto;
@@ -168,3 +161,10 @@ impl<S: Serialization, T: Transportation> get_todos::GetTodos::Call for Client<S
             .get_todos().await
     }
 }
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod client;
+pub mod generator;
+pub mod wirespec;

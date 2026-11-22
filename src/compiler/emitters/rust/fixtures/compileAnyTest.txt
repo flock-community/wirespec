@@ -3,10 +3,10 @@ use regex;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Message {
-    pub payload: Box<dyn std::any::Any>,
-    pub metadata: Option<Box<dyn std::any::Any>>,
-    pub attachments: Vec<Box<dyn std::any::Any>>,
-    pub extensions: std::collections::HashMap<String, Box<dyn std::any::Any>>,
+    pub payload: AnyValue,
+    pub metadata: Option<AnyValue>,
+    pub attachments: Vec<AnyValue>,
+    pub extensions: std::collections::HashMap<String, AnyValue>,
 }
 impl Message {
     pub fn validate(&self) -> Vec<String> {
