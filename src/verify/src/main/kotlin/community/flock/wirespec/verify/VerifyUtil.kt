@@ -189,9 +189,10 @@ internal class Language(
                         )
                         imp.path.contains("model") -> listOf("use generated::model::${snakeName}::${typeName};")
                         imp.path.contains("client") -> listOf("use generated::client::${snakeName}::${typeName};")
+                        imp.path.endsWith(".generator") -> listOf("use generated::generator::${snakeName}::${typeName};", "use generated::wirespec::*;")
                         else -> listOf("use generated::${snakeName}::${typeName};")
                     }
-                }.joinToString("\n")
+                }.distinct().joinToString("\n")
                 // Import specific wirespec traits to avoid name clashes with endpoint types (Request, Response, etc.)
                 val wirespecUse = if (hasEndpointImports) {
                     "use generated::wirespec::{BodySerializer, BodyDeserializer, PathSerializer, PathDeserializer, ParamSerializer, ParamDeserializer, BodySerialization, PathSerialization, ParamSerialization, Serializer, Deserializer, Serialization, RawRequest, RawResponse, Method};"

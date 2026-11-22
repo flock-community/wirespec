@@ -4,14 +4,15 @@ use regex;
 pub mod Queue {
     use super::*;
     pub trait Sender {
-        fn queue(message: &str);
+        fn queue(&self, message: &str);
     }
     pub trait Listener {
-        fn queue(handler: Box<dyn Fn(String) -> ()>);
+        fn queue(&self, handler: Box<dyn Fn(String) -> ()>);
     }
 }
 
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
+pub mod channel;
 pub mod wirespec;

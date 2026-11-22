@@ -32,9 +32,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
  *   written as `itemId`;
  * - a refined type derives them as `#[serde(transparent)]`, so it is written as the value it wraps;
  * - an enum is written as its label, the Wirespec name of the entry;
- * - a union derives them as `#[serde(tag = "type")]`: the name of the member goes into a `type` property, like the
- *   Jackson and kotlinx.serialization extensions do. Serde can only add that property to a member that is a type,
- *   not to an enum or a refined type.
+ * - a union derives them as `#[serde(untagged)]`: a member is written as it is, without a property that names it,
+ *   like the TypeScript emitter does. Reading takes the first member of the union that the JSON fits.
  *
  * In the shared `wirespec` module, `BodySerializer` and `BodyDeserializer` get a serde bound on the body, so one
  * implementation can hand every body to a serde data format such as `serde_json`.
@@ -69,7 +68,7 @@ public class RustSerdeExtension : IrExtension {
             is EnumDefinition, is UnionDefinition, null -> listOf(this)
         }
 
-        is Union -> if (name.pascalCase() in models) listOf(DERIVE, TAGGED, this) else listOf(this)
+        is Union -> if (name.pascalCase() in models) listOf(DERIVE, UNTAGGED, this) else listOf(this)
         is Enum -> if (name.pascalCase() in models && entries.isNotEmpty()) listOf(this, labelSerialization()) else listOf(this)
         is Package, is Import, is Function, is Namespace, is Interface, is Main, is LanguageFile, is Field, is RawElement -> listOf(this)
     }
@@ -111,7 +110,7 @@ public class RustSerdeExtension : IrExtension {
 
         val DERIVE = RawElement("#[derive(serde::Serialize, serde::Deserialize)]")
         val TRANSPARENT = RawElement("#[serde(transparent)]")
-        val TAGGED = RawElement("#[serde(tag = \"type\")]")
+        val UNTAGGED = RawElement("#[serde(untagged)]")
 
         val BODY_BOUNDS = mapOf(
             "fn serialize_body<T: 'static>" to "fn serialize_body<T: serde::Serialize + 'static>",
