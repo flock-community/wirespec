@@ -105,7 +105,20 @@ An endpoint becomes one file that holds everything that is needed to send and re
   a class for its headers. Interfaces group them: `UpdateTodo\Response` for all of them, `Response2XX` and
   `Response4XX` per status class, and `ResponseTodo` and `ResponseApiError` per body type.
 - **Handler and Call**: `UpdateTodo\Handler` is the interface the server implements, `UpdateTodo\Call` is the
-  interface the client implements.
+  interface the client implements. They return the union of the response classes,
+  `UpdateTodo\Response200|UpdateTodo\Response404`, so the signature lists every response and a static analyser narrows
+  the type in each `instanceof` branch.
+- **fold**: PHP has no sealed types, so `UpdateTodo\Response` declares `fold`, with one required closure per response:
+  `on200` and `on404`. Each response calls its own closure with its body and itself. Leaving a closure out is an
+  `ArgumentCountError`, which IDEs and static analysers flag, so handling the responses with `fold` is exhaustive, like
+  a `when` over a sealed type:
+
+  ```php
+  $message = $client->updateTodo($id, $notify, $requestId, $input)->fold(
+      on200: fn (Todo $todo, UpdateTodo\Response200 $response) => "Saved version {$response->headers->version}",
+      on404: fn (ApiError $error) => "Not found: {$error->message}",
+  );
+  ```
 - **Serialization**: the class `UpdateTodo` has the static methods `toRawRequest`, `fromRawRequest`, `toRawResponse`
   and `fromRawResponse`. They convert between the typed request and response and the `Wirespec\RawRequest` and
   `Wirespec\RawResponse` that go over the wire, and delegate the serialization of the path, parameters, headers and

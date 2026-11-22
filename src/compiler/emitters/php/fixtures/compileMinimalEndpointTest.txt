@@ -46,6 +46,12 @@ final readonly class Request implements Wirespec\Request
  */
 interface Response extends Wirespec\Response
 {
+    /**
+     * @template R
+     * @param \Closure(list<TodoDto>, Response200): R $on200
+     * @return R
+     */
+    public function fold(\Closure $on200): mixed;
 }
 
 /**
@@ -88,16 +94,26 @@ final readonly class Response200 implements Response2XX, ResponseListTodoDto
         $this->headers = new Response200Headers();
         $this->body = $body;
     }
+
+    /**
+     * @template R
+     * @param \Closure(list<TodoDto>, Response200): R $on200
+     * @return R
+     */
+    public function fold(\Closure $on200): mixed
+    {
+        return $on200($this->body, $this);
+    }
 }
 
 interface Handler extends Wirespec\Handler
 {
-    public function getTodos(Request $request): Response;
+    public function getTodos(Request $request): Response200;
 }
 
 interface Call extends Wirespec\Call
 {
-    public function getTodos(): Response;
+    public function getTodos(): Response200;
 }
 
 namespace Community\Flock\Wirespec\Generated\Endpoint;
@@ -121,7 +137,7 @@ final class GetTodos implements Wirespec\Endpoint
 
     public static function toRawResponse(
         Wirespec\Serializer $serialization,
-        GetTodos\Response $response,
+        GetTodos\Response200 $response,
     ): Wirespec\RawResponse {
         return match (true) {
             $response instanceof GetTodos\Response200 => new Wirespec\RawResponse(statusCode: $response->status, headers: [], body: $serialization->serializeBody($response->body, 'list<' . TodoDto::class . '>')),
@@ -132,7 +148,7 @@ final class GetTodos implements Wirespec\Endpoint
     public static function fromRawResponse(
         Wirespec\Deserializer $serialization,
         Wirespec\RawResponse $response,
-    ): GetTodos\Response {
+    ): GetTodos\Response200 {
         return match ($response->statusCode) {
             200 => new GetTodos\Response200(body: ($response->body !== null ? $serialization->deserializeBody($response->body, 'list<' . TodoDto::class . '>') : throw new \Exception('body is null'))),
             default => throw new \Exception(('Cannot match response with status: ' . $response->statusCode)),
@@ -182,7 +198,7 @@ final readonly class GetTodosClient implements GetTodos\Call
     ) {
     }
 
-    public function getTodos(): GetTodos\Response
+    public function getTodos(): GetTodos\Response200
     {
         $request = new GetTodos\Request();
         $rawRequest = GetTodos::toRawRequest($this->serialization, $request);
@@ -230,7 +246,7 @@ final readonly class Client implements GetTodos\Call
     ) {
     }
 
-    public function getTodos(): GetTodos\Response
+    public function getTodos(): GetTodos\Response200
     {
         return (new GetTodosClient(serialization: $this->serialization, transportation: $this->transportation))->getTodos();
     }

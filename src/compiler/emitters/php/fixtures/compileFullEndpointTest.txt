@@ -69,6 +69,14 @@ final readonly class Request implements Wirespec\Request
  */
 interface Response extends Wirespec\Response
 {
+    /**
+     * @template R
+     * @param \Closure(TodoDto, Response200): R $on200
+     * @param \Closure(TodoDto, Response201): R $on201
+     * @param \Closure(Error, Response500): R $on500
+     * @return R
+     */
+    public function fold(\Closure $on200, \Closure $on201, \Closure $on500): mixed;
 }
 
 /**
@@ -120,6 +128,18 @@ final readonly class Response200 implements Response2XX, ResponseTodoDto
         $this->headers = new Response200Headers();
         $this->body = $body;
     }
+
+    /**
+     * @template R
+     * @param \Closure(TodoDto, Response200): R $on200
+     * @param \Closure(TodoDto, Response201): R $on201
+     * @param \Closure(Error, Response500): R $on500
+     * @return R
+     */
+    public function fold(\Closure $on200, \Closure $on201, \Closure $on500): mixed
+    {
+        return $on200($this->body, $this);
+    }
 }
 
 final readonly class Response201Headers implements Wirespec\Response\Headers
@@ -146,6 +166,18 @@ final readonly class Response201 implements Response2XX, ResponseTodoDto
         $this->headers = new Response201Headers(token: $token, refreshToken: $refreshToken);
         $this->body = $body;
     }
+
+    /**
+     * @template R
+     * @param \Closure(TodoDto, Response200): R $on200
+     * @param \Closure(TodoDto, Response201): R $on201
+     * @param \Closure(Error, Response500): R $on500
+     * @return R
+     */
+    public function fold(\Closure $on200, \Closure $on201, \Closure $on500): mixed
+    {
+        return $on201($this->body, $this);
+    }
 }
 
 final readonly class Response500Headers implements Wirespec\Response\Headers
@@ -167,11 +199,23 @@ final readonly class Response500 implements Response5XX, ResponseError
         $this->headers = new Response500Headers();
         $this->body = $body;
     }
+
+    /**
+     * @template R
+     * @param \Closure(TodoDto, Response200): R $on200
+     * @param \Closure(TodoDto, Response201): R $on201
+     * @param \Closure(Error, Response500): R $on500
+     * @return R
+     */
+    public function fold(\Closure $on200, \Closure $on201, \Closure $on500): mixed
+    {
+        return $on500($this->body, $this);
+    }
 }
 
 interface Handler extends Wirespec\Handler
 {
-    public function putTodo(Request $request): Response;
+    public function putTodo(Request $request): Response200|Response201|Response500;
 }
 
 interface Call extends Wirespec\Call
@@ -183,7 +227,7 @@ interface Call extends Wirespec\Call
         Token $token,
         ?Token $refreshToken,
         PotentialTodoDto $body,
-    ): Response;
+    ): Response200|Response201|Response500;
 }
 
 namespace Community\Flock\Wirespec\Generated\Endpoint;
@@ -210,7 +254,7 @@ final class PutTodo implements Wirespec\Endpoint
 
     public static function toRawResponse(
         Wirespec\Serializer $serialization,
-        PutTodo\Response $response,
+        PutTodo\Response200|PutTodo\Response201|PutTodo\Response500 $response,
     ): Wirespec\RawResponse {
         return match (true) {
             $response instanceof PutTodo\Response200 => new Wirespec\RawResponse(statusCode: $response->status, headers: [], body: $serialization->serializeBody($response->body, TodoDto::class)),
@@ -223,7 +267,7 @@ final class PutTodo implements Wirespec\Endpoint
     public static function fromRawResponse(
         Wirespec\Deserializer $serialization,
         Wirespec\RawResponse $response,
-    ): PutTodo\Response {
+    ): PutTodo\Response200|PutTodo\Response201|PutTodo\Response500 {
         return match ($response->statusCode) {
             200 => new PutTodo\Response200(body: ($response->body !== null ? $serialization->deserializeBody($response->body, TodoDto::class) : throw new \Exception('body is null'))),
             201 => new PutTodo\Response201(token: ((\array_change_key_case($response->headers)['token'] ?? null) !== null ? $serialization->deserializeParam((\array_change_key_case($response->headers)['token'] ?? null), Token::class) : throw new \Exception('Param token cannot be null')), refreshToken: ((\array_change_key_case($response->headers)['refreshtoken'] ?? null) !== null ? $serialization->deserializeParam((\array_change_key_case($response->headers)['refreshtoken'] ?? null), Token::class) : null), body: ($response->body !== null ? $serialization->deserializeBody($response->body, TodoDto::class) : throw new \Exception('body is null'))),
@@ -361,7 +405,7 @@ final readonly class PutTodoClient implements PutTodo\Call
         Token $token,
         ?Token $refreshToken,
         PotentialTodoDto $body,
-    ): PutTodo\Response {
+    ): PutTodo\Response200|PutTodo\Response201|PutTodo\Response500 {
         $request = new PutTodo\Request(id: $id, done: $done, name: $name, token: $token, refreshToken: $refreshToken, body: $body);
         $rawRequest = PutTodo::toRawRequest($this->serialization, $request);
         $rawResponse = $this->transportation->transport($rawRequest);
@@ -478,7 +522,7 @@ final readonly class Client implements PutTodo\Call
         Token $token,
         ?Token $refreshToken,
         PotentialTodoDto $body,
-    ): PutTodo\Response {
+    ): PutTodo\Response200|PutTodo\Response201|PutTodo\Response500 {
         return (new PutTodoClient(serialization: $this->serialization, transportation: $this->transportation))->putTodo($id, $done, $name, $token, $refreshToken, $body);
     }
 }

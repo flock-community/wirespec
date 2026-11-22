@@ -319,7 +319,8 @@ public object PhpGenerator :
 
     private fun Type.docIfNeeded(scope: Scope): String? = doc(scope).takeIf { it != native(scope) }
 
-    private fun Name.className(scope: Scope = Scope()): String = referenceName().let { scope.siblings[it] ?: it }.className()
+    // A union type such as `Response200|Response404` is one name; each of its classes is resolved on its own.
+    private fun Name.className(scope: Scope = Scope()): String = referenceName().split('|').joinToString("|") { (scope.siblings[it] ?: it).className() }
 
     private fun String.className(): String = split('.', '\\').joinToString("\\") { if (it.lowercase() in reservedClassNames) "${it}_" else it }
 

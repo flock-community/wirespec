@@ -70,6 +70,8 @@ public open class PhpEmitter(
     override fun emit(refined: Refined): File = refined.convert().withPhpRefinedFunctions(refined)
 
     override fun emit(endpoint: Endpoint): File = endpoint.convert()
+        .withResponseFold(endpoint)
+        .withResponseUnions(listOf(endpoint), qualified = false)
 
     override fun emit(channel: Channel): File = channel.convert()
 
@@ -83,10 +85,13 @@ public open class PhpEmitter(
         else -> null
     }?.placeIn("Generator", (listOf(definition.identifier.value) + definition.importReferences().map { it.value }).toModelImports())
 
-    override fun emitEndpointClient(endpoint: Endpoint): File =
-        super.emitEndpointClient(endpoint).placeIn("Client", endpoint.endpointImports() + endpoint.modelImports())
+    override fun emitEndpointClient(endpoint: Endpoint): File = super.emitEndpointClient(endpoint)
+        .withResponseUnions(listOf(endpoint), qualified = true)
+        .placeIn("Client", endpoint.endpointImports() + endpoint.modelImports())
 
-    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File = super.emitClient(endpoints, logger).let { client ->
+    override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File = super.emitClient(endpoints, logger)
+        .withResponseUnions(endpoints, qualified = true)
+        .let { client ->
         File(
             name = location("", client.name.pascalCase()),
             elements = listOf(Package(rootNamespace), wirespecImport) +
