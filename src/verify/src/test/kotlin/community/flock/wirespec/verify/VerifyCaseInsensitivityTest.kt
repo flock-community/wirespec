@@ -90,10 +90,12 @@ class VerifyCaseInsensitivityTest : FunSpec({
                     })
 
                     // fromRawRequest call
-                    assign("fromRaw", functionCall("fromRawRequest", receiver = if (isRust) null else endpointRef) {
+                    // Rust returns a Result, which `NullableGet` unwraps.
+                    assign(if (isRust) "fromRawResult" else "fromRaw", functionCall("fromRawRequest", receiver = if (isRust) null else endpointRef) {
                         arg("serialization", if (isRust) with(RustEmitter) { VariableReference("serialization").borrow() } else VariableReference("serialization"))
                         arg("rawRequest", VariableReference("rawRequest"))
                     })
+                    if (isRust) assign("fromRaw", NullableGet(VariableReference("fromRawResult")))
 
                     // Assert token.iss matches despite case mismatch
                     assertThat(

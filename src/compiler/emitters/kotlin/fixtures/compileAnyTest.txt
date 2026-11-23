@@ -3,7 +3,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class Message(
+public data class Message(
   val payload: Any,
   val metadata: Any?,
   val attachments: List<Any>,
@@ -19,8 +19,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Message
 
-object MessageGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Message =
+public object MessageGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Message =
     Message(
       payload = generator.generate(path + listOf<String>("payload"), Wirespec.GeneratorFieldString(
         regex = null,

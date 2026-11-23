@@ -449,7 +449,7 @@ public class StructConstructorBuilder : BaseBuilder {
         return node
     }
 
-    public fun build(): Constructor = Constructor(parameters, body)
+    public fun build(): Constructor = Constructor(parameters, body, visibility = null)
 }
 
 @Dsl
@@ -876,6 +876,7 @@ internal fun Enum.withLabelField(
         Constructor(
             parameters = listOf(Parameter(Name.of("label"), Type.String)),
             body = listOf(Assignment(Name.of("this.label"), VariableReference(Name.of("label")), true)),
+            visibility = null,
         ),
     ),
     elements = listOf(

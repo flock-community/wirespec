@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.ir.FieldCall
 import community.flock.wirespec.compiler.core.ir.FunctionBuilder
 import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.Name
+import community.flock.wirespec.compiler.core.ir.NullableGet
 import community.flock.wirespec.compiler.core.ir.Type
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.file
@@ -51,10 +52,12 @@ class VerifyClientTest : FunSpec({
                     }
 
                     val getTodosMethod = if (isPython) "get_todos" else "getTodos"
-                    assign("response", functionCall(getTodosMethod,
+                    // A Rust client returns a Result, which `NullableGet` unwraps.
+                    assign(if (isRust) "result" else "response", functionCall(getTodosMethod,
                         receiver = VariableReference("endpointClient"),
                         isAwait = true,
                     ))
+                    if (isRust) assign("response", NullableGet(VariableReference("result")))
 
                     assertDescriptionSwitch(response200Type)
                 }
@@ -99,10 +102,11 @@ class VerifyClientTest : FunSpec({
                     }
 
                     val getTodosMethod = if (isPython) "get_todos" else "getTodos"
-                    assign("response", functionCall(getTodosMethod,
+                    assign(if (isRust) "result" else "response", functionCall(getTodosMethod,
                         receiver = VariableReference("mainClient"),
                         isAwait = true,
                     ))
+                    if (isRust) assign("response", NullableGet(VariableReference("result")))
 
                     assertDescriptionSwitch(response200Type)
                 }

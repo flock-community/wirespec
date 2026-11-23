@@ -1,8 +1,9 @@
 use super::super::wirespec::*;
 use regex;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub enum MyAwesomeEnum {
+    #[default]
     ONE,
     Two,
     THREEMORE,
@@ -47,6 +48,12 @@ impl std::fmt::Display for MyAwesomeEnum {
         write!(f, "{}", self.label())
     }
 }
+impl std::str::FromStr for MyAwesomeEnum {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_label(s).ok_or_else(|| format!("Unknown MyAwesomeEnum: {}", s))
+    }
+}
 
 use super::super::wirespec::*;
 use regex;
@@ -54,12 +61,13 @@ use super::super::model::my_awesome_enum::MyAwesomeEnum;
 
 pub struct MyAwesomeEnumGenerator;
 impl MyAwesomeEnumGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> MyAwesomeEnum {
-        return MyAwesomeEnum.value_of(generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<MyAwesomeEnum>() }));
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> MyAwesomeEnum {
+        return MyAwesomeEnum::from_label(generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), GeneratorFieldEnum { values: vec![String::from("ONE"), String::from("Two"), String::from("THREE_MORE"), String::from("UnitedKingdom"), String::from("-1"), String::from("0"), String::from("10"), String::from("-999"), String::from("88")], annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new(), r#type: std::any::TypeId::of::<MyAwesomeEnum>() }).as_str()).expect("Unknown MyAwesomeEnum");
     }
 }
 
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
+pub mod generator;
 pub mod wirespec;

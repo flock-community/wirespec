@@ -51,6 +51,7 @@ include(
     "src:integration:jvm",
     "src:integration:kotest",
     "src:integration:kotlinx-serialization",
+    "src:integration:rust-serde",
     "src:integration:wirespec",
     "src:integration:wiremock",
     "src:integration:spring",

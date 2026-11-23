@@ -3,7 +3,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class Settings(
+public data class Settings(
   val name: String = "anonymous",
   val greeting: String = "Hello \"\$name\"",
   val retries: Long = 3L,
@@ -28,7 +28,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-enum class Status (override val label: String): Wirespec.Enum {
+public enum class Status (override val label: String): Wirespec.Enum {
   ACTIVE("ACTIVE"),
   INACTIVE("INACTIVE");
   override fun toString(): String {
@@ -41,7 +41,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-enum class Priority (override val label: String): Wirespec.Enum {
+public enum class Priority (override val label: String): Wirespec.Enum {
   _1("1"),
   _2("2");
   override fun toString(): String {
@@ -57,8 +57,8 @@ import community.flock.wirespec.generated.model.Settings
 import community.flock.wirespec.generated.model.Status
 import community.flock.wirespec.generated.model.Priority
 
-object SettingsGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Settings =
+public object SettingsGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Settings =
     Settings(
       name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
         regex = null,
@@ -131,8 +131,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Status
 
-object StatusGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Status =
+public object StatusGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Status =
     Status.valueOf(generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldEnum(
       values = listOf<String>("ACTIVE", "INACTIVE"),
       annotations = emptyList<Map<String, Any>>(),
@@ -146,8 +146,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Priority
 
-object PriorityGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Priority =
+public object PriorityGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Priority =
     Priority.valueOf(generator.generate(path + listOf<String>("value"), Wirespec.GeneratorFieldEnum(
       values = listOf<String>("1", "2"),
       annotations = emptyList<Map<String, Any>>(),

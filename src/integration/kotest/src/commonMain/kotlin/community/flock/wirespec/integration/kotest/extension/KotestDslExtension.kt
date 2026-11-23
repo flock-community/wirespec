@@ -60,7 +60,7 @@ public open class KotestDslExtension(
         copy(
             elements = elements.map { child ->
                 if (child is Struct && child.name.pascalCase() in recordNames && child.fieldList().isNotEmpty() && !child.hasCompanion()) {
-                    child.copy(elements = child.elements + raw("companion object"))
+                    child.copy(elements = child.elements + raw("public companion object"))
                 } else {
                     child
                 }
@@ -70,5 +70,5 @@ public open class KotestDslExtension(
         this
     }
 
-    private fun Struct.hasCompanion(): Boolean = elements.any { it is RawElement && it.code.trimStart().startsWith("companion object") }
+    private fun Struct.hasCompanion(): Boolean = elements.any { it is RawElement && it.code.trimStart().removePrefix("public ").startsWith("companion object") }
 }

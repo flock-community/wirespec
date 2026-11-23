@@ -56,6 +56,7 @@ import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.TypeParameter
 import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.VariableReference
+import community.flock.wirespec.compiler.core.ir.annotatedFields
 import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.ir.Function as AstFunction
 
@@ -144,7 +145,10 @@ public object RustGenerator :
 
     private fun Enum.emit(indent: Int): String {
         val rustName = name.pascalCase()
-        val definition = "#[derive(Debug, Clone, PartialEq)]\npub enum $rustName {\n${entries.joinToString("") { "${it.name.value()},\n".indentCode(1) }}}\n"
+        // An enum without entries has no value to default to.
+        val derive = if (entries.isEmpty()) "#[derive(Debug, Clone, PartialEq)]" else "#[derive(Debug, Clone, Default, PartialEq)]"
+        val variants = entries.mapIndexed { index, entry -> (if (index == 0) "#[default]\n" else "") + "${entry.name.value()},\n" }
+        val definition = "$derive\npub enum $rustName {\n${variants.joinToString("") { it.indentCode(1) }}}\n"
         val labelArms = entries.joinToString("\n") { "$rustName::${it.name.value()} => \"${it.wireValue()}\",".indentCode(3) }
         val fromLabelArms = entries.joinToString("\n") { "\"${it.wireValue()}\" => Some($rustName::${it.name.value()}),".indentCode(3) }
         val implementation = if (entries.isEmpty()) {
@@ -169,6 +173,12 @@ public object RustGenerator :
             |        write!(f, "{}", self.label())
             |    }
             |}
+            |impl std::str::FromStr for $rustName {
+            |    type Err = String;
+            |    fn from_str(s: &str) -> Result<Self, Self::Err> {
+            |        Self::from_label(s).ok_or_else(|| format!("Unknown $rustName: {}", s))
+            |    }
+            |}
             |
             """.trimMargin()
         }
@@ -182,7 +192,7 @@ public object RustGenerator :
         val body = if (fields.isEmpty() && constructors.isEmpty()) {
             ";\n"
         } else {
-            " {\n${fields.joinToString("") { "pub ${it.name.snakeCase().sanitize()}: ${it.type.emit()},\n".indentCode(1) }}}\n"
+            " {\n${annotatedFields().joinToString("") { (field, attributes) -> (attributes.joinToString("") { "$it\n" } + "pub ${field.name.snakeCase().sanitize()}: ${field.type.emit()},\n").indentCode(1) }}}\n"
         }
         val definition = "pub struct $rustName${typeParameters.joinNonEmpty(", ", "<", ">") { it.type.emit() }}$body"
         val implementations = constructors.joinToString("") { it.emit(rustName, fields) } +
@@ -288,8 +298,9 @@ public object RustGenerator :
         }
         is Literal -> emit()
         is LiteralList -> if (values.isEmpty()) "Vec::<${type.emit()}>::new()" else "vec![${values.joinToString(", ") { it.emit() }}]"
+        // An empty map names its types, like an empty list: nothing else tells Rust what a boxed map holds.
         is LiteralMap -> if (values.isEmpty()) {
-            "std::collections::HashMap::new()"
+            "std::collections::HashMap::<${keyType.emit()}, ${valueType.emit()}>::new()"
         } else {
             "std::collections::HashMap::from([${values.entries.joinToString(", ") { (key, value) -> "(${Literal(key, keyType).emit()}, ${value.emit()})" }}])"
         }
@@ -298,8 +309,12 @@ public object RustGenerator :
         is NullLiteral, is NullableEmpty -> "None"
         is VariableReference -> name.snakeCase().sanitize()
         is FieldCall -> "${receiver?.let { "${it.emit()}." }.orEmpty()}${field.snakeCase().sanitize()}"
-        is FunctionCall -> {
-            val function = if ("::" in name.value()) name.value() else name.snakeCase().sanitize()
+        // The IR has no expression for `?`, which hands an error to the caller: it is written as a call of `?` on
+        // the value. `Ok`, `Err` and `Some` are variants, not functions in camel case.
+        is FunctionCall -> if (name.value() == TRY && receiver != null) {
+            "${receiver.emit()}?"
+        } else {
+            val function = if ("::" in name.value() || name.value() in variants) name.value() else name.snakeCase().sanitize()
             "${receiver?.let { "${it.emit()}." }.orEmpty()}$function(${arguments.values.joinToString(", ") { it.emit() }})${if (isAwait) ".await" else ""}"
         }
         is ArrayIndexCall -> when {
@@ -385,10 +400,14 @@ public object RustGenerator :
     }
 }
 
+private const val TRY = "?"
+
+private val variants = setOf("Ok", "Err", "Some")
+
 private val selfReceivers = setOf("self", "&self")
 
-// `self` and `Self` cannot be escaped as raw identifiers (r#self is invalid Rust); the emitter's
+// `self`, `Self`, `super` and `crate` cannot be escaped as raw identifiers (r#self is invalid Rust); the emitter's
 // sanitization renames such fields instead, so the generator leaves them untouched.
-private val escapableKeywords = RustGenerator.reservedKeywords - setOf("self", "Self")
+private val escapableKeywords = RustGenerator.reservedKeywords - setOf("self", "Self", "super", "crate")
 
 private fun String.sanitize(): String = if (this in escapableKeywords) "r#$this" else this

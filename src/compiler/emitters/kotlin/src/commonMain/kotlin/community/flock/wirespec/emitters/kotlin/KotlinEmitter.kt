@@ -153,30 +153,43 @@ public open class KotlinEmitter(
         }
     }
 
-    // The shared runtime is compiled by :src:integration:wirespec, which runs under
-    // explicit API mode, so every declaration in it has to spell its visibility out.
+    // Generated code is often compiled in a library under explicit API mode, so every declaration
+    // spells its visibility out. Overrides are left alone: they take the visibility they override.
     private fun File.withExplicitVisibility(): File = transform {
         matchingElements { element: Element ->
             when (element) {
-                is Namespace -> element.copy(visibility = Visibility.PUBLIC)
+                is Namespace -> element.copy(visibility = element.visibility.orPublic())
                 is LanguageInterface -> element.copy(
-                    visibility = Visibility.PUBLIC,
-                    fields = element.fields.map { it.copy(visibility = Visibility.PUBLIC) },
+                    visibility = element.visibility.orPublic(),
+                    fields = element.fields.map { if (it.isOverride) it else it.copy(visibility = it.visibility.orPublic()) },
                 )
-                is LanguageUnion -> element.copy(visibility = Visibility.PUBLIC)
-                is LanguageEnum -> element.copy(visibility = Visibility.PUBLIC)
-                is Struct -> element.copy(visibility = Visibility.PUBLIC)
-                is LanguageFunction -> element.copy(visibility = Visibility.PUBLIC)
+                is LanguageUnion -> element.copy(visibility = element.visibility.orPublic())
+                is LanguageEnum -> element.copy(visibility = element.visibility.orPublic())
+                is Struct -> element.copy(
+                    visibility = element.visibility.orPublic(),
+                    constructors = element.constructors.map { it.copy(visibility = it.visibility.orPublic()) },
+                )
+                is LanguageFunction -> if (element.isOverride) element else element.withExplicitVisibility()
                 else -> element
             }
         }
     }
+
+    /**
+     * The generator camelCases the name of a function without a visibility, but writes the name of one with a
+     * visibility verbatim, so a function that only gets its visibility here keeps the name it would have had.
+     */
+    private fun LanguageFunction.withExplicitVisibility(): LanguageFunction =
+        if (visibility != null) this else copy(name = Name(listOf(name.camelCase())), visibility = Visibility.PUBLIC)
+
+    private fun Visibility?.orPublic(): Visibility = this ?: Visibility.PUBLIC
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
         return file
             .prependImports(wirespecImports.takeIf { module.irNeedsWirespecImport() })
             .placeInPackage(packageName = packageName, definition = definition)
+            .withExplicitVisibility()
     }
 
     override fun emitGenerator(definition: Definition, module: Module): LanguageFile? {
@@ -201,6 +214,7 @@ public open class KotlinEmitter(
         return sanitized
             .prependImports(wirespecImports + modelImports)
             .placeInPackage(packageName = packageName, subPackage = "generator")
+            .withExplicitVisibility()
     }
 
     override fun emit(type: Type, module: Module): File =
@@ -257,7 +271,7 @@ public open class KotlinEmitter(
                 add(endpointImport)
                 addAll(file.elements)
             }
-        )
+        ).withExplicitVisibility()
     }
 
     override fun emitClient(endpoints: List<Endpoint>, logger: Logger): File {
@@ -277,7 +291,7 @@ public open class KotlinEmitter(
                 addAll(allImports)
                 addAll(file.elements)
             }
-        )
+        ).withExplicitVisibility()
     }
 
     private fun Identifier.sanitize(): String = value

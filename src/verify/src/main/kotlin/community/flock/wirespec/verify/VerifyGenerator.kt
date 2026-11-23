@@ -3,6 +3,7 @@ package community.flock.wirespec.verify
 import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.rust.RustEmitter
 import community.flock.wirespec.emitters.scala.ScalaEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.ir.ContainerBuilder
@@ -36,6 +37,8 @@ internal fun ContainerBuilder.generatorImports(lang: Language, definitionNames: 
             import("community.flock.wirespec.generated.wirespec", WIRESPEC)
             definitionNames.forEach { import("$GENERATOR_PACKAGE.${it}Generator", "${it}Generator") }
         }
+        // `Language.run` writes the `use` statements for Rust from the name of the import.
+        is RustEmitter -> definitionNames.forEach { import(GENERATOR_PACKAGE, "${it}Generator") }
         else -> error("Generators are not verified for: ${lang.emitter::class.simpleName}")
     }
 }
@@ -166,6 +169,27 @@ internal fun generatorCode(lang: Language): String = when (lang.emitter) {
         |        case f: Wirespec.GeneratorFieldDict[?] => Map("key" -> f.generate(path :+ "key"))
         |    }).asInstanceOf[T]
         |}
+    """.trimMargin()
+
+    // A constant reference, so the test file passes `generator` to a function that borrows it.
+    is RustEmitter -> """
+        |struct TestGenerator;
+        |impl Generator for TestGenerator {
+        |    fn generate_string(&self, _: Vec<String>, field: &GeneratorFieldString) -> String { String::from(if field.regex.is_some() { "1234AB" } else { "string" }) }
+        |    fn generate_integer64(&self, _: Vec<String>, _: &GeneratorFieldInteger64) -> i64 { 42 }
+        |    fn generate_integer32(&self, _: Vec<String>, _: &GeneratorFieldInteger32) -> i32 { 42 }
+        |    fn generate_number64(&self, _: Vec<String>, _: &GeneratorFieldNumber64) -> f64 { 4.2 }
+        |    fn generate_number32(&self, _: Vec<String>, _: &GeneratorFieldNumber32) -> f32 { 4.2 }
+        |    fn generate_boolean(&self, _: Vec<String>, _: &GeneratorFieldBoolean) -> bool { true }
+        |    fn generate_bytes(&self, _: Vec<String>, _: &GeneratorFieldBytes) -> Vec<u8> { Vec::new() }
+        |    fn generate_enum(&self, _: Vec<String>, field: &GeneratorFieldEnum) -> String { field.values[0].clone() }
+        |    fn generate_union(&self, _: Vec<String>, field: &GeneratorFieldUnion) -> String { field.variants[0].clone() }
+        |    fn generate_array<T>(&self, path: Vec<String>, field: &GeneratorFieldArray<T>) -> Vec<T> { vec![(field.generate)([path, vec![String::from("0")]].concat())] }
+        |    fn generate_nullable<T>(&self, path: Vec<String>, field: &GeneratorFieldNullable<T>) -> Option<T> { Some((field.generate)(path)) }
+        |    fn generate_dict<T>(&self, path: Vec<String>, field: &GeneratorFieldDict<T>) -> std::collections::HashMap<String, T> { std::collections::HashMap::from([(String::from("key"), (field.generate)([path, vec![String::from("key")]].concat()))]) }
+        |    fn generate_shape<T>(&self, path: Vec<String>, field: &GeneratorFieldShape<T>) -> T { (field.generate)(path) }
+        |}
+        |const generator: &TestGenerator = &TestGenerator;
     """.trimMargin()
 
     else -> error("Unknown emitter: ${lang.emitter::class.simpleName}")

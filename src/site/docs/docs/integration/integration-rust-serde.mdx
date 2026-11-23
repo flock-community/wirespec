@@ -1,0 +1,142 @@
+---
+title: Serde
+slug: /integration/rust-serde
+---
+
+import { Languages } from "@site/src/components/Languages";
+
+<Languages languages={["Rust"]} />
+
+The generated Rust models have no serialization of their own: Wirespec hands every body to the `BodySerializer` and
+`BodyDeserializer` you provide. If you serialize with [serde](https://serde.rs), this integration ships an
+[IR extension](../plugins/plugins.md#ir-extensions) that makes every generated model a serde type, so one small
+serializer covers all of them.
+
+## What it does
+
+The extension adds serde to the models in the `model` directory, in the JSON form of the contract:
+
+- a type derives `Serialize` and `Deserialize`, and every field is renamed to its Wirespec name;
+- a refined type is `#[serde(transparent)]`, so it is written as the value it wraps;
+- an enum is written as its label, the Wirespec name of the entry;
+- a union is `#[serde(untagged)]`: a member is written as it is, without a property that names it, like the
+  [TypeScript emitter](../emitters/emitters-typescript.mdx#union) does. See [Unions](#unions).
+
+For example, this definition:
+
+```wirespec
+type ItemId = String(/^[a-z0-9-]+$/g)
+enum Role { USER, ASSISTANT }
+type Item { itemId: ItemId, role: Role }
+type UserMessage { role: Role, text: String }
+type AssistantMessage { role: Role, text: String }
+type Message = UserMessage | AssistantMessage
+```
+
+is emitted as:
+
+```rust
+#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Item {
+    #[serde(rename = "itemId")]
+    pub item_id: ItemId,
+    #[serde(rename = "role")]
+    pub role: Role,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(transparent)]
+pub struct ItemId {
+    pub value: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum Message {
+    UserMessage(UserMessage),
+    AssistantMessage(AssistantMessage),
+}
+```
+
+An `Item` is written as `{"itemId":"abc","role":"ASSISTANT"}`, and a `Message` as
+`{"role":"USER","text":"hi"}`.
+
+In the shared `wirespec.rs`, the body serializers get a serde bound on the body they take:
+
+```rust
+pub trait BodySerializer {
+    fn serialize_body<T: serde::Serialize + 'static>(&self, t: &T, r#type: TypeId) -> Vec<u8>;
+}
+pub trait BodyDeserializer {
+    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], r#type: TypeId) -> Result<T, WirespecError>;
+}
+```
+
+:::note
+- The structs of an endpoint (`Path`, `Queries`, `Request`, `Response200`) are left as they are. Paths, queries and
+  headers still go through the `PathSerializer` and `ParamSerializer` you provide.
+- With the serde bound, every body must be a serde type. An `Any` is an `AnyValue`, which is not, so a type with a
+  field of type `Any` and an endpoint with such a body do not compile with this extension.
+:::
+
+## Unions
+
+A union is written as its member, so the JSON does not say which member it is. When serde reads a union, it tries
+the members in the order of the contract and takes the first one the JSON fits:
+
+- A property that a member does not know is ignored, and a nullable field may be missing. So a member also fits the
+  JSON of another member that has all its required fields.
+- Put the member with the most required fields first. With `type Pet = Cat | Dog`, where a `Cat` is a `Dog` with a
+  required `lives`, a cat is read as a `Cat` and a dog as a `Dog`. With `Dog | Cat`, a cat is read as a `Dog` and
+  loses its `lives`.
+- Members with the same required fields cannot be told apart: the `Message` above is always read as a
+  `UserMessage`. Give the members a required field of their own, or look at a field such as `role` after reading.
+
+:::warning
+The [Jackson](./integration-jackson.mdx) and [kotlinx.serialization](./integration-kotlinx-serialization.mdx)
+integrations write the name of the member into a `type` property. Rust reads their unions, because it ignores the
+property, but they cannot read a union that Rust writes.
+:::
+
+## Setup
+
+The extension applies to the **Rust** target only. It is bundled with every Wirespec plugin as `RustSerde`:
+
+```shell
+wirespec compile -i ./wirespec -o ./src/generated -l Rust -p '' --shared -e RustSerde
+```
+
+The attributes are fully qualified, so no import is added. Your crate needs `serde` with its `derive` feature, and
+the data format you serialize to:
+
+```toml title="Cargo.toml"
+[dependencies]
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
+
+## Serializing bodies
+
+With the serde bound, the body serialization is the same for every model:
+
+```rust
+use std::any::TypeId;
+
+struct Json;
+
+impl BodySerializer for Json {
+    fn serialize_body<T: serde::Serialize + 'static>(&self, t: &T, _: TypeId) -> Vec<u8> {
+        serde_json::to_vec(t).expect("body is serializable")
+    }
+}
+
+impl BodyDeserializer for Json {
+    fn deserialize_body<T: serde::de::DeserializeOwned + 'static>(&self, raw: &[u8], _: TypeId) -> Result<T, WirespecError> {
+        serde_json::from_slice(raw).map_err(|error| WirespecError::Deserialization(error.to_string()))
+    }
+}
+```

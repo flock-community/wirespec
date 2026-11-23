@@ -25,10 +25,16 @@ macro_rules! route {
                     .unwrap(),
             )
             .to(|http: HttpRequest, body: web::Bytes| async move {
-                let request = $endpoint::$api::from_raw_request(&Json, to_raw_request(&http, body));
-                let response =
-                    <PetStore as $endpoint::$api::Handler>::$endpoint(&PetStore, request).await;
-                to_http_response($endpoint::$api::to_raw_response(&Json, response))
+                match $endpoint::$api::from_raw_request(&Json, to_raw_request(&http, body)) {
+                    Ok(request) => {
+                        let response =
+                            <PetStore as $endpoint::$api::Handler>::$endpoint(&PetStore, request)
+                                .await;
+                        to_http_response($endpoint::$api::to_raw_response(&Json, response))
+                    }
+                    // A request the contract does not allow: say what is wrong with it.
+                    Err(error) => HttpResponse::BadRequest().body(error.to_string()),
+                }
             }),
         )
     };

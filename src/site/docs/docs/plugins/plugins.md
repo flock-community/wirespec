@@ -185,6 +185,7 @@ that name replaces the fully qualified class name; in Gradle you reference the c
 | `JvmBuilder`               | Java, Kotlin, Scala | Adds an immutable `Builder` with `builder()` and `toBuilder()` to every model — see [Builders](../integration/integration-builders.mdx) |
 | `KotestDsl`                | Kotlin              | Adds a Kotest scenario DSL for every model, endpoint, channel and rpc — see [Kotest](../integration/integration-kotest.mdx)            |
 | `KotlinxSerialization`     | Kotlin              | Adds `@Serializable`/`@SerialName` to every model — see [kotlinx.serialization](../integration/integration-kotlinx-serialization.mdx) |
+| `RustSerde`                | Rust                | Makes every model a serde type, written under its Wirespec names — see [Serde](../integration/integration-rust-serde.mdx)             |
 | `SpringMappingAnnotations` | Java, Kotlin        | Adds Spring MVC mapping annotations to every endpoint handler — see [Spring](../integration/integration-spring.mdx)                   |
 | `SpringNativeHints`        | Java, Kotlin        | Adds a `WirespecNativeHints` class that registers the models and endpoints for GraalVM native images                                  |
 

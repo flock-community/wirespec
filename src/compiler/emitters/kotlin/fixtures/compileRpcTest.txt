@@ -3,7 +3,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class User(
+public data class User(
   val name: String
 ) : Wirespec.Shape {
   override fun validate(): List<String> =
@@ -16,16 +16,16 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.User
 
-object GetUser : Wirespec.Rpc {
-  sealed interface Response
-  data class Result(
+public object GetUser : Wirespec.Rpc {
+  public sealed interface Response
+  public data class Result(
       val value: User
     ) : Response
-  data class Error(
+  public data class Error(
       val value: String
     ) : Response
-  fun interface Service {
-      suspend fun getUser(id: String): Response
+  public fun interface Service {
+      public suspend fun getUser(id: String): Response
   }
 }
 
@@ -34,9 +34,9 @@ package community.flock.wirespec.generated.rpc
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-object Ping : Wirespec.Rpc {
-  fun interface Service {
-      suspend fun ping(): String
+public object Ping : Wirespec.Rpc {
+  public fun interface Service {
+      public suspend fun ping(): String
   }
 }
 
@@ -46,8 +46,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.User
 
-object UserGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): User =
+public object UserGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): User =
     User(name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
       regex = null,
       annotations = emptyList<Map<String, Any>>()

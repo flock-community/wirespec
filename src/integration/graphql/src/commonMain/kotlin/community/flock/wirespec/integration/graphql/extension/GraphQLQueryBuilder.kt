@@ -140,7 +140,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
      */
     val dslMarker: RawElement? = RawElement("@$DSL_MARKER").takeIf { language == Language.Kotlin }
 
-    val dslMarkerDefinition: RawElement? = RawElement("@DslMarker\nannotation class $DSL_MARKER").takeIf { language == Language.Kotlin }
+    val dslMarkerDefinition: RawElement? = RawElement("@DslMarker\npublic annotation class $DSL_MARKER").takeIf { language == Language.Kotlin }
 
     /**
      * `QueryTodoGraphQL.request(id)` writes the request of an rpc with every field of its result, and
@@ -148,6 +148,8 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
      * and its `GraphQLVariables`. It has no fields, so it is an `object` in Kotlin and a record without components in Java.
      */
     fun builder(request: Request): Struct = struct(request.builder) {
+        // A top-level Java record is public without a modifier, and could not be static.
+        if (language == Language.Kotlin) visibility(Visibility.PUBLIC)
         val selection = operations.composite(request.result)
 
         fun request(selection: Definition?, query: Expression) = function(REQUEST) {

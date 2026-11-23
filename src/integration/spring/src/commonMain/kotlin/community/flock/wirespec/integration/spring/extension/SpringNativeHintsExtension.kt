@@ -61,9 +61,9 @@ public class SpringNativeHintsExtension(
         return """
             |@Configuration
             |@ImportRuntimeHints(WirespecNativeHints.GeneratedHints::class)
-            |open class WirespecNativeHints {
+            |public open class WirespecNativeHints {
             |
-            |  class GeneratedHints : RuntimeHintsRegistrar {
+            |  public class GeneratedHints : RuntimeHintsRegistrar {
             |    override fun registerHints(hints: RuntimeHints, classLoader: ClassLoader?) {
             |      val allMembers = MemberCategory.entries.toTypedArray()
             |$registrations

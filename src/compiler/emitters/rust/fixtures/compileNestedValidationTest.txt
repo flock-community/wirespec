@@ -9,8 +9,16 @@ impl Tag {
     pub fn validate(&self) -> bool {
         return regex::Regex::new(r"^[a-z]+$").unwrap().is_match(&self.value);
     }
-    pub fn to_string(&self) -> String {
-        return self.value.clone();
+}
+impl std::fmt::Display for Tag {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for Tag {
+    type Err = <String as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| Tag { value })
     }
 }
 
@@ -25,8 +33,16 @@ impl Score {
     pub fn validate(&self) -> bool {
         return 0 <= self.value && self.value <= 100;
     }
-    pub fn to_string(&self) -> String {
-        return format!("{}", self.value);
+}
+impl std::fmt::Display for Score {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+impl std::str::FromStr for Score {
+    type Err = <i64 as std::str::FromStr>::Err;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse().map(|value| Score { value })
     }
 }
 
@@ -93,8 +109,8 @@ use super::super::model::tag::Tag;
 
 pub struct TagGenerator;
 impl TagGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Tag {
-        return Tag { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-z]+$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> Tag {
+        return Tag { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), GeneratorFieldString { regex: Some(String::from("^[a-z]+$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -104,8 +120,8 @@ use super::super::model::score::Score;
 
 pub struct ScoreGenerator;
 impl ScoreGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Score {
-        return Score { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: Some(0_i64), max: Some(100_i64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> Score {
+        return Score { value: generator.generate(vec![path.as_slice(), vec![String::from("value")].as_slice()].concat(), GeneratorFieldInteger64 { min: Some(0_i64), max: Some(100_i64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 
@@ -117,8 +133,8 @@ use super::tag_generator::TagGenerator;
 
 pub struct LabelGenerator;
 impl LabelGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Label {
-        return Label { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| TagGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<Tag>() }), code: generator.generate(vec![path.as_slice(), vec![String::from("code")].as_slice()].concat(), Wirespec.GeneratorFieldString { regex: Some(String::from("^[A-Z]{3}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), aliases: generator.generate(vec![path.as_slice(), vec![String::from("aliases")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldString { regex: Some(String::from("^[a-z]+$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> Label {
+        return Label { name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p0| TagGenerator::generate(generator, p0)), r#type: std::any::TypeId::of::<Tag>() }), code: generator.generate(vec![path.as_slice(), vec![String::from("code")].as_slice()].concat(), GeneratorFieldString { regex: Some(String::from("^[A-Z]{3}$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), aliases: generator.generate(vec![path.as_slice(), vec![String::from("aliases")].as_slice()].concat(), GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldString { regex: Some(String::from("^[a-z]+$")), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
     }
 }
 
@@ -134,8 +150,8 @@ use super::label_generator::LabelGenerator;
 
 pub struct BoardGenerator;
 impl BoardGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> Board {
-        return Board { owner: generator.generate(vec![path.as_slice(), vec![String::from("owner")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| TagGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Tag>() })) }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p2| TagGenerator.generate(generator, p2)), r#type: std::any::TypeId::of::<Tag>() })) })) }), slots: generator.generate(vec![path.as_slice(), vec![String::from("slots")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, Wirespec.GeneratorFieldNullable { generate: Box::new(|p2| generator.generate(p2, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p3| TagGenerator.generate(generator, p3)), r#type: std::any::TypeId::of::<Tag>() })) })) })) }), grid: generator.generate(vec![path.as_slice(), vec![String::from("grid")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p2| ScoreGenerator.generate(generator, p2)), r#type: std::any::TypeId::of::<Score>() })) })) }), tags_by_key: generator.generate(vec![path.as_slice(), vec![String::from("tagsByKey")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p1| TagGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Tag>() })) }), scores_by_key: generator.generate(vec![path.as_slice(), vec![String::from("scoresByKey")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p2| ScoreGenerator.generate(generator, p2)), r#type: std::any::TypeId::of::<Score>() })) })) }), label: generator.generate(vec![path.as_slice(), vec![String::from("label")].as_slice()].concat(), Wirespec.GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("code"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("aliases"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| LabelGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Label>() })) }), labels: generator.generate(vec![path.as_slice(), vec![String::from("labels")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("code"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("aliases"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p2| LabelGenerator.generate(generator, p2)), r#type: std::any::TypeId::of::<Label>() })) })) }), labels_by_key: generator.generate(vec![path.as_slice(), vec![String::from("labelsByKey")].as_slice()].concat(), Wirespec.GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("code"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("aliases"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| LabelGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<Label>() })) }), limit: generator.generate(vec![path.as_slice(), vec![String::from("limit")].as_slice()].concat(), Wirespec.GeneratorFieldInteger64 { min: Some(1_i64), max: Some(10_i64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), ratios: generator.generate(vec![path.as_slice(), vec![String::from("ratios")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldNumber64 { min: Some(0.0_f64), max: Some(1.0_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> Board {
+        return Board { owner: generator.generate(vec![path.as_slice(), vec![String::from("owner")].as_slice()].concat(), GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p1| TagGenerator::generate(generator, p1)), r#type: std::any::TypeId::of::<Tag>() })) }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p2| TagGenerator::generate(generator, p2)), r#type: std::any::TypeId::of::<Tag>() })) })) }), slots: generator.generate(vec![path.as_slice(), vec![String::from("slots")].as_slice()].concat(), GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, GeneratorFieldNullable { generate: Box::new(|p2| generator.generate(p2, GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p3| TagGenerator::generate(generator, p3)), r#type: std::any::TypeId::of::<Tag>() })) })) })) }), grid: generator.generate(vec![path.as_slice(), vec![String::from("grid")].as_slice()].concat(), GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p2| ScoreGenerator::generate(generator, p2)), r#type: std::any::TypeId::of::<Score>() })) })) }), tags_by_key: generator.generate(vec![path.as_slice(), vec![String::from("tagsByKey")].as_slice()].concat(), GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p1| TagGenerator::generate(generator, p1)), r#type: std::any::TypeId::of::<Tag>() })) }), scores_by_key: generator.generate(vec![path.as_slice(), vec![String::from("scoresByKey")].as_slice()].concat(), GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p2| ScoreGenerator::generate(generator, p2)), r#type: std::any::TypeId::of::<Score>() })) })) }), label: generator.generate(vec![path.as_slice(), vec![String::from("label")].as_slice()].concat(), GeneratorFieldNullable { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("code"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("aliases"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| LabelGenerator::generate(generator, p1)), r#type: std::any::TypeId::of::<Label>() })) }), labels: generator.generate(vec![path.as_slice(), vec![String::from("labels")].as_slice()].concat(), GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldArray { generate: Box::new(|p1| generator.generate(p1, GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("code"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("aliases"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p2| LabelGenerator::generate(generator, p2)), r#type: std::any::TypeId::of::<Label>() })) })) }), labels_by_key: generator.generate(vec![path.as_slice(), vec![String::from("labelsByKey")].as_slice()].concat(), GeneratorFieldDict { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("name"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("code"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("aliases"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| LabelGenerator::generate(generator, p1)), r#type: std::any::TypeId::of::<Label>() })) }), limit: generator.generate(vec![path.as_slice(), vec![String::from("limit")].as_slice()].concat(), GeneratorFieldInteger64 { min: Some(1_i64), max: Some(10_i64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }), ratios: generator.generate(vec![path.as_slice(), vec![String::from("ratios")].as_slice()].concat(), GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldNumber64 { min: Some(0.0_f64), max: Some(1.0_f64), annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() })) }) };
     }
 }
 
@@ -147,12 +163,13 @@ use super::tag_generator::TagGenerator;
 
 pub struct TreeNodeGenerator;
 impl TreeNodeGenerator {
-    pub fn generate(generator: Wirespec.Generator, path: Vec<String>) -> TreeNode {
-        return TreeNode { tag: generator.generate(vec![path.as_slice(), vec![String::from("tag")].as_slice()].concat(), Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::new(), generate: Box::new(|p0| TagGenerator.generate(generator, p0)), r#type: std::any::TypeId::of::<Tag>() }), children: generator.generate(vec![path.as_slice(), vec![String::from("children")].as_slice()].concat(), Wirespec.GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, Wirespec.GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("tag"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("children"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| TreeNodeGenerator.generate(generator, p1)), r#type: std::any::TypeId::of::<TreeNode>() })) }) };
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> TreeNode {
+        return TreeNode { tag: generator.generate(vec![path.as_slice(), vec![String::from("tag")].as_slice()].concat(), GeneratorFieldShape { annotations: std::collections::HashMap::<String, Vec<std::collections::HashMap<String, Box<dyn std::any::Any>>>>::new(), generate: Box::new(|p0| TagGenerator::generate(generator, p0)), r#type: std::any::TypeId::of::<Tag>() }), children: generator.generate(vec![path.as_slice(), vec![String::from("children")].as_slice()].concat(), GeneratorFieldArray { generate: Box::new(|p0| generator.generate(p0, GeneratorFieldShape { annotations: std::collections::HashMap::from([(String::from("tag"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new()), (String::from("children"), Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new())]), generate: Box::new(|p1| TreeNodeGenerator::generate(generator, p1)), r#type: std::any::TypeId::of::<TreeNode>() })) }) };
     }
 }
 
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
+pub mod generator;
 pub mod wirespec;

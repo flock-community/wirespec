@@ -3,7 +3,7 @@ package community.flock.wirespec.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class Request(
+public data class Request(
   val type: String,
   val url: String,
   val BODY_TYPE: String?,
@@ -21,8 +21,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 import community.flock.wirespec.generated.model.Request
 
-object RequestGenerator {
-  fun generate(generator: Wirespec.Generator, path: List<String>): Request =
+public object RequestGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Request =
     Request(
       type = generator.generate(path + listOf<String>("type"), Wirespec.GeneratorFieldString(
         regex = null,

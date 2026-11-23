@@ -180,6 +180,7 @@ internal fun Struct.annotatedFields(): List<Pair<Field, List<String>>> = buildLi
 public data class Constructor(
     val parameters: List<Parameter>,
     val body: List<Statement>,
+    val visibility: Visibility?,
 )
 
 public data class Field(
@@ -375,7 +376,7 @@ public data class NullCheck(
 ) : Statement,
     Expression
 
-internal data class NullableMap(
+public data class NullableMap(
     val expression: Expression,
     val body: Expression,
     val alternative: Expression,

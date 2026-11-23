@@ -24,11 +24,13 @@ emitter does not support [default values](#default-values) yet, so the example i
 ```
 
 File and field names are converted to snake case, so `dueDate` becomes `due_date` and `requestId` becomes
-`request_id`.
+`request_id`. A name that is a Rust keyword becomes a raw identifier: `type` becomes `r#type`. The keywords `self`,
+`Self`, `super` and `crate` have no raw identifier and get an underscore instead: `self` becomes `self_`.
 
 ## Type
 
-A type becomes a `struct` with a `validate` method:
+A type becomes a `struct` with a `validate` method. Every model has a `Default`, so a value can be built with
+`..Default::default()`:
 
 ```rust wirespec file=model/todo.rs
 ```
@@ -47,6 +49,11 @@ The fields map to Rust types as follows:
 | `T[]`       | `Vec<T>`                               |
 | `{ T }`     | `std::collections::HashMap<String, T>` |
 | `T?`        | `Option<T>`                            |
+| `Any`       | `AnyValue`                             |
+
+An `AnyValue` holds a value of any type behind a shared pointer: `AnyValue::new(value)` wraps one and
+`downcast_ref::<T>()` reads it. A clone points to the same value, and two `AnyValue`s are equal only when they are the
+same value, not when their contents are equal.
 
 `validate` returns the paths of the values that are not valid. Only refined values and constrained fields, such as
 `String(/^[A-Z]+$/g)`, can be invalid, so `Todo` checks `id`. Values in lists, dicts and nullables are checked at any
@@ -58,8 +65,9 @@ field name as a prefix:
 
 ## Refined
 
-A refined type becomes a `struct` that wraps the value. `validate` checks the regular expression, and `to_string`
-returns the plain value. A refined `Integer` or `Number` checks its bounds instead.
+A refined type becomes a `struct` that wraps the value. `validate` checks the regular expression; a refined `Integer`
+or `Number` checks its bounds instead. `Display` prints the plain value and `FromStr` parses it, without validating, so
+a refined type can be a path parameter:
 
 ```rust wirespec file=model/todo_id.rs
 ```
@@ -67,14 +75,16 @@ returns the plain value. A refined `Integer` or `Number` checks its bounds inste
 ## Enum
 
 An enum becomes an `enum` that implements the `Enum` trait, which converts between a variant and its label, the value
-as it is written in Wirespec. `Display` prints the label:
+as it is written in Wirespec. `Display` prints the label and `FromStr` parses it, so an enum can be a path parameter.
+The first entry is the `Default`:
 
 ```rust wirespec file=model/priority.rs
 ```
 
 ## Union
 
-A union becomes an `enum` with a variant for every member, so a `match` over a `TodoEvent` is exhaustive:
+A union becomes an `enum` with a variant for every member, so a `match` over a `TodoEvent` is exhaustive. Its
+`Default` is the default of its first member:
 
 ```rust wirespec file=model/todo_event.rs
 ```
@@ -95,12 +105,41 @@ request and its responses:
   `to_raw_response` and `from_raw_response`. They convert between the typed request and response and the
   `RawRequest` and `RawResponse` that go over the wire, and delegate the serialization of the path, parameters,
   headers and body to a `Serializer` or `Deserializer`.
-- **Client and Api**: every type that implements the shared `Client` trait, by providing a `Transportation` and a
-  `Serialization`, gets a `Handler` that sends the request. `Api` describes the endpoint for frameworks with its path
-  template and method.
+- **Api**: `Api` describes the endpoint for frameworks with its path template and method.
 
 ```rust wirespec file=endpoint/update_todo.rs
 ```
+
+### Errors
+
+A raw request or response comes from outside, so reading it can fail. `from_raw_request` and `from_raw_response`
+return a `Result` with a `WirespecError`, and do not panic:
+
+| `WirespecError`             | When                                                              |
+|-----------------------------|-------------------------------------------------------------------|
+| `MissingPathSegment(index)` | The path is shorter than the path of the endpoint                 |
+| `MissingParameter(name)`    | A required query parameter or header is missing                   |
+| `MissingBody`               | The request or response has no body, and the contract has one     |
+| `UnexpectedStatus(status)`  | The response has a status the contract does not list              |
+| `Deserialization(message)`  | A deserializer you provide could not read a value                 |
+| `Transport(message)`        | The `Transportation` you provide could not send the request       |
+
+The deserializers and the `Transportation` you provide return a `Result` as well, so they can report the last two. A
+server answers a request that gives an error with a `400 Bad Request`:
+
+```rust
+match UpdateTodo::from_raw_request(&serialization, raw_request) {
+    Ok(request) => UpdateTodo::to_raw_response(&serialization, handler.update_todo(request).await),
+    Err(error) => RawResponse { status_code: 400, headers: HashMap::new(), body: Some(error.to_string().into_bytes()) },
+}
+```
+
+A call of a client returns the same `Result`: the server could not be reached, it answered with a status the
+contract does not list, or its response could not be read.
+
+A path parameter is written with `Display` and read with `FromStr`. For the bodies you provide a `BodySerializer` and
+a `BodyDeserializer`: the models have no serialization of their own. The
+[RustSerde](../integration/integration-rust-serde.mdx) extension adds it, so both can hand every body to `serde_json`.
 
 ## Channel
 
@@ -121,7 +160,8 @@ directly:
 ## Client
 
 For every endpoint, a client implements its `Call` trait. It builds the `Request`, converts it with `to_raw_request`,
-sends it with a `Transportation` and converts the answer with `from_raw_response`:
+sends it with a `Transportation` and converts the answer with `from_raw_response`. It returns the response, or the
+[error](#errors) of the transport or of reading the response:
 
 ```rust wirespec file=client/update_todo_client.rs
 ```
@@ -141,6 +181,46 @@ expression of a refined type:
 ```rust wirespec file=generator/todo_id_generator.rs
 ```
 
+A `Generator` has a function for each kind of field. The fields of a generated value, such as an element of a list or
+a field of another type, come with a `generate` function that builds the value for a path. A generator that always
+returns the same values looks like this:
+
+```rust
+use std::collections::HashMap;
+
+struct Fixed;
+
+impl Generator for Fixed {
+    fn generate_string(&self, _: Vec<String>, field: &GeneratorFieldString) -> String {
+        String::from(if field.regex.is_some() { "1234AB" } else { "string" })
+    }
+    fn generate_integer64(&self, _: Vec<String>, field: &GeneratorFieldInteger64) -> i64 { field.min.unwrap_or(42) }
+    fn generate_integer32(&self, _: Vec<String>, field: &GeneratorFieldInteger32) -> i32 { field.min.unwrap_or(42) }
+    fn generate_number64(&self, _: Vec<String>, field: &GeneratorFieldNumber64) -> f64 { field.min.unwrap_or(4.2) }
+    fn generate_number32(&self, _: Vec<String>, field: &GeneratorFieldNumber32) -> f32 { field.min.unwrap_or(4.2) }
+    fn generate_boolean(&self, _: Vec<String>, _: &GeneratorFieldBoolean) -> bool { true }
+    fn generate_bytes(&self, _: Vec<String>, _: &GeneratorFieldBytes) -> Vec<u8> { Vec::new() }
+    fn generate_enum(&self, _: Vec<String>, field: &GeneratorFieldEnum) -> String { field.values[0].clone() }
+    fn generate_union(&self, _: Vec<String>, field: &GeneratorFieldUnion) -> String { field.variants[0].clone() }
+    fn generate_array<T>(&self, path: Vec<String>, field: &GeneratorFieldArray<T>) -> Vec<T> {
+        vec![(field.generate)([path, vec![String::from("0")]].concat())]
+    }
+    fn generate_nullable<T>(&self, path: Vec<String>, field: &GeneratorFieldNullable<T>) -> Option<T> {
+        Some((field.generate)(path))
+    }
+    fn generate_dict<T>(&self, path: Vec<String>, field: &GeneratorFieldDict<T>) -> HashMap<String, T> {
+        HashMap::from([(String::from("key"), (field.generate)([path, vec![String::from("key")]].concat()))])
+    }
+    fn generate_shape<T>(&self, path: Vec<String>, field: &GeneratorFieldShape<T>) -> T { (field.generate)(path) }
+}
+
+let todo = TodoGenerator::generate(&Fixed, Vec::new());
+```
+
+`generate_enum` returns one of the `values` of the field and `generate_union` one of its `variants`. A type that
+refers to itself, directly or through another type, is generated without end unless `generate_array` and
+`generate_nullable` stop at some depth of the path.
+
 ## Shared
 
 `wirespec.rs` is the same for every specification. It contains:
@@ -153,7 +233,9 @@ expression of a refined type:
 | `Serializer`, `Deserializer`, `Serialization` and their parts | Plug in the serialization of bodies, paths and parameters         |
 | `RawRequest`, `RawResponse`, `Transportation`                 | The untyped request and response, and how to send them            |
 | `Generator`, `GeneratorField` and its structs                 | Generate values for the generators                                |
-| `Client`, `Server`                                            | Provide the transport and serialization, and describe an endpoint |
+| `AnyValue`                                                    | A value of type `Any`                                             |
+| `WirespecError`                                               | What can go wrong with a message from outside                     |
+| `Server`                                                      | Describe an endpoint                                              |
 
 <details>
   <summary>The complete wirespec.rs</summary>

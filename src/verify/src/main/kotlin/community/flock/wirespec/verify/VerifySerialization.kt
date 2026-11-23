@@ -178,7 +178,7 @@ private fun rustSerializationCode(fixture: Fixture?): String {
     val deserBody = if (deserBranches.isEmpty()) {
         "panic!(\"Unsupported body type for deserialization: {:?}\", _type)"
     } else {
-        "let boxed: Box<dyn std::any::Any> = " + deserBranches.joinToString("\n        |        } else ") { it } + "\n        |        } else {\n        |            panic!(\"Unsupported body type for deserialization: {:?}\", _type)\n        |        };\n        |        *boxed.downcast::<T>().unwrap()"
+        "let boxed: Box<dyn std::any::Any> = " + deserBranches.joinToString("\n        |        } else ") { it } + "\n        |        } else {\n        |            panic!(\"Unsupported body type for deserialization: {:?}\", _type)\n        |        };\n        |        Ok(*boxed.downcast::<T>().unwrap())"
     }
 
     // Build param deserializer branches for custom types
@@ -197,7 +197,7 @@ private fun rustSerializationCode(fixture: Fixture?): String {
         |    }
         |}
         |impl BodyDeserializer for MockSer {
-        |    fn deserialize_body<T: 'static>(&self, raw: &[u8], _type: std::any::TypeId) -> T {
+        |    fn deserialize_body<T: 'static>(&self, raw: &[u8], _type: std::any::TypeId) -> Result<T, generated::wirespec::WirespecError> {
         |        $deserBody
         |    }
         |}
@@ -205,7 +205,7 @@ private fun rustSerializationCode(fixture: Fixture?): String {
         |    fn serialize_path<T: std::fmt::Display>(&self, t: &T, _type: std::any::TypeId) -> String { t.to_string() }
         |}
         |impl PathDeserializer for MockSer {
-        |    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, _type: std::any::TypeId) -> T where T::Err: std::fmt::Debug { raw.parse().unwrap() }
+        |    fn deserialize_path<T: std::str::FromStr>(&self, raw: &str, _type: std::any::TypeId) -> Result<T, generated::wirespec::WirespecError> where T::Err: std::fmt::Debug { Ok(raw.parse().unwrap()) }
         |}
         |impl ParamSerializer for MockSer {
         |    fn serialize_param<T: 'static>(&self, value: &T, _type: std::any::TypeId) -> Vec<String> {
@@ -216,7 +216,7 @@ private fun rustSerializationCode(fixture: Fixture?): String {
         |    }
         |}
         |impl ParamDeserializer for MockSer {
-        |    fn deserialize_param<T: 'static>(&self, values: &[String], _type: std::any::TypeId) -> T {
+        |    fn deserialize_param<T: 'static>(&self, values: &[String], _type: std::any::TypeId) -> Result<T, generated::wirespec::WirespecError> {
         |        let boxed: Box<dyn std::any::Any> = if _type == std::any::TypeId::of::<String>() {
         |            Box::new(values.first().cloned().unwrap_or_default())
         |        } else if _type == std::any::TypeId::of::<bool>() {
@@ -225,7 +225,7 @@ private fun rustSerializationCode(fixture: Fixture?): String {
         |        } else {
         |            panic!("Unsupported param type for deserialization: {:?}", _type)
         |        };
-        |        *boxed.downcast::<T>().unwrap()
+        |        Ok(*boxed.downcast::<T>().unwrap())
         |    }
         |}
         |impl BodySerialization for MockSer {}
