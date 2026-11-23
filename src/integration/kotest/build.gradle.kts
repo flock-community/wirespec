@@ -63,5 +63,11 @@ kotlin {
                 implementation(libs.bundles.kotest)
             }
         }
+        jvmTest {
+            dependencies {
+                implementation(project(":src:integration:jackson"))
+                implementation(libs.bundles.jackson2)
+            }
+        }
     }
 }

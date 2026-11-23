@@ -40,6 +40,10 @@ internal object ChannelDslFile {
             if (emitSend || !isRecord) {
                 import("community.flock.wirespec.integration.kotest.dsl", "channelCall")
             }
+            if (emitSend) {
+                import("community.flock.wirespec.integration.kotest.dsl", "ModifiedMessage")
+                import("community.flock.wirespec.integration.kotest.dsl", "RawMessageScope")
+            }
             if (isRecord) {
                 import("community.flock.wirespec.integration.kotest.dsl", "generatedGen")
                 import("${packageName.value}.generator", "${payload}Generator")
@@ -80,16 +84,26 @@ internal object ChannelDslFile {
             )
 
             if (emitSend) {
-                asyncFunction("send") {
+                val modifiedPayload = IrType.Custom("ModifiedMessage", listOf(IrType.Custom(payload)))
+                function("modify") {
                     visibility(Visibility.PUBLIC)
                     receiver(genPayload)
-                    arg("topic", IrType.Nullable(IrType.String), rawExpr("null"))
-                    arg("key", IrType.Nullable(IrType.String), rawExpr("null"))
-                    returnType(IrType.Custom(payload))
-                    raw("val call = channelCall<$payload>(${shape.name}::class)")
-                    raw("topic?.let { call.topic(it) }")
-                    raw("key?.let { call.key(it) }")
-                    returns(rawExpr("call.send(this)"))
+                    arg("block", IrType.Function(emptyList(), IrType.Unit, IrType.Custom("RawMessageScope")))
+                    returnType(modifiedPayload)
+                    returns(rawExpr("ModifiedMessage(this, block)"))
+                }
+                listOf(genPayload to IrType.Custom(payload), modifiedPayload to IrType.Unit).forEach { (sent, returned) ->
+                    asyncFunction("send") {
+                        visibility(Visibility.PUBLIC)
+                        receiver(sent)
+                        arg("topic", IrType.Nullable(IrType.String), rawExpr("null"))
+                        arg("key", IrType.Nullable(IrType.String), rawExpr("null"))
+                        returnType(returned)
+                        raw("val call = channelCall<$payload>(${shape.name}::class)")
+                        raw("topic?.let { call.topic(it) }")
+                        raw("key?.let { call.key(it) }")
+                        returns(rawExpr("call.send(this)"))
+                    }
                 }
             }
         }

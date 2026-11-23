@@ -6,6 +6,7 @@ import community.flock.wirespec.examples.kotest.generated.endpoint.GetCampaign
 import community.flock.wirespec.examples.kotest.generated.endpoint.GetProduct
 import community.flock.wirespec.examples.kotest.generated.kotest.call
 import community.flock.wirespec.examples.kotest.generated.kotest.generate
+import community.flock.wirespec.examples.kotest.generated.kotest.modify
 import community.flock.wirespec.examples.kotest.generated.model.CampaignId
 import community.flock.wirespec.examples.kotest.generated.model.Product
 import community.flock.wirespec.examples.kotest.generated.model.ProductId
@@ -58,6 +59,17 @@ class CampaignEndpointScenarioTest :
 
             response.shouldBeInstanceOf<CreateProduct.Response201>()
             response.body shouldBe product
+        }
+
+        test("a method the contract doesn't declare on /products is rejected with a 405") {
+            val response = CreateProduct.generate
+                .request {
+                    body { sku("SKU-405") }
+                }
+                .modify { method = "PUT" }
+                .call()
+
+            response.status shouldBe 405
         }
 
         test("GetProduct on an unknown id returns a 404 with a contract Error") {

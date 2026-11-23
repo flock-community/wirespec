@@ -51,6 +51,9 @@ internal object RpcDslFile {
                 import("community.flock.wirespec.kotlin", "Wirespec")
             }
             import("community.flock.wirespec.integration.kotest.dsl", "rpcCall")
+            if (shape.parameters.isNotEmpty()) {
+                import("community.flock.wirespec.integration.kotest.dsl", "modifiedRpcRequest")
+            }
             if (shape.requestFields.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
@@ -76,6 +79,9 @@ internal object RpcDslFile {
                 getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
             buildCall(shape)
+            if (shape.parameters.isNotEmpty()) {
+                buildModify(shape)
+            }
             if (shape.requestFields.isNotEmpty()) {
                 elements.add(RecordBuilder.buildBuilderClass(shape.requestName, shape.requestFields))
             }
@@ -146,6 +152,17 @@ internal object RpcDslFile {
             receiver(IrType.Custom("Gen", listOf(IrType.Custom(shape.requestName))))
             returnType(IrType.Custom(shape.callReturnType))
             returns(rawExpr("rpcCall(${shape.name}.Service::class, this) { service, $request -> service.${shape.functionName}($args) }"))
+        }
+    }
+
+    private fun FileBuilder.buildModify(shape: RpcShape) {
+        val request = IrType.Custom(shape.requestName)
+        function("modify") {
+            visibility(Visibility.PUBLIC)
+            receiver(IrType.Custom("Gen", listOf(request)))
+            arg("block", IrType.Function(emptyList(), request, request))
+            returnType(IrType.Custom("Arb", listOf(request)))
+            returns(rawExpr("modifiedRpcRequest(this, block)"))
         }
     }
 

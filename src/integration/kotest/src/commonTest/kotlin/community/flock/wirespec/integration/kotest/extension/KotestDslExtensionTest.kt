@@ -51,6 +51,22 @@ class KotestDslExtensionTest {
     }
 
     @Test
+    fun emitsModifyOnRequestsAndResponsesWithTheirOwnTerminals() {
+        val output = CompileMinimalEndpointTest.compiler(::emitter).shouldBeRight()
+
+        output shouldContain "public fun Gen<GetTodos.Request>.modify(block: RawRequestScope.() -> Unit): ModifiedRequest<GetTodos.Request> ="
+        output shouldContain "ModifiedRequest(this, block)"
+        output shouldContain "public suspend fun ModifiedRequest<GetTodos.Request>.call(): RawResponse ="
+        output shouldContain "modifiedRequestCall(GetTodos.api, this)"
+
+        output shouldContain "@JvmName(\"modifyResponse\")\npublic fun Gen<GetTodos.Response<*>>.modify(block: RawResponseScope.() -> Unit): ModifiedResponse<GetTodos.Response<*>> ="
+        output shouldContain "ModifiedResponse(this, block)"
+        output shouldContain "public suspend fun ModifiedResponse<GetTodos.Response<*>>.mock(predicate: (GetTodos.Request) -> Boolean): Unit ="
+        output shouldContain "modifiedResponseMock(GetTodos.api, this, predicate)"
+        output shouldNotContain ".raw()"
+    }
+
+    @Test
     fun blockStyleSlotsAreVarsValidatedOnFlush() {
         val output = CompileFullEndpointTest.compiler(::emitter).shouldBeRight()
 
@@ -148,6 +164,10 @@ class KotestDslExtensionTest {
         output shouldContain "return call.send(this)"
         output shouldNotContain "QueueMessage"
         output shouldNotContain "inner.sendFields"
+
+        output shouldContain "public fun Gen<String>.modify(block: RawMessageScope.() -> Unit): ModifiedMessage<String> ="
+        output shouldContain "ModifiedMessage(this, block)"
+        output shouldContain "public suspend fun ModifiedMessage<String>.send(topic: String? = null, key: String? = null): Unit {"
     }
 
     @Test
@@ -167,6 +187,8 @@ class KotestDslExtensionTest {
         output shouldContain "public val OldListener.generate: OldListenerGenerate"
         val sendSignature = "public suspend fun Gen<Event>.send(topic: String? = null, key: String? = null): Event {"
         output.windowed(sendSignature.length).count { it == sendSignature } shouldBe 1
+        val modifySignature = "public fun Gen<Event>.modify(block: RawMessageScope.() -> Unit): ModifiedMessage<Event> ="
+        output.windowed(modifySignature.length).count { it == modifySignature } shouldBe 1
     }
 
     @Test
@@ -259,6 +281,10 @@ class KotestDslExtensionTest {
         output shouldContain "public suspend fun Gen<PingRequest>.call(): String ="
         output shouldContain "rpcCall(Ping.Service::class, this) { service, _ -> service.ping() }"
         output shouldNotContain "PingRequestBuilder"
+
+        output shouldContain "public fun Gen<GetUserRequest>.modify(block: GetUserRequest.() -> GetUserRequest): Arb<GetUserRequest> ="
+        output shouldContain "modifiedRpcRequest(this, block)"
+        output shouldNotContain "Gen<PingRequest>.modify"
     }
 
     @Test

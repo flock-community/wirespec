@@ -38,10 +38,17 @@ internal object EndpointDslFile {
 
             import("community.flock.wirespec.integration.kotest.dsl", "endpointCall")
             import("community.flock.wirespec.integration.kotest.dsl", "requestCall")
+            import("community.flock.wirespec.integration.kotest.dsl", "ModifiedRequest")
+            import("community.flock.wirespec.integration.kotest.dsl", "RawRequestScope")
+            import("community.flock.wirespec.integration.kotest.dsl", "RawResponse")
+            import("community.flock.wirespec.integration.kotest.dsl", "modifiedRequestCall")
             import("community.flock.wirespec.integration.kotest.dsl", "WirespecScenarioDsl")
             if (shape.responseVariants.isNotEmpty()) {
                 import("community.flock.wirespec.integration.kotest.dsl", "responseCall")
                 import("community.flock.wirespec.integration.kotest.dsl", "responseMock")
+                import("community.flock.wirespec.integration.kotest.dsl", "ModifiedResponse")
+                import("community.flock.wirespec.integration.kotest.dsl", "RawResponseScope")
+                import("community.flock.wirespec.integration.kotest.dsl", "modifiedResponseMock")
             }
             if (shape.bodyKind == EndpointShape.BodyKind.Primitive) {
                 import("community.flock.wirespec.integration.kotest.dsl", "draw")
@@ -71,8 +78,10 @@ internal object EndpointDslFile {
                 getter = FunctionCall(name = Name.of("${shape.name}Generate")),
             )
             buildRequestCall(shape)
+            buildModifiedRequest(shape)
             if (shape.responseVariants.isNotEmpty()) {
                 buildResponseMock(shape)
+                buildModifiedResponse(shape)
             }
             buildScopeClass(shape, present, required)
             shape.responseVariants.forEach { variant -> buildResponseScope(shape, variant) }
@@ -143,6 +152,43 @@ internal object EndpointDslFile {
             arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
             returnType(IrType.Unit)
             returns(rawExpr("responseMock(${shape.name}.api, this, predicate)"))
+        }
+    }
+
+    private fun FileBuilder.buildModifiedRequest(shape: EndpointShape) {
+        val request = "${shape.name}.Request"
+        function("modify") {
+            visibility(Visibility.PUBLIC)
+            receiver(genOf(request))
+            arg("block", blockType("RawRequestScope"))
+            returnType(IrType.Custom("ModifiedRequest", listOf(IrType.Custom(request))))
+            returns(rawExpr("ModifiedRequest(this, block)"))
+        }
+        asyncFunction("call") {
+            visibility(Visibility.PUBLIC)
+            receiver(IrType.Custom("ModifiedRequest", listOf(IrType.Custom(request))))
+            returnType(IrType.Custom("RawResponse"))
+            returns(rawExpr("modifiedRequestCall(${shape.name}.api, this)"))
+        }
+    }
+
+    /** The request's `modify` in the same file erases to the same JVM signature, so this one is renamed for the JVM. */
+    private fun FileBuilder.buildModifiedResponse(shape: EndpointShape) {
+        val response = "${shape.name}.Response<*>"
+        function("modify") {
+            annotation("@JvmName(\"modifyResponse\")")
+            visibility(Visibility.PUBLIC)
+            receiver(genOf(response))
+            arg("block", blockType("RawResponseScope"))
+            returnType(IrType.Custom("ModifiedResponse", listOf(IrType.Custom(response))))
+            returns(rawExpr("ModifiedResponse(this, block)"))
+        }
+        asyncFunction("mock") {
+            visibility(Visibility.PUBLIC)
+            receiver(IrType.Custom("ModifiedResponse", listOf(IrType.Custom(response))))
+            arg("predicate", IrType.Function(listOf(IrType.Custom("${shape.name}.Request")), IrType.Boolean))
+            returnType(IrType.Unit)
+            returns(rawExpr("modifiedResponseMock(${shape.name}.api, this, predicate)"))
         }
     }
 
