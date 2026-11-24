@@ -236,9 +236,8 @@ The client and the server follow the language they are generated for:
   implementing the `Service`, as the transportation still suspends.
 - **Java** works with `CompletableFuture`s in the same way: with `--sync`, `handle` returns the `RawResponse` itself.
 - **Scala** is synchronous, like its `Service` and `Transportation`.
-- **TypeScript** writes the `Result` and the `Error` of an rpc alike, as `{ value }`, so nothing at runtime tells them
-  apart. A service returns its error as `JsonRpc.error(value)`, and the client returns the error of an rpc marked the
-  same way: `JsonRpc.isError(response)` tells it from the result. The bytes of a message are read and written with
+- **TypeScript** tells the `Result` of an rpc from its `Error` by its `kind`: a service returns
+  `{ kind: "Error", value }`, and so does the client. The bytes of a message are read and written with
   `TextEncoder` and `TextDecoder`, which every runtime has.
 - **Python** reads the envelope with the `json` module of its standard library.
 - **Rust** gets a module of its own, `json_rpc`. Its client returns a `Result`. The values go through your

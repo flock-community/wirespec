@@ -211,8 +211,8 @@ A channel becomes a `namespace` with a `Sender` to publish messages and a `Liste
 ## RPC
 
 An RPC becomes a `namespace` with a `Service` interface to implement. Because `CompleteTodo` declares an error, the
-service returns a `Response` that is either a `Result` or an `Error`. Without an error, it returns the result type
-directly:
+service returns a `Response` that is either a `Result` or an `Error`. Both hold a `value`, so each has a `kind` that
+names it, and a `switch` on `kind` tells them apart. Without an error, the service returns the result type directly:
 
 ```typescript wirespec file=rpc/CompleteTodo.ts
 ```

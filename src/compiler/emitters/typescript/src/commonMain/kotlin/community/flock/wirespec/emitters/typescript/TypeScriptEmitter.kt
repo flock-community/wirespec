@@ -1,21 +1,16 @@
 package community.flock.wirespec.emitters.typescript
 
-import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
-import community.flock.wirespec.compiler.core.emit.namespace
 import community.flock.wirespec.compiler.core.emit.plus
-import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Channel
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Module
-import community.flock.wirespec.compiler.core.parse.ast.Part
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
@@ -151,19 +146,15 @@ public open class TypeScriptEmitter : IrEmitter {
             }
     }
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger)
-        .plus(
-            ast.modules
-                .flatMap { it.statements }
-                .filterNot { it is Part }
-                .groupBy { def -> def.namespace() }
-                .map { (ns, defs) ->
-                    Emitted(
-                        "${ns}/index.${extension.value}",
-                        defs.joinToString("\n") { "export {${it.identifier.value}} from './${it.identifier.value}'" }
-                    )
-                }
-        )
+    /**
+     * The `index.ts` of the directory of every kind of definition exports each of them. It is written from every file
+     * that is emitted, so it also holds what an IR extension adds, and is there when an extension is applied.
+     */
+    override fun emitIndex(files: List<File>): List<File> = files
+        .map { it.name.value().removePrefix("/") }
+        .filter { it.substringBefore('/', "") in INDEXED_DIRECTORIES }
+        .groupBy({ it.substringBefore('/') }, { it.substringAfter('/') })
+        .map { (directory, names) -> File(Name.of("$directory/index"), listOf(RawElement(names.joinToString("\n") { "export {$it} from './$it'" }))) }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): File {
         val file = super.emit(definition, module, logger)
@@ -311,6 +302,7 @@ public open class TypeScriptEmitter : IrEmitter {
             .sanitizeNames(sanitizationConfig)
 
     override fun emit(rpc: Rpc): File = rpc.convert()
+        .withResponseKinds()
         .sanitizeNames(sanitizationConfig)
         .let { file ->
             rpc.importReferences().distinctBy { it.value }
@@ -319,6 +311,18 @@ public open class TypeScriptEmitter : IrEmitter {
                 ?.let { imports -> file.copy(elements = imports + file.elements) }
                 ?: file
         }
+
+    /**
+     * TypeScript tells types apart by their shape, and the `Result` and the `Error` of an rpc both hold a `value`. So
+     * each gets a `kind` that names it, as the generator fields do, and a `switch` on `kind` tells them apart.
+     */
+    private fun File.withResponseKinds(): File = transform {
+        matchingElements<Struct> { struct ->
+            struct.name.pascalCase().takeIf { it in RPC_RESPONSE_KINDS }
+                ?.let { kind -> struct.copy(fields = listOf(Field(Name.of("kind"), LanguageType.StringLiteral(kind))) + struct.fields) }
+                ?: struct
+        }
+    }
 
     override fun emitEndpointClient(endpoint: Endpoint): File {
         val endpointName = endpoint.identifier.value
@@ -437,6 +441,10 @@ public open class TypeScriptEmitter : IrEmitter {
             "GeneratorFieldUnion", "GeneratorFieldArray", "GeneratorFieldNullable",
             "GeneratorFieldShape", "GeneratorFieldDict",
         ).associateWith { it.removePrefix("GeneratorField").lowercase() }
+
+        private val RPC_RESPONSE_KINDS = setOf("Result", "Error")
+
+        private val INDEXED_DIRECTORIES = setOf("model", "endpoint", "channel", "rpc")
     }
 
 }

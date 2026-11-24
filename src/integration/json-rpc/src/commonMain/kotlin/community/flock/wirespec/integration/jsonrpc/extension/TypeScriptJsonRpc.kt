@@ -10,9 +10,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 
 /**
- * TypeScript writes the `Result` and the `Error` of an rpc alike, as `{ value }`, so nothing at runtime tells them
- * apart. A service returns its error as `JsonRpc.error(value)`, which marks it, and the client returns the error of
- * an rpc marked the same way, so `JsonRpc.isError(response)` tells it from the result on either side.
+ * The `kind` of a response tells the `Result` of an rpc from its `Error`, so the server answers an `Error` with an
+ * error object, and the client returns an error object of the rpc as an `Error`.
  *
  * The client and the server always return a promise; with `--sync` a service may return the value itself. The file
  * reads and writes the bytes of a message with `TextEncoder` and `TextDecoder`, which every runtime has.
@@ -46,7 +45,7 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |    ${name.literal()},
         |    [${params.joinToString(", ") { it.param() }}],
         |    (json) => ${resultValue("json")},
-        |    ${error?.let { "(json) => JsonRpc.error(${it.decode("json")})" } ?: "undefined"},
+        |    ${error?.let { "(json) => ({ kind: \"Error\", value: ${it.decode("json")} })" } ?: "undefined"},
         |  )
         |}
     """.trimMargin()
@@ -58,7 +57,7 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
 
     private fun JsonRpcMethod.resultValue(json: String): String = when (error) {
         null -> result.decodeResult(json)
-        else -> "({ value: ${result.decodeResult(json)} })"
+        else -> "({ kind: \"Result\", value: ${result.decodeResult(json)} })"
     }
 
     private fun Reference.decodeResult(json: String): String = when {
@@ -103,7 +102,7 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
 
     private fun JsonRpcMethod.answer(): String = when (val error = error) {
         null -> "result(${result.encodeResult("response")})"
-        else -> "JsonRpc.isError(response) ? failure(JsonRpc.SERVER_ERROR, \"Server error\", ${error.encodeResult("(response as $rpcName.Error).value")}) : result(${result.encodeResult("(response as $rpcName.Result).value")})"
+        else -> "response.kind === \"Error\" ? failure(JsonRpc.SERVER_ERROR, \"Server error\", ${error.encodeResult("response.value")}) : result(${result.encodeResult("response.value")})"
     }
 
     /** The JSON of a value that can be undefined or void, as a result or the data of an error. */
@@ -147,9 +146,7 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
     }
 
     private val RUNTIME = """
-        |const ERROR = Symbol("JsonRpc.error")
-        |
-        |/** The codes of the errors JSON-RPC 2.0 defines, and the error of an rpc, which TypeScript writes like its result. */
+        |/** The codes of the errors JSON-RPC 2.0 defines. */
         |export const JsonRpc = {
         |  PARSE_ERROR: -32700,
         |  INVALID_REQUEST: -32600,
@@ -158,9 +155,6 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |  INTERNAL_ERROR: -32603,
         |  /** The code of the error of an rpc itself, which is the data of the error object. */
         |  SERVER_ERROR: -32000,
-        |  /** The error of an rpc, marked as one: a service returns it, and the client returns it. */
-        |  error: <T>(value: T): { value: T } => ({ value, [ERROR]: true }) as { value: T },
-        |  isError: (response: object): boolean => ERROR in response,
         |} as const
         |
         |/** An error object a JSON-RPC server answered with, other than the error of the rpc itself. */

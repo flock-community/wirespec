@@ -93,12 +93,17 @@ class JsonRpcExtensionTest {
     }
 
     @Test
-    fun `TypeScript marks the error of an rpc, because its Result and Error look alike`() {
+    fun `TypeScript tells the Result of an rpc from its Error by its kind`() {
         TypeScriptEmitter().emitWithJsonRpc().file("JsonRpc.ts").let {
             it shouldContain "import {GetUser} from './rpc/GetUser'"
-            it shouldContain "(json) => JsonRpc.error(this.serialization.deserializeBody<UserNotFound>(bytes(json), \"UserNotFound\")),"
-            it shouldContain "return JsonRpc.isError(response) ? failure(JsonRpc.SERVER_ERROR"
+            it shouldContain "(json) => ({ kind: \"Error\", value: this.serialization.deserializeBody<UserNotFound>(bytes(json), \"UserNotFound\") }),"
+            it shouldContain "return response.kind === \"Error\" ? failure(JsonRpc.SERVER_ERROR"
         }
+    }
+
+    @Test
+    fun `TypeScript keeps the index of every directory when the extension is applied`() {
+        TypeScriptEmitter().emitWithJsonRpc().map { it.file }.shouldContainAll("model/index.ts", "rpc/index.ts", "JsonRpc.ts")
     }
 
     @Test
