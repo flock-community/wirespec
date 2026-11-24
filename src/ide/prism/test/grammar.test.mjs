@@ -149,9 +149,9 @@ describe("endpoints", () => {
     ]);
   });
 
-  it("highlights every path character of RFC 3986 as the path", () => {
-    expectTypes("endpoint E GET /v1.0/~me/!$&'()*+,;=:@/caf%C3%A9/Users -> {}", [
-      ["/v1.0/~me/!$&'()*+,;=:@/caf%C3%A9/Users", "path/string"],
+  it("highlights every unreserved character of RFC 3986 as the path", () => {
+    expectTypes("endpoint E GET /v1.0/~me/photo_2-large.jpg -> {}", [
+      ["/v1.0/~me/photo_2-large.jpg", "path/string"],
       ["->", "operator"],
     ]);
   });

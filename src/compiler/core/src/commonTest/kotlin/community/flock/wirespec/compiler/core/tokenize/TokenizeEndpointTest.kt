@@ -79,30 +79,27 @@ class TokenizeEndpointTest {
     )
 
     @Test
-    fun testPathWithEveryPathCharacterOfRfc3986() = testTokenizer(
+    fun testPathWithEveryUnreservedCharacterOfRfc3986() = testTokenizer(
         // language=ws
-        """endpoint GetTodos GET /v1.0/~me/a-b_c/!$&'()*+,;=:@/caf%C3%A9 -> {}""",
-        EndpointDefinition, WirespecType, Method, Path, Path, Path, Path, Path,
+        """endpoint GetTodos GET /v1.0/~me/a-b_c -> {}""",
+        EndpointDefinition, WirespecType, Method, Path, Path, Path,
         Arrow, LeftCurly, RightCurly, EndOfProgram,
     )
 
     @Test
-    fun testPathEndsBeforeAPercentThatEncodesNoOctet() = testTokenizer(
+    fun testPathEndsAtAReservedCharacter() = testTokenizer(
         // language=ws
-        """endpoint GetTodos GET /todos%zz -> {}""",
-        EndpointDefinition, WirespecType, Method, Path, Character, DromedaryCaseIdentifier,
+        """endpoint GetTodos GET /todos:search -> {}""",
+        EndpointDefinition, WirespecType, Method, Path, Colon, DromedaryCaseIdentifier,
         Arrow, LeftCurly, RightCurly, EndOfProgram,
     )
 
     @Test
-    fun testPathSegmentCannotStartWithAStar() = testTokenizer(
+    fun testPathEndsAtAPercentSign() = testTokenizer(
         // language=ws
-        """
-        |endpoint GetTodos GET /todos/a* -> {}
-        |/* A comment */
-        """.trimMargin(),
-        EndpointDefinition, WirespecType, Method, Path, Path,
-        Arrow, LeftCurly, RightCurly, Comment, EndOfProgram,
+        """endpoint GetTodos GET /todos%20 -> {}""",
+        EndpointDefinition, WirespecType, Method, Path, Character, Integer,
+        Arrow, LeftCurly, RightCurly, EndOfProgram,
     )
 
     @Test

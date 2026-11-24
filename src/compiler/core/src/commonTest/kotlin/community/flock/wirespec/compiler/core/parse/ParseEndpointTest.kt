@@ -15,12 +15,14 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
@@ -85,11 +87,11 @@ class ParseEndpointTest {
     }
 
     @Test
-    fun testEndpointPathWithEveryPathCharacterOfRfc3986() {
+    fun testEndpointPathWithEveryUnreservedCharacterOfRfc3986() {
         val source =
             // language=ws
             """
-            |endpoint GetTodos GET /v1.0/~me/!$&'()*+,;=:@/caf%C3%A9 -> {
+            |endpoint GetPhoto GET /v1.0/~me/photo_2-large.jpg -> {
             |    200 -> Unit
             |}
             """.trimMargin()
@@ -98,7 +100,16 @@ class ParseEndpointTest {
             .shouldBeRight()
             .single()
             .shouldBeInstanceOf<Endpoint>()
-            .path shouldBe listOf(Literal("v1.0"), Literal("~me"), Literal("!$&'()*+,;=:@"), Literal("caf%C3%A9"))
+            .path shouldBe listOf(Literal("v1.0"), Literal("~me"), Literal("photo_2-large.jpg"))
+    }
+
+    @Test
+    fun testEndpointPathRejectsTheReservedCharactersAndPercentEncoding() {
+        listOf("!", "$", "&", "'", "(", ")", "*", "+", ",", ";", "=", ":", "@", "%").forEach { character ->
+            parser("endpoint GetTodos GET /a${character}b -> { 200 -> Unit }")
+                .shouldBeLeft()
+                .head.message shouldMatch Regex("Path expected, not: \\w+ at line 1 and position 25")
+        }
     }
 
     @Test

@@ -149,20 +149,6 @@ class KotlinEmitterTest {
     }
 
     @Test
-    fun pathTemplateKeepsThePathAsWrittenAndTheRawRequestDecodesIt() {
-        val kotlin = compile(
-            """
-            |endpoint GetMetadata GET /${'$'}metadata/caf%C3%A9 -> {
-            |  200 -> Unit
-            |}
-            """.trimMargin(),
-        ).invoke { KotlinEmitter() }.shouldBeRight()
-
-        kotlin shouldContain "override val pathTemplate: String = \"/\\${'$'}metadata/caf%C3%A9\""
-        kotlin shouldContain "path = listOf<String>(\"\\${'$'}metadata\", \"café\"),"
-    }
-
-    @Test
     fun syncEmitsTheHandlerWithoutSuspend() {
         val kotlin = EmitterFixtures.compileMinimalEndpointTest
             .replace("suspend fun getTodos(request: Request)", "fun getTodos(request: Request)")

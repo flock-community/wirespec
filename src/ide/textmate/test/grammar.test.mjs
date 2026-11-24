@@ -193,12 +193,11 @@ type After {}`;
     ]);
   });
 
-  it("highlights every path character of RFC 3986 as the path", () => {
-    expectScopes("endpoint E GET /v1.0/~me/!$&'()*+,;=:@/caf%C3%A9 -> {}", [
+  it("highlights every unreserved character of RFC 3986 as the path", () => {
+    expectScopes("endpoint E GET /v1.0/~me/photo_2-large.jpg -> {}", [
       ["v1.0", "string.unquoted.path.wirespec"],
       ["~me", "string.unquoted.path.wirespec"],
-      ["!$&'()*+,;=:@", "string.unquoted.path.wirespec"],
-      ["caf%C3%A9", "string.unquoted.path.wirespec"],
+      ["photo_2-large.jpg", "string.unquoted.path.wirespec"],
       ["->", "keyword.operator.arrow.wirespec"],
     ]);
   });

@@ -23,10 +23,9 @@ internal fun Namespace.injectApiObject(endpoint: Endpoint): Namespace = transfor
 }
 
 private fun buildApiObject(endpoint: Endpoint): RawElement {
-    // A path segment may hold `$`, which starts a template in a Kotlin string.
     val pathTemplate = "/" + endpoint.path.joinToString("/") {
         when (it) {
-            is Endpoint.Segment.Literal -> it.value.replace("$", "\\$")
+            is Endpoint.Segment.Literal -> it.value
             is Endpoint.Segment.Param -> "{${it.identifier.value}}"
         }
     }

@@ -52,11 +52,7 @@ internal fun LanguageFile.injectSpringAnnotationBeforeHandler(annotation: String
 internal fun Endpoint.springAnnotation(language: FileExtension): String {
     val pathString = "/" + path.joinToString("/") {
         when (it) {
-            is Endpoint.Segment.Literal -> when (language) {
-                // A path segment may hold `$`, which starts a template in a Kotlin string.
-                FileExtension.Kotlin -> it.value.replace("$", "\\$")
-                else -> it.value
-            }
+            is Endpoint.Segment.Literal -> it.value
             is Endpoint.Segment.Param -> "{${it.identifier.value}}"
         }
     }

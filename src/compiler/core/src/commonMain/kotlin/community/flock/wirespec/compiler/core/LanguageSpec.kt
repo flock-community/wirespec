@@ -59,12 +59,6 @@ import community.flock.wirespec.compiler.core.tokenize.WsUnit
 
 private typealias TokenMatcher = Pair<Regex, TokenType>
 
-/**
- * A character of a path segment, `pchar` in RFC 3986 section 3.3: a letter, a digit, one of `-._~!$&'()*+,;=:@`, or an
- * octet that is percent-encoded as `%` and two hexadecimal digits.
- */
-private const val PATH_CHARACTER = "[A-Za-z0-9._~!\$&'()*+,;=:@-]|%[0-9A-Fa-f]{2}"
-
 public interface LanguageSpec {
     public val typeIdentifier: TypeIdentifier
     public val fieldIdentifier: FieldIdentifier
@@ -116,8 +110,8 @@ public object WirespecSpec : LanguageSpec {
         Regex("@[A-Z][a-zA-Z0-9_]*") to Annotation,
         Regex("[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
         Regex("[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
-        // A segment cannot start with `*`, because `/*` opens a block comment.
-        Regex("/(?!\\*)(?:$PATH_CHARACTER)+") to Path,
+        // A path segment holds the unreserved characters of RFC 3986 only: letters, digits and `-._~`.
+        Regex("/[A-Za-z0-9._~-]+") to Path,
         Regex("//.*\n") to Comment,
         // Both of these are written in the unrolled form that never backtracks. The textbook
         // `(\*(?!/)|[^*])*` shape recurses once per character inside java.util.regex, which

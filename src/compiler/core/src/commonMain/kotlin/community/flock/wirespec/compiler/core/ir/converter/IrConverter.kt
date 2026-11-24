@@ -631,7 +631,7 @@ public fun EndpointWirespec.convert(): File {
                             LiteralList(
                                 values = endpoint.path.map {
                                     when (it) {
-                                        is EndpointWirespec.Segment.Literal -> Literal(it.value.percentDecoded(), Type.String)
+                                        is EndpointWirespec.Segment.Literal -> Literal(it.value, Type.String)
                                         is EndpointWirespec.Segment.Param -> FunctionCall(
                                             receiver = VariableReference(Name.of("serialization")),
                                             name = Name("serialize", "Path"),
@@ -965,16 +965,6 @@ public fun ReferenceWirespec.convertConstraint(value: Expression): Expression = 
 }
 
 private fun ReferenceWirespec.toTypeDescriptor(): TypeDescriptor = TypeDescriptor(convert())
-
-private val PERCENT_ENCODED_OCTETS = Regex("(?:%[0-9A-Fa-f]{2})+")
-
-/**
- * A raw request holds the segments of its path decoded, and the transport encodes them, so a literal segment is decoded
- * here: `%20` in the spec is a space, and a run of octets is one UTF-8 sequence.
- */
-private fun String.percentDecoded(): String = PERCENT_ENCODED_OCTETS.replace(this) { octets ->
-    octets.value.chunked(3).map { it.drop(1).toInt(16).toByte() }.toByteArray().decodeToString()
-}
 
 private fun deserializeParamExpression(
     map: Expression,

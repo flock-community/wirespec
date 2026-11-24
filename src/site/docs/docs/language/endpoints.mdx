@@ -55,9 +55,9 @@ type Todo {
 
 ## Path
 
-The path of an endpoint follows [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-3.3). Every segment
-starts with a `/`, and holds letters, digits, the characters `-._~!$&'()*+,;=:@`, and octets that are percent-encoded as
-`%` and two hexadecimal digits. A segment may be empty, so `/` is the root path and `/todos/` ends with a slash:
+Every segment of a path starts with a `/`. A literal segment holds only the _unreserved_ characters of
+[RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3): letters, digits, `-`, `.`, `_` and `~`. A
+segment may also be empty, so `/` is the root path and `/todos/` ends with a slash:
 
 ```wirespec
 endpoint GetRoot GET / -> {
@@ -67,17 +67,19 @@ endpoint GetRoot GET / -> {
 endpoint GetPhoto GET /v1.0/~me/photo.jpg -> {
     200 -> Bytes
 }
-
-endpoint GetCafe GET /places/caf%C3%A9 -> {
-    200 -> Unit
-}
 ```
 
-Comments take two forms that a path would otherwise allow: `/*` opens a block comment and `//` a line comment. So a
-segment cannot start with `*`, written `%2A` instead, and an empty segment cannot come right before another `/`.
+Two slashes in a row open a line comment, so an empty segment can only end the path.
 
-The generated code keeps the path as written in its path template, and decodes a percent-encoded segment in the request
-it sends, which the transport encodes again: `caf%C3%A9` is the segment `café`.
+:::info[Why only unreserved characters]
+RFC 3986 allows more in a path segment: the sub-delimiters `!$&'()*+,;=`, `:`, `@`, and percent-encoded octets such as
+`%20`. Wirespec rejects them on purpose. An unreserved character means the same whether or not it is percent-encoded,
+so a literal segment reads the same in the spec, in the generated code and on the wire, and no emitter or framework has
+to escape or decode it. The other characters are reserved: a server or framework may give them a meaning, such as `;`
+for matrix parameters or `*` for a wildcard in a route, and some start a comment or a string template, such as `/*` in
+Wirespec or `$` in Kotlin. A value that needs them belongs in a [path parameter](#path-parameters), which the transport
+encodes.
+:::
 
 ## Path parameters
 
