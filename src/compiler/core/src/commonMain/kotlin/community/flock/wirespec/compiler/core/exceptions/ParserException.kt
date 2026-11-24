@@ -44,6 +44,13 @@ internal class UnknownStringFormatException(fileUri: FileUri, format: String, co
         message = "Unknown string format: $format, expected one of: ${StringFormat.entries.joinToString { it.label }}",
     )
 
+internal class DotSegmentException(fileUri: FileUri, segment: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "Wirespec does not allow path traversal, so a path cannot hold the dot-segment $segment",
+    )
+
 internal class AnnotatedSpreadException(fileUri: FileUri, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,

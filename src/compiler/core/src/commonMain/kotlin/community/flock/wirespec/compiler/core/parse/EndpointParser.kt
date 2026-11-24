@@ -2,6 +2,8 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import arrow.core.raise.either
+import arrow.core.raise.ensure
+import community.flock.wirespec.compiler.core.exceptions.DotSegmentException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
 import community.flock.wirespec.compiler.core.parse.ast.Annotation
@@ -25,6 +27,8 @@ import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 internal object EndpointParser {
+
+    private val DOT_SEGMENTS = setOf(".", "..")
 
     fun TokenProvider.parseEndpoint(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Endpoint> = parseToken {
         when (token.type) {
@@ -99,10 +103,17 @@ internal object EndpointParser {
 
     private fun TokenProvider.parseEndpointSegments() = either {
         when (token.type) {
-            is Path -> Endpoint.Segment.Literal(token.value.drop(1)).also { eatToken().bind() }
+            is Path -> parseLiteralSegment().bind()
             is ForwardSlash -> parseParamOrEmptySegment().bind()
             else -> raiseWrongToken<Path>().bind()
         }
+    }
+
+    /** The dot-segments `.` and `..` of RFC 3986 point to the current and the parent path, so they would let a path traverse. */
+    private fun TokenProvider.parseLiteralSegment() = parseToken { path ->
+        val segment = path.value.drop(1)
+        ensure(segment !in DOT_SEGMENTS) { DotSegmentException(fileUri, segment, path.coordinates) }
+        Endpoint.Segment.Literal(segment)
     }
 
     /** A `/` without a path character after it opens a parameter, or ends an empty segment, as in `/` and `/todos/`. */

@@ -71,6 +71,10 @@ endpoint GetPhoto GET /v1.0/~me/photo.jpg -> {
 
 Two slashes in a row open a line comment, so an empty segment can only end the path.
 
+A segment cannot be `.` or `..`. These dot-segments point to the current and the parent path, so `/./todos` and
+`/../todos` would let a path traverse, and Wirespec does not allow path traversal. Any other segment with a dot, such
+as `/.well-known` or `/v1.0`, is fine.
+
 :::info[Why only unreserved characters]
 RFC 3986 allows more in a path segment: the sub-delimiters `!$&'()*+,;=`, `:`, `@`, and percent-encoded octets such as
 `%20`. Wirespec rejects them on purpose. An unreserved character means the same whether or not it is percent-encoded,

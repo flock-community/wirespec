@@ -113,6 +113,29 @@ class ParseEndpointTest {
     }
 
     @Test
+    fun testEndpointPathRejectsTheDotSegments() {
+        listOf(
+            "/./todos" to ".",
+            "/../todos" to "..",
+            "/todos/." to ".",
+            "/todos/{id: String}/.." to "..",
+        ).forEach { (path, segment) ->
+            parser("endpoint GetTodos GET $path -> { 200 -> Unit }")
+                .shouldBeLeft()
+                .head.message shouldBe "Wirespec does not allow path traversal, so a path cannot hold the dot-segment $segment"
+        }
+    }
+
+    @Test
+    fun testEndpointPathAllowsDotsInASegment() {
+        parser("endpoint GetTodos GET /.well-known/.../v1.0 -> { 200 -> Unit }")
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .path shouldBe listOf(Literal(".well-known"), Literal("..."), Literal("v1.0"))
+    }
+
+    @Test
     fun testRootPathParser() {
         val source =
             // language=ws
