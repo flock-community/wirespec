@@ -48,6 +48,7 @@ include(
     "src:integration:avro",
     "src:integration:graphql",
     "src:integration:jackson",
+    "src:integration:json-rpc",
     "src:integration:jvm",
     "src:integration:kotest",
     "src:integration:kotlinx-serialization",

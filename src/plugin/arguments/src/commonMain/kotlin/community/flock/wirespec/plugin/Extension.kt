@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.ir.extension.applyExtensions
 import community.flock.wirespec.integration.avro.extension.AvroExtension
 import community.flock.wirespec.integration.graphql.extension.GraphQLClientExtension
 import community.flock.wirespec.integration.jackson.extension.JacksonExtension
+import community.flock.wirespec.integration.jsonrpc.extension.JsonRpcExtension
 import community.flock.wirespec.integration.jvm.extension.JvmBuilderExtension
 import community.flock.wirespec.integration.kotest.extension.KotestDslExtension
 import community.flock.wirespec.integration.kotlinxserialization.extension.KotlinxSerializationExtension
@@ -22,6 +23,7 @@ public enum class Extension(private val type: KClass<out IrExtension>, private v
     Avro(AvroExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
     GraphQLClient(GraphQLClientExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala)),
     Jackson(JacksonExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin)),
+    JsonRpc(JsonRpcExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala, FileExtension.TypeScript, FileExtension.Python, FileExtension.Rust)),
     JvmBuilder(JvmBuilderExtension::class, setOf(FileExtension.Java, FileExtension.Kotlin, FileExtension.Scala)),
     KotestDsl(KotestDslExtension::class, setOf(FileExtension.Kotlin)),
     KotlinxSerialization(KotlinxSerializationExtension::class, setOf(FileExtension.Kotlin)),
@@ -48,6 +50,7 @@ public fun Extension.toIrExtension(packageName: PackageName, language: FileExten
         Extension.Avro -> AvroExtension(packageName, language)
         Extension.GraphQLClient -> GraphQLClientExtension(packageName, language)
         Extension.Jackson -> JacksonExtension()
+        Extension.JsonRpc -> JsonRpcExtension(packageName, language)
         Extension.JvmBuilder -> JvmBuilderExtension(language)
         Extension.KotestDsl -> KotestDslExtension(packageName)
         Extension.KotlinxSerialization -> KotlinxSerializationExtension()

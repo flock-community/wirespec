@@ -86,6 +86,7 @@ public enum class Extensions(internal val extension: Extension) {
     AVRO(Extension.Avro),
     GRAPHQL_CLIENT(Extension.GraphQLClient),
     JACKSON(Extension.Jackson),
+    JSON_RPC(Extension.JsonRpc),
     JVM_BUILDER(Extension.JvmBuilder),
     KOTEST_DSL(Extension.KotestDsl),
     KOTLINX_SERIALIZATION(Extension.KotlinxSerialization),

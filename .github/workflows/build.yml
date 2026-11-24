@@ -298,8 +298,10 @@ jobs:
           - maven-spring-native
           - gradle-ktor
           - gradle-kotest
+          - gradle-json-rpc
           - npm-typescript
           - rust-petstore
+          - rust-json-rpc
           - scala-zio
 
     steps:
