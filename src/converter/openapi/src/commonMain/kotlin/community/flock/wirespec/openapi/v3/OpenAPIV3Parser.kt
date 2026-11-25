@@ -88,6 +88,7 @@ import community.flock.wirespec.openapi.common.sanitize
 import community.flock.wirespec.openapi.common.stringType
 import community.flock.wirespec.openapi.common.tagAnnotation
 import community.flock.wirespec.openapi.common.toAnnotation
+import community.flock.wirespec.openapi.common.toContentTypeAnnotations
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.common.toDict
 import community.flock.wirespec.openapi.common.toIterable
@@ -175,6 +176,7 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                                 val isNullable = media.schema?.let { resolve(it) }?.isNullable ?: false
                                 Endpoint.Response(
                                     annotations = response.description.toDescriptionAnnotationList() +
+                                        listOf(contentType.value).toContentTypeAnnotations() +
                                         toLinkAnnotationList(response.links),
                                     status = status.value,
                                     headers = response.headers?.map { entry ->
@@ -204,6 +206,7 @@ private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                     annotations = operation.description.toDescriptionAnnotationList() +
                         operation.tags.orEmpty().filterNotNull().map { tagAnnotation(it) } +
                         operation.security.toOperationAnnotations() +
+                        requests.mapNotNull { it.content?.type }.toContentTypeAnnotations() +
                         operation.servers.orEmpty().map { it.toServerInfo().toAnnotation() },
                     identifier = DefinitionIdentifier(name),
                     method = method,

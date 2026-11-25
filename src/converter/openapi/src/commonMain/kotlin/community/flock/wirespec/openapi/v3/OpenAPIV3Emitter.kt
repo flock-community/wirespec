@@ -58,12 +58,14 @@ import community.flock.wirespec.openapi.common.OAuthFlowInfo
 import community.flock.wirespec.openapi.common.SecuritySchemeInfo
 import community.flock.wirespec.openapi.common.ServerInfo
 import community.flock.wirespec.openapi.common.SpecMetadata
+import community.flock.wirespec.openapi.common.contents
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.emitPattern
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.findLinks
 import community.flock.wirespec.openapi.common.json
 import community.flock.wirespec.openapi.common.openAPIProblems
+import community.flock.wirespec.openapi.common.requestContents
 import community.flock.wirespec.openapi.common.securityRequirements
 import community.flock.wirespec.openapi.common.servers
 import community.flock.wirespec.openapi.common.tags
@@ -265,8 +267,8 @@ public object OpenAPIV3Emitter : SpecInfoEmitter {
                 OpenAPIV30ParameterLocation.HEADER,
             )
         },
-        requestBody = requests.mapNotNull { it.content?.emit() }
-            .toMap()
+        requestBody = requestContents()
+            .associate { it.emit() }
             .takeIf { it.isNotEmpty() }
             ?.let { content ->
                 OpenAPIV30RequestBody(
@@ -282,7 +284,7 @@ public object OpenAPIV3Emitter : SpecInfoEmitter {
                     description = res.first().annotations.findDescription()
                         ?: "${identifier.value} $statusCode response",
                     content = res
-                        .mapNotNull { it.content }
+                        .flatMap { it.contents() }
                         .associate { it.emit() }
                         .ifEmpty { null },
                     links = res.flatMap { it.annotations.findLinks() }.toOpenAPIV30Links(),

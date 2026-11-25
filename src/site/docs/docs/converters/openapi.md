@@ -91,6 +91,7 @@ The annotations that only mean something to OpenAPI start with `OpenAPI`.
 | `@OpenAPINoSecurity`                             | endpoints                                 | `security: []`: an operation anyone may call                                       |
 | `@OpenAPITag("...")`                             | the spec, endpoints                       | a tag of an operation, or a tag of the document with its description (see [Tags](#tags)) |
 | `@OpenAPILink("GetUser", operationId: "...")`    | responses                                 | a response link of OpenAPI 3, one annotation per link (see [Links](#links))        |
+| `@OpenAPIContentType("application/xml")`         | endpoints, responses                      | the content types of a request or response body (see [Content types](#content-types)) |
 
 _Definitions_ are types, enums and unions, and _fields_ are the fields of a type, the parameters and headers of an
 endpoint and the headers of a response.
@@ -286,7 +287,7 @@ or the files involved when:
   for `apiKey`, `flows` for `oauth2`, `openIdConnectUrl` for `openIdConnect`;
 - a spec annotation, or a server URL, security scheme or tag name, is declared more than once, as listed above;
 - an annotation has the wrong target: `@OpenAPIInfo` or `@OpenAPISecurityScheme` without `spec:`,
-  `@spec:OpenAPINoSecurity`, `@spec:OpenAPILink`, or any `@file:OpenAPI…`;
+  `@spec:OpenAPINoSecurity`, `@spec:OpenAPILink`, `@spec:OpenAPIContentType`, or any `@file:OpenAPI…`;
 - a server has no URL, a server variable no default, or a tag no name;
 - an endpoint has both `@OpenAPISecurity` and `@OpenAPINoSecurity`.
 
@@ -340,6 +341,36 @@ endpoint CreateUser POST User /users -> {
 | `server`       | no       | URL of the server the next call should target.                   |
 
 Runtime expressions (`$response.body#/...`, `$request.path.id`, etc.) are kept verbatim — Wirespec does not validate or rewrite them. The annotation is preserved on parse and re-emitted on the way back to OpenAPI; language emitters (Kotlin, Java, TypeScript, Python, Rust) ignore it.
+
+## Content types
+
+Wirespec has no syntax for the content type of a body: a body is `application/json`. The `@OpenAPIContentType`
+annotation carries any other content type. On an endpoint it names the content types of the request body, on a response
+those of the response body. One content type is a string, several are a list:
+
+```wirespec
+type Pet { name: String }
+
+@OpenAPIContentType(["application/json", "application/xml"])
+endpoint CreatePet POST Pet /pets -> {
+    @OpenAPIContentType(["application/json", "application/xml"])
+    200 -> Pet
+    @OpenAPIContentType("text/plain")
+    400 -> String
+}
+```
+
+The OpenAPI v3 emitter writes the body once per content type, under `content`. The OpenAPI v2 emitter writes the
+content types of an endpoint as the `consumes` of the operation, and those of its responses as its `produces`. Without
+the annotation a body is `application/json`, as before.
+
+The converter writes the annotation for every body that is not just `application/json`, so the content types of a
+document survive the way to Wirespec and back. A response with several content types becomes one response per content
+type, with an annotation on those that are not `application/json`. An endpoint has one request body: when the request bodies of an operation have a
+different schema per content type, the endpoint keeps the first schema, for all of the content types.
+
+The annotation only changes the OpenAPI document: language emitters (Kotlin, Java, TypeScript, Python, Rust) ignore
+it.
 
 ## Playground
 

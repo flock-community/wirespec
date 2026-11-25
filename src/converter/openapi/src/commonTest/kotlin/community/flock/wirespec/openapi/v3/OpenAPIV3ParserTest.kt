@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.openapi.common.Ast
+import community.flock.wirespec.openapi.common.toContentTypeAnnotations
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
 import io.kotest.matchers.collections.shouldContain
@@ -615,7 +616,7 @@ class OpenAPIV3ParserTest {
             ),
             Endpoint(
                 comment = null,
-                annotations = emptyList(),
+                annotations = listOf("application/json", "application/xml").toContentTypeAnnotations(),
                 identifier = DefinitionIdentifier("TodosPOST"),
                 method = Endpoint.Method.POST,
                 path = listOf(

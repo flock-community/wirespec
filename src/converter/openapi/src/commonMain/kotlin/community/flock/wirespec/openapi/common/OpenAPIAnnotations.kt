@@ -15,9 +15,9 @@ import community.flock.wirespec.compiler.core.parse.ast.SpecAnnotation
 /**
  * The annotations that carry what Wirespec has no syntax for, so an OpenAPI document survives the conversion.
  *
- * [INFO] and [SECURITY_SCHEME] describe the document and only go on the spec (`@spec:`); [NO_SECURITY] and [LINK]
- * only go on an endpoint or a response. [SERVER], [SECURITY] and [TAG] go on both: on the spec they describe the
- * document, on an endpoint the operation.
+ * [INFO] and [SECURITY_SCHEME] describe the document and only go on the spec (`@spec:`); [NO_SECURITY], [LINK] and
+ * [CONTENT_TYPE] only go on an endpoint or a response. [SERVER], [SECURITY] and [TAG] go on both: on the spec they
+ * describe the document, on an endpoint the operation.
  */
 internal object OpenAPIAnnotations {
     const val DESCRIPTION = "Description"
@@ -28,6 +28,7 @@ internal object OpenAPIAnnotations {
     const val NO_SECURITY = "OpenAPINoSecurity"
     const val TAG = "OpenAPITag"
     const val LINK = "OpenAPILink"
+    const val CONTENT_TYPE = "OpenAPIContentType"
 
     const val DEFAULT_PARAMETER = "default"
 
@@ -35,7 +36,7 @@ internal object OpenAPIAnnotations {
     val SPEC_ONLY: Set<String> = setOf(INFO, SECURITY_SCHEME)
 
     /** The OpenAPI annotations that belong to one operation or response: they are no spec annotations. */
-    val NOT_ON_SPEC: Set<String> = setOf(NO_SECURITY, LINK)
+    val NOT_ON_SPEC: Set<String> = setOf(NO_SECURITY, LINK, CONTENT_TYPE)
 
     /** The scheme types whose requirements name scopes; for every other type the list of scopes is empty. */
     val SCOPED_SCHEME_TYPES: Set<String> = setOf("oauth2", "openIdConnect")
@@ -221,7 +222,11 @@ private fun List<SpecAnnotation>.declaredTwice(name: String, label: String): Lis
 private fun SpecAnnotation.label(): String = "@spec:${annotation.name}" + annotation.positionalString()?.let { "(\"$it\")" }.orEmpty()
 
 /** Where an OpenAPI annotation that does not apply to the spec goes instead. */
-private fun Annotation.target(): String = if (name == OpenAPIAnnotations.LINK) "a response" else "an endpoint"
+private fun Annotation.target(): String = when (name) {
+    OpenAPIAnnotations.LINK -> "a response"
+    OpenAPIAnnotations.CONTENT_TYPE -> "an endpoint or a response"
+    else -> "an endpoint"
+}
 
 private fun List<SpecAnnotation>.files(): String = map { it.fileUri.value }.distinct().joinToString(" and ")
 
@@ -358,6 +363,35 @@ internal fun List<SecurityRequirement>?.toOperationAnnotations(): List<Annotatio
     isEmpty() -> listOf(Annotation(OpenAPIAnnotations.NO_SECURITY, emptyList()))
     else -> map { it.toAnnotation() }
 }
+
+/**
+ * Wirespec has no syntax for the content type of a body and reads every body as JSON, so only other content types need
+ * an annotation: one type is written by name, several as a list.
+ */
+internal fun List<String>.toContentTypeAnnotations(): List<Annotation> = distinct()
+    .takeIf { it.isNotEmpty() && it != listOf(APPLICATION_JSON) }
+    ?.let { types -> types.singleOrNull()?.let(Annotation.Value::Single) ?: Annotation.Value.Array(types.map(Annotation.Value::Single)) }
+    ?.let { annotation(OpenAPIAnnotations.CONTENT_TYPE, it) }
+    .let(::listOfNotNull)
+
+/**
+ * The request bodies of the endpoint, one per content type. A Wirespec endpoint has one request body, so
+ * `@OpenAPIContentType` on the endpoint names its content types; an endpoint that comes straight from an OpenAPI
+ * document has a request per content type, each with its own.
+ */
+internal fun Endpoint.requestContents(): List<Endpoint.Content> = requests.mapNotNull { it.content }
+    .let { contents -> contents.singleOrNull()?.withContentTypes(annotations) ?: contents }
+
+/** The body of the response, once per content type that `@OpenAPIContentType` on the response names. */
+internal fun Endpoint.Response.contents(): List<Endpoint.Content> = content?.withContentTypes(annotations).orEmpty()
+
+private fun Endpoint.Content.withContentTypes(annotations: List<Annotation>): List<Endpoint.Content> = annotations.contentTypes()
+    .map { copy(type = it) }
+    .ifEmpty { listOf(this) }
+
+private fun List<Annotation>.contentTypes(): List<String> = named(OpenAPIAnnotations.CONTENT_TYPE)
+    .flatMap { it.positional()?.strings().orEmpty() }
+    .distinct()
 
 internal fun tagAnnotation(name: String, description: String? = null): Annotation = annotation(OpenAPIAnnotations.TAG, Annotation.Value.Single(name), parameter("description", description))
 

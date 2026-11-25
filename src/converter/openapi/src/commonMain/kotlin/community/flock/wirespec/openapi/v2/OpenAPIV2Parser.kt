@@ -55,6 +55,7 @@ import community.flock.wirespec.openapi.common.sanitize
 import community.flock.wirespec.openapi.common.stringType
 import community.flock.wirespec.openapi.common.tagAnnotation
 import community.flock.wirespec.openapi.common.toAnnotation
+import community.flock.wirespec.openapi.common.toContentTypeAnnotations
 import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.common.toDict
 import community.flock.wirespec.openapi.common.toIterable
@@ -98,12 +99,14 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                     .filter { it.location == OpenAPIV20ParameterLocation.HEADER }
                     .map { toField(it, name) }
                     .let(::Shape)
+                // The content types of an operation replace those of the document; they are not added to them.
                 val operationConsumes = (operation as? OpenAPIV20Operation)?.consumes
                 val operationProduces = (operation as? OpenAPIV20Operation)?.produces
                 val requests = parameters
                     .filter { it.location == OpenAPIV20ParameterLocation.BODY }
                     .flatMap { requestBody ->
-                        (consumes.orEmpty() + operationConsumes.orEmpty())
+                        (operationConsumes ?: consumes)
+                            .orEmpty()
                             .distinct()
                             .ifEmpty { listOf(APPLICATION_JSON) }
                             .map { type ->
@@ -129,29 +132,35 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                 val responses = operation.responses.orEmpty()
                     .mapValues { resolveResponse(it.value) }
                     .flatMap { (status, res) ->
-                        (produces.orEmpty() + operationProduces.orEmpty())
+                        (operationProduces ?: produces)
+                            .orEmpty()
                             .distinct()
-                            .ifEmpty { listOf(APPLICATION_JSON) }.map { type ->
+                            .ifEmpty { listOf(APPLICATION_JSON) }
+                            .map { type ->
+                                (res as? OpenAPIV20Response)?.schema?.let { schema ->
+                                    Endpoint.Content(
+                                        type = type,
+                                        reference = when (schema) {
+                                            is OpenAPIReference -> toReference(schema, false)
+                                            is Schema -> toReference(
+                                                schema,
+                                                className(name, status.value, "ResponseBody"),
+                                                false,
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                            .map { content ->
                                 Endpoint.Response(
-                                    annotations = res.description.toDescriptionAnnotationList(),
+                                    annotations = res.description.toDescriptionAnnotationList() +
+                                        listOfNotNull(content?.type).toContentTypeAnnotations(),
                                     status = status.value,
                                     headers = res.headers
                                         ?.map { (identifier, header) -> toField(header.resolveHeader(), identifier) }
                                         .orEmpty()
                                         .let(::Shape),
-                                    content = (res as? OpenAPIV20Response)?.schema?.let { schema ->
-                                        Endpoint.Content(
-                                            type = type,
-                                            reference = when (schema) {
-                                                is OpenAPIReference -> toReference(schema, false)
-                                                is Schema -> toReference(
-                                                    schema,
-                                                    className(name, status.value, "ResponseBody"),
-                                                    false,
-                                                )
-                                            },
-                                        )
-                                    },
+                                    content = content,
                                 )
                             }
                     }
@@ -162,7 +171,8 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths.orEmpty()
                         comment = null,
                         annotations = operation.description.toDescriptionAnnotationList() +
                             operation.tags.orEmpty().filterNotNull().map { tagAnnotation(it) } +
-                            operation.security.toOperationAnnotations(),
+                            operation.security.toOperationAnnotations() +
+                            requests.mapNotNull { it.content?.type }.toContentTypeAnnotations(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         method = method,
                         path = segments,
