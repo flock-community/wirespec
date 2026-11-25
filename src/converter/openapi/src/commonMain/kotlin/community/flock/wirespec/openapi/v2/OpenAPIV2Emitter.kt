@@ -41,12 +41,14 @@ import community.flock.wirespec.openapi.common.SecurityRequirement
 import community.flock.wirespec.openapi.common.SecuritySchemeInfo
 import community.flock.wirespec.openapi.common.ServerInfo
 import community.flock.wirespec.openapi.common.SpecMetadata
+import community.flock.wirespec.openapi.common.contents
 import community.flock.wirespec.openapi.common.emitFormat
 import community.flock.wirespec.openapi.common.emitPattern
 import community.flock.wirespec.openapi.common.filterNotNullValues
 import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.json
 import community.flock.wirespec.openapi.common.openAPIProblems
+import community.flock.wirespec.openapi.common.requestContents
 import community.flock.wirespec.openapi.common.securityRequirements
 import community.flock.wirespec.openapi.common.tags
 import community.flock.wirespec.openapi.common.toSchemaDefault
@@ -298,8 +300,8 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
         operationId = identifier.value,
         description = annotations.findDescription() ?: comment?.value,
         security = annotations.securityRequirements()?.withoutSchemes(unsupportedSchemes, identifier.value, logger),
-        consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
-        produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
+        consumes = requestContents().map { it.type }.distinct().ifEmpty { null },
+        produces = responses.flatMap { it.contents() }.map { it.type }.distinct().ifEmpty { null },
         parameters = requests
             .mapNotNull { it.content }
             .take(1)
