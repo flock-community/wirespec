@@ -72,6 +72,15 @@ describe("types", () => {
     ]);
   });
 
+  it("highlights string literal types", () => {
+    expectScopes(`type Cat {\n  kind: "c\\"at",\n  name: String\n}`, [
+      ["kind", "variable.other.property.wirespec"],
+      ['"c', "string.quoted.double.wirespec"],
+      ['\\"', "constant.character.escape.wirespec"],
+      ["String", "support.type.primitive.wirespec"],
+    ]);
+  });
+
   it("highlights default values", () => {
     const defaults = `type Config {
   name: String = "anon\\"ymous",
