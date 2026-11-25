@@ -482,10 +482,7 @@ class ParseTypeTest {
             """
             |type Dog {
             |    kind: "dog",
-            |    nickname: "good \"boy\""?,
-            |    tags: "pet"[],
-            |    tagsByKey: {"pet"},
-            |    sort: "name" = "name"
+            |    sound: "\"woof\"" = "\"woof\""
             |}
             """.trimMargin()
 
@@ -496,25 +493,29 @@ class ParseTypeTest {
             .shape.fields
             .map { it.reference } shouldBe listOf(
             Reference.Literal("dog", isNullable = false),
-            Reference.Literal("good \"boy\"", isNullable = true),
-            Reference.Iterable(Reference.Literal("pet", isNullable = false), isNullable = false),
-            Reference.Dict(Reference.Literal("pet", isNullable = false), isNullable = false),
-            Reference.Literal("name", isNullable = false),
+            Reference.Literal("\"woof\"", isNullable = false),
         )
     }
 
     @Test
-    fun testStringLiteralTypeOutsideAType() {
-        val source =
-            // language=ws
-            """
-            |endpoint GetDogs GET /dogs ? {sort: "name"} -> {
-            |  200 -> "ok"
-            |}
-            |channel Events -> "ping"
-            """.trimMargin()
-
-        parser(source).shouldBeRight().shouldHaveSize(2)
+    fun testStringLiteralTypeIsOnlyAPlainFieldOfAType() {
+        listOf(
+            "type Foo { kind: \"cat\"? }" to "A string literal type cannot be optional or a list: kind",
+            "type Foo { kind: \"cat\"[] }" to "A string literal type cannot be optional or a list: kind",
+            "part Foo { kind: \"cat\" }" to "A string literal type is only allowed on the fields of a type, not on: kind",
+            "endpoint GetFoo GET /foo ? {kind: \"cat\"} -> { 200 -> String }" to "A string literal type is only allowed on the fields of a type, not on: kind",
+            "endpoint GetFoo GET /foo # {kind: \"cat\"} -> { 200 -> String }" to "A string literal type is only allowed on the fields of a type, not on: kind",
+            "rpc GetFoo { kind: \"cat\" } -> String" to "A string literal type is only allowed on the fields of a type, not on: kind",
+        ).forEach { (source, message) ->
+            parser(source).shouldBeLeft().head.message shouldBe message
+        }
+        listOf(
+            "type Foo { kinds: {\"cat\"} }",
+            "endpoint GetFoo GET /foo -> { 200 -> \"cat\" }",
+            "endpoint PostFoo POST \"cat\" /foo -> { 200 -> String }",
+            "channel Foo -> \"cat\"",
+            "type Foo = \"cat\"",
+        ).forEach { source -> parser(source).shouldBeLeft() }
     }
 
     @Test

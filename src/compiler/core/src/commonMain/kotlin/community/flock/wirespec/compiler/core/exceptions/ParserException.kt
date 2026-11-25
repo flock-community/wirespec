@@ -65,6 +65,20 @@ internal class DefaultValueNotAllowedException(fileUri: FileUri, fieldName: Stri
         message = "Default values are only allowed on the fields of a type and the parameters of an rpc, not on: $fieldName",
     )
 
+internal class LiteralTypeNotAllowedException(fileUri: FileUri, fieldName: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A string literal type is only allowed on the fields of a type, not on: $fieldName",
+    )
+
+internal class LiteralTypeModifierException(fileUri: FileUri, fieldName: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A string literal type cannot be optional or a list: $fieldName",
+    )
+
 internal class InvalidDefaultValueException(fileUri: FileUri, fieldName: String, value: String, reference: Reference, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,

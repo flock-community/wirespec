@@ -6,6 +6,8 @@ import arrow.core.raise.ensure
 import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
 import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
+import community.flock.wirespec.compiler.core.exceptions.LiteralTypeModifierException
+import community.flock.wirespec.compiler.core.exceptions.LiteralTypeNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.exceptions.UnknownStringFormatException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -73,28 +75,28 @@ internal object TypeParser {
         }
     }
 
-    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean): Either<WirespecException, Shape> = parseToken {
-        (if (token.type is RightCurly) emptyList() else parseShapeEntries(allowFieldDefaults).bind())
+    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean, allowLiteralTypes: Boolean): Either<WirespecException, Shape> = parseToken {
+        (if (token.type is RightCurly) emptyList() else parseShapeEntries(allowFieldDefaults, allowLiteralTypes).bind())
             .also {
                 expect<RightCurly>().bind()
             }
             .let(::Shape)
     }
 
-    private fun TokenProvider.parseShapeEntries(allowFieldDefaults: Boolean): Either<WirespecException, List<ShapeEntry>> = either {
+    private fun TokenProvider.parseShapeEntries(allowFieldDefaults: Boolean, allowLiteralTypes: Boolean): Either<WirespecException, List<ShapeEntry>> = either {
         buildList {
-            add(parseShapeEntry(allowFieldDefaults).bind())
+            add(parseShapeEntry(allowFieldDefaults, allowLiteralTypes).bind())
             while (token.type is Comma) {
                 eatToken().bind()
-                add(parseShapeEntry(allowFieldDefaults).bind())
+                add(parseShapeEntry(allowFieldDefaults, allowLiteralTypes).bind())
             }
         }
     }
 
-    private fun TokenProvider.parseShapeEntry(allowFieldDefaults: Boolean): Either<WirespecException, ShapeEntry> = either {
+    private fun TokenProvider.parseShapeEntry(allowFieldDefaults: Boolean, allowLiteralTypes: Boolean): Either<WirespecException, ShapeEntry> = either {
         val annotations = parseAnnotations().bind()
         when (token.type) {
-            is WirespecIdentifier -> parseField(FieldIdentifier(token.value), annotations, allowFieldDefaults).bind()
+            is WirespecIdentifier -> parseField(FieldIdentifier(token.value), annotations, allowFieldDefaults, allowLiteralTypes).bind()
             is Ellipsis -> parseSpread(annotations).bind()
             else -> raiseWrongToken<WirespecIdentifier>().bind()
         }
@@ -102,7 +104,7 @@ internal object TypeParser {
 
     fun TokenProvider.parseDict(): Either<WirespecException, Reference.Dict> = parseToken {
         when (token.type) {
-            is WirespecType, is LiteralString -> Reference.Dict(
+            is WirespecType -> Reference.Dict(
                 reference = parseType().bind(),
                 isNullable = when (token.type) {
                     is RightCurly -> {
@@ -141,13 +143,6 @@ internal object TypeParser {
                 )
             }
 
-            is LiteralString -> {
-                Reference.Literal(
-                    value = previousToken.literal(),
-                    isNullable = isNullable().bind(),
-                )
-            }
-
             else -> raiseWrongToken<TypeDefinitionStart>(previousToken).bind()
         }
         parseIterable(reference).bind()
@@ -177,7 +172,7 @@ private fun TokenProvider.parseTypeDefinition(comment: Comment?, annotations: Li
             comment = comment,
             annotations = annotations,
             identifier = typeName,
-            shape = parseTypeShape(allowFieldDefaults = true).bind(),
+            shape = parseTypeShape(allowFieldDefaults = true, allowLiteralTypes = true).bind(),
             extends = emptyList(),
         )
 
@@ -339,12 +334,13 @@ private fun TokenProvider.parseSpread(annotations: List<Annotation>) = parseToke
     }
 }
 
-private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowFieldDefaults: Boolean) = parseToken {
+private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowFieldDefaults: Boolean, allowLiteralTypes: Boolean) = parseToken {
     expect<Colon>().bind()
 
     val reference = when (token.type) {
         is LeftCurly -> parseDict().bind()
-        is WirespecType, is LiteralString -> parseType().bind()
+        is WirespecType -> parseType().bind()
+        is LiteralString -> parseLiteralType(identifier, allowLiteralTypes).bind()
         else -> raiseWrongToken<WirespecType>().bind()
     }
 
@@ -357,6 +353,15 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
             else -> null
         },
     )
+}
+
+/** A string literal type is the whole type of a field of a type: it takes no `?` and no `[]`. */
+private fun TokenProvider.parseLiteralType(identifier: FieldIdentifier, allowLiteralTypes: Boolean) = parseToken { literal ->
+    ensure(allowLiteralTypes) { LiteralTypeNotAllowedException(fileUri, identifier.value, literal.coordinates) }
+    when (token.type) {
+        is QuestionMark, is Brackets -> raise(LiteralTypeModifierException(fileUri, identifier.value, token.coordinates))
+        else -> Reference.Literal(value = literal.literal(), isNullable = false)
+    }
 }
 
 private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowFieldDefaults: Boolean) = parseToken { equals ->

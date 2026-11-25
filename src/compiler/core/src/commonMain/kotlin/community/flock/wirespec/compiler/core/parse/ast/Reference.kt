@@ -48,7 +48,10 @@ public sealed interface Reference : Value<String> {
         override val isNullable: Boolean,
     ) : Reference
 
-    /** A string literal type, such as `"cat"`: the only value it admits is [value]. */
+    /**
+     * A string literal type, such as `"cat"`: the only value it admits is [value]. It is the whole type of a field of a
+     * type, so the parser never makes it nullable.
+     */
     public data class Literal(
         override val value: String,
         override val isNullable: Boolean,

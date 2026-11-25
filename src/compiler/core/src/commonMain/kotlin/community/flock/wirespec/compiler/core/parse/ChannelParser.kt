@@ -8,7 +8,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Comment
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 internal object ChannelParser {
@@ -26,7 +25,7 @@ internal object ChannelParser {
         val reference = with(TypeParser) {
             when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType, is LiteralString -> parseType().bind()
+                is WirespecType -> parseType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }

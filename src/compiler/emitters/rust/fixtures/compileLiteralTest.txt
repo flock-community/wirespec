@@ -2,158 +2,12 @@ use super::super::wirespec::*;
 use regex;
 
 #[derive(Debug, Clone, Default, PartialEq)]
-pub struct Cat {
-    pub kind: String,
-    pub name: String,
-}
-impl Cat {
-    pub fn validate(&self) -> Vec<String> {
-        return if (self.kind == String::from("cat")) { Vec::<String>::new() } else { vec![String::from("kind")] };
-    }
-}
-
-use super::super::wirespec::*;
-use regex;
-
-#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Dog {
     pub kind: String,
-    pub nickname: Option<String>,
-    pub tags: Vec<String>,
-    pub tags_by_key: std::collections::HashMap<String, String>,
 }
 impl Dog {
     pub fn validate(&self) -> Vec<String> {
-        return vec![if (self.kind == String::from("dog")) { Vec::<String>::new() } else { vec![String::from("kind")] }.as_slice(), self.nickname.as_ref().map(|it| if (it.clone() == String::from("good \"boy\"")) { Vec::<String>::new() } else { vec![String::from("nickname")] }).unwrap_or(Vec::<String>::new()).as_slice(), self.tags.iter().enumerate().flat_map(|(i, el)| if (el.clone() == String::from("pet")) { Vec::<String>::new() } else { vec![format!("tags[{}]", i)] }).collect::<Vec<_>>().as_slice(), self.tags_by_key.iter().flat_map(|(k, v)| if (v.clone() == String::from("pet")) { Vec::<String>::new() } else { vec![format!("tagsByKey[{}]", k)] }).collect::<Vec<_>>().as_slice()].concat();
-    }
-}
-
-use super::super::wirespec::*;
-use regex;
-use super::super::model::dog::Dog;
-
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Path;
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Queries {
-    pub sort: String,
-}
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct RequestHeaders;
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Request {
-    pub path: Path,
-    pub method: Method,
-    pub queries: Queries,
-    pub headers: RequestHeaders,
-    pub body: (),
-}
-impl Request {
-    pub fn new(sort: String) -> Self {
-        Request {
-            path: Path {},
-            method: Method::GET,
-            queries: Queries { sort: sort },
-            headers: RequestHeaders {},
-            body: ()
-        }
-    }
-}
-#[derive(Debug, Clone, PartialEq)]
-pub enum Response {
-    Response200(Response200),
-}
-impl From<Response200> for Response { fn from(value: Response200) -> Self { Response::Response200(value) } }
-#[derive(Debug, Clone, PartialEq)]
-pub enum Response2XX {
-    Response200(Response200),
-}
-#[derive(Debug, Clone, PartialEq)]
-pub enum ResponseListDog {
-    Response200(Response200),
-}
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Response200Headers;
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Response200 {
-    pub status: i32,
-    pub headers: Response200Headers,
-    pub body: Vec<Dog>,
-}
-impl Response200 {
-    pub fn new(body: Vec<Dog>) -> Self {
-        Response200 {
-            status: 200_i32,
-            headers: Response200Headers {},
-            body: body
-        }
-    }
-}
-pub mod GetDogs {
-    use super::*;
-    pub trait Handler {
-        async fn get_dogs(&self, request: Request) -> Response;
-    }
-    pub trait Call {
-        async fn get_dogs(&self, sort: String) -> std::result::Result<Response, WirespecError>;
-    }
-    pub fn to_raw_request(serialization: &impl Serializer, request: Request) -> RawRequest {
-        return RawRequest { method: format!("{:?}", request.method), path: vec![String::from("dogs")], queries: std::collections::HashMap::from([(String::from("sort"), serialization.serialize_param(&request.queries.sort, std::any::TypeId::of::<String>()))]), headers: std::collections::HashMap::<String, Vec<String>>::new(), body: None };
-    }
-    pub fn from_raw_request(serialization: &impl Deserializer, request: RawRequest) -> std::result::Result<Request, WirespecError> {
-        return Ok(Request::new(request.queries.get("sort").as_ref().map(|it| serialization.deserialize_param(it, std::any::TypeId::of::<String>())).transpose()?.ok_or(WirespecError::MissingParameter(String::from("sort")))?));
-    }
-    pub fn to_raw_response(serialization: &impl Serializer, response: Response) -> RawResponse {
-        match response {
-            Response::Response200(r) => {
-                return RawResponse { status_code: r.status, headers: std::collections::HashMap::<String, Vec<String>>::new(), body: Some(serialization.serialize_body(&r.body, std::any::TypeId::of::<Vec<Dog>>())) };
-            }
-        }
-    }
-    pub fn from_raw_response(serialization: &impl Deserializer, response: RawResponse) -> std::result::Result<Response, WirespecError> {
-        match response.status_code {
-            200_i32 => {
-                return Ok(Response::Response200(Response200::new(response.body.as_ref().map(|it| serialization.deserialize_body(it, std::any::TypeId::of::<Vec<Dog>>())).transpose()?.ok_or(WirespecError::MissingBody)?)));
-            }
-            _ => {
-                return Err(WirespecError::UnexpectedStatus(response.status_code));
-            }
-        }
-    }
-    pub struct Api;
-    impl Server for Api {
-        type Req = Request;
-        type Res = Response;
-        fn path_template(&self) -> &'static str { "/dogs" }
-        fn method(&self) -> Method { Method::GET }
-    }
-}
-
-use super::super::wirespec::*;
-use super::super::endpoint::get_dogs;
-use super::super::model::dog::Dog;
-
-pub struct GetDogsClient<'a, S: Serialization, T: Transportation> {
-    pub serialization: &'a S,
-    pub transportation: &'a T,
-}
-impl<'a, S: Serialization, T: Transportation> get_dogs::GetDogs::Call for GetDogsClient<'a, S, T> {
-    async fn get_dogs(&self, sort: String) -> Result<get_dogs::Response, WirespecError> {
-        let request = get_dogs::Request::new(sort);
-        let raw_request = get_dogs::GetDogs::to_raw_request(self.serialization, request);
-        let raw_response = self.transportation.transport(&raw_request).await?;
-        get_dogs::GetDogs::from_raw_response(self.serialization, raw_response)
-    }
-}
-
-use super::super::wirespec::*;
-use regex;
-use super::super::model::cat::Cat;
-
-pub struct CatGenerator;
-impl CatGenerator {
-    pub fn generate(generator: &impl Generator, path: Vec<String>) -> Cat {
-        return Cat { kind: String::from("cat"), name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+        return if (self.kind == String::from("dog")) { Vec::<String>::new() } else { vec![String::from("kind")] };
     }
 }
 
@@ -164,30 +18,12 @@ use super::super::model::dog::Dog;
 pub struct DogGenerator;
 impl DogGenerator {
     pub fn generate(generator: &impl Generator, path: Vec<String>) -> Dog {
-        return Dog { kind: String::from("dog"), nickname: generator.generate(vec![path.as_slice(), vec![String::from("nickname")].as_slice()].concat(), GeneratorFieldNullable { generate: Box::new(|p0| String::from("good \"boy\"")) }), tags: generator.generate(vec![path.as_slice(), vec![String::from("tags")].as_slice()].concat(), GeneratorFieldArray { generate: Box::new(|p0| String::from("pet")) }), tags_by_key: generator.generate(vec![path.as_slice(), vec![String::from("tagsByKey")].as_slice()].concat(), GeneratorFieldDict { generate: Box::new(|p0| String::from("pet")) }) };
-    }
-}
-
-pub mod get_dogs_client;
-use super::wirespec::*;
-use super::model::dog::Dog;
-use super::endpoint::get_dogs;
-use get_dogs_client::GetDogsClient;
-
-pub struct Client<S: Serialization, T: Transportation> {
-    pub serialization: S,
-    pub transportation: T,
-}
-impl<S: Serialization, T: Transportation> get_dogs::GetDogs::Call for Client<S, T> {
-    async fn get_dogs(&self, sort: String) -> Result<get_dogs::Response, WirespecError> {
-        GetDogsClient { serialization: &self.serialization, transportation: &self.transportation }
-            .get_dogs(sort).await
+        return Dog { kind: String::from("dog") };
     }
 }
 
 #![allow(warnings)]
 pub mod model;
 pub mod endpoint;
-pub mod client;
 pub mod generator;
 pub mod wirespec;

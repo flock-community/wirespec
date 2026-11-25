@@ -13,7 +13,6 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.ExclamationMark
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 internal object RpcParser {
@@ -27,7 +26,7 @@ internal object RpcParser {
 
     private fun TokenProvider.parseRpcDefinition(comment: Comment?, annotations: List<Annotation>, identifier: DefinitionIdentifier) = parseToken {
         val shape = when (token.type) {
-            is LeftCurly -> parseTypeShape(allowFieldDefaults = true).bind()
+            is LeftCurly -> parseTypeShape(allowFieldDefaults = true, allowLiteralTypes = false).bind()
             else -> raiseWrongToken<LeftCurly>().bind()
         }
 
@@ -56,7 +55,7 @@ internal object RpcParser {
 
     private fun TokenProvider.parseReference(): Either<WirespecException, Reference> = either {
         when (token.type) {
-            is WirespecType, is LiteralString -> parseType().bind()
+            is WirespecType -> parseType().bind()
             else -> raiseWrongToken<WirespecType>().bind()
         }
     }

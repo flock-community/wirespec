@@ -1,8 +1,6 @@
 package community.flock.wirespec.verify
 
 import community.flock.wirespec.compiler.core.ir.BinaryOp
-import community.flock.wirespec.compiler.core.ir.LiteralMap
-import community.flock.wirespec.compiler.core.ir.NullableOf
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.file
 import community.flock.wirespec.compiler.test.CompileLiteralTest
@@ -17,13 +15,10 @@ class VerifyLiteralTest : FunSpec({
                 main {
                     assign("dog", construct(type("Dog")) {
                         arg("kind", literal("dog"))
-                        arg("nickname", NullableOf(literal("good \"boy\"")))
-                        arg("tags", listOf(listOf(literal("pet")), string))
-                        arg("tagsByKey", LiteralMap(mapOf("a" to literal("pet")), string, string))
                     })
                     assign("errors", functionCall("validate", receiver = VariableReference("dog")))
                     assign("expected", literalList(string))
-                    assertThat(BinaryOp(VariableReference("errors"), BinaryOp.Operator.EQUALS, VariableReference("expected")), "A dog with its literals should have no validation errors")
+                    assertThat(BinaryOp(VariableReference("errors"), BinaryOp.Operator.EQUALS, VariableReference("expected")), "A dog of kind dog should have no validation errors")
                 }
             }
 
@@ -40,16 +35,13 @@ class VerifyLiteralTest : FunSpec({
                 main {
                     assign("dog", construct(type("Dog")) {
                         arg("kind", literal("cat"))
-                        arg("nickname", NullableOf(literal("bad boy")))
-                        arg("tags", listOf(listOf(literal("pet"), literal("wild")), string))
-                        arg("tagsByKey", LiteralMap(mapOf("a" to literal("wild")), string, string))
                     })
                     assign("errors", functionCall("validate", receiver = VariableReference("dog")))
                     assign(
                         "expected",
-                        literalList(listOf(literal("kind"), literal("nickname"), literal("tags[1]"), literal("tagsByKey[a]")), string),
+                        literalList(listOf(literal("kind")), string),
                     )
-                    assertThat(BinaryOp(VariableReference("errors"), BinaryOp.Operator.EQUALS, VariableReference("expected")), "Every value that is not its literal should be reported by its path")
+                    assertThat(BinaryOp(VariableReference("errors"), BinaryOp.Operator.EQUALS, VariableReference("expected")), "A field that does not hold its literal should be reported")
                 }
             }
 

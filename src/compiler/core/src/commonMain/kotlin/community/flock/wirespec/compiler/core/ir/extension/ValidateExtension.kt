@@ -135,7 +135,7 @@ public class ValidateExtension(language: FileExtension) : IrExtension {
                     ?.convertConstraint(checked(subject))
                     ?.let { IfExpression(it, NO_ERRORS, path.errors()) }
 
-                is Reference.Literal -> IfExpression(BinaryOp(subject.byValue(), BinaryOp.Operator.EQUALS, Literal(value, Type.String)), NO_ERRORS, path.errors())
+                is Reference.Literal -> IfExpression(BinaryOp(subject, BinaryOp.Operator.EQUALS, Literal(value, Type.String)), NO_ERRORS, path.errors())
 
                 is Reference.Iterable -> (variable("i", depth) to variable("el", depth)).let { (index, element) ->
                     reference.errors(VariableReference(element), path.index(index), depth + 1)
@@ -156,15 +156,11 @@ public class ValidateExtension(language: FileExtension) : IrExtension {
             Dialect.Member, Dialect.Python, Dialect.Rust -> FunctionCall(receiver = subject, name = VALIDATE)
         }
 
-        private fun Reference.Primitive.checked(subject: Expression): Expression = when (type) {
-            is Reference.Primitive.Type.String -> subject
-            is Reference.Primitive.Type.Integer, is Reference.Primitive.Type.Number, Reference.Primitive.Type.Boolean, Reference.Primitive.Type.Bytes -> subject.byValue()
-        }
-
-        // Rust binds list, dict and option values by reference, while a bound or a literal compares by value.
-        private fun Expression.byValue(): Expression = when {
-            dialect == Dialect.Rust && this is VariableReference -> FunctionCall(receiver = this, name = Name.of("clone"))
-            else -> this
+        // Rust binds list, dict and option values by reference, while a bound compares a number by value.
+        private fun Reference.Primitive.checked(subject: Expression): Expression = when {
+            dialect == Dialect.Rust && type !is Reference.Primitive.Type.String && subject is VariableReference ->
+                FunctionCall(receiver = subject, name = Name.of("clone"))
+            else -> subject
         }
 
         // A TypeScript model calls the validate functions of the types it nests, so it imports them.

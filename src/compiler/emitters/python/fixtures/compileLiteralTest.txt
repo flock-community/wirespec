@@ -7,147 +7,10 @@ import enum
 from ..wirespec import T, Wirespec, _raise
 
 @dataclass
-class Cat(Wirespec.Shape):
-    kind: str
-    name: str
-    def validate(self) -> list[str]:
-        return ([] if (self.kind == 'cat') else ['kind'])
-
-from __future__ import annotations
-import re
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Generic, List, Optional
-import enum
-from ..wirespec import T, Wirespec, _raise
-
-@dataclass
 class Dog(Wirespec.Shape):
     kind: str
-    nickname: Optional[str]
-    tags: list[str]
-    tagsByKey: dict[str, str]
     def validate(self) -> list[str]:
-        return ([] if (self.kind == 'dog') else ['kind']) + (([] if (self.nickname == 'good "boy"') else ['nickname']) if self.nickname is not None else []) + [item for i, el in enumerate(self.tags) for item in ([] if (el == 'pet') else [f"tags[{i}]"])] + [item for k, v in self.tagsByKey.items() for item in ([] if (v == 'pet') else [f"tagsByKey[{k}]"])]
-
-from __future__ import annotations
-import re
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Generic, List, Optional
-import enum
-from ..wirespec import T, Wirespec, _raise
-from ..model.Dog import Dog
-
-@dataclass
-class Path(Wirespec.Path):
-    pass
-@dataclass
-class Queries(Wirespec.Queries):
-    sort: str
-@dataclass
-class RequestHeaders(Wirespec.Request.Headers):
-    pass
-@dataclass
-class Request(Wirespec.Request[None]):
-    path: Path
-    method: Wirespec.Method
-    queries: Queries
-    headers: RequestHeaders
-    body: None
-    def __init__(
-        self,
-        sort: str,
-    ):
-        self.path = Path()
-        self.method = Wirespec.Method.GET
-        self.queries = Queries(sort=sort)
-        self.headers = RequestHeaders()
-        self.body = None
-class Response(Wirespec.Response[T], Generic[T]):
-    pass
-class Response2XX(Response[T], Generic[T]):
-    pass
-class ResponseListDog(Response[list[Dog]]):
-    pass
-@dataclass
-class Response200Headers(Wirespec.Response.Headers):
-    pass
-@dataclass
-class Response200(Response2XX[list[Dog]], ResponseListDog):
-    status: int
-    headers: Response200Headers
-    body: list[Dog]
-    def __init__(
-        self,
-        body: list[Dog],
-    ):
-        self.status = 200
-        self.headers = Response200Headers()
-        self.body = body
-class GetDogs(Wirespec.Endpoint):
-    class Handler(Wirespec.Handler, ABC):
-        @abstractmethod
-        async def get_dogs(self, request: Request) -> Response[Any]:
-            ...
-    class Call(Wirespec.Call, ABC):
-        @abstractmethod
-        async def get_dogs(self, sort: str) -> Response[Any]:
-            ...
-    @staticmethod
-    def toRawRequest(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
-        return Wirespec.RawRequest(method=request.method.value, path=['dogs'], queries={'sort': serialization.serializeParam(request.queries.sort, str)}, headers={}, body=None)
-    @staticmethod
-    def fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> Request:
-        return Request(sort=(serialization.deserializeParam(request.queries['sort'], str) if request.queries['sort'] is not None else _raise('Param sort cannot be null')))
-    @staticmethod
-    def toRawResponse(serialization: Wirespec.Serializer, response: Response[Any]) -> Wirespec.RawResponse:
-        match response:
-            case Response200() as r:
-                return Wirespec.RawResponse(statusCode=r.status, headers={}, body=serialization.serializeBody(r.body, list[Dog]))
-            case _:
-                raise Exception(('Cannot match response with status: ' + str(response.status)))
-    @staticmethod
-    def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> Response[Any]:
-        match response.statusCode:
-            case 200:
-                return Response200(body=(serialization.deserializeBody(response.body, list[Dog]) if response.body is not None else _raise('body is null')))
-            case _:
-                raise Exception(('Cannot match response with status: ' + str(response.statusCode)))
-
-from __future__ import annotations
-import re
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Generic, List, Optional
-import enum
-from ..wirespec import T, Wirespec, _raise
-from ..model.Dog import Dog
-from ..endpoint.GetDogs import *
-
-@dataclass
-class GetDogsClient(GetDogs.Call):
-    serialization: Wirespec.Serialization
-    transportation: Wirespec.Transportation
-    async def get_dogs(self, sort: str) -> Response[Any]:
-        request = Request(sort=sort)
-        rawRequest = GetDogs.toRawRequest(serialization=self.serialization, request=request)
-        rawResponse = await self.transportation.transport(rawRequest)
-        return GetDogs.fromRawResponse(serialization=self.serialization, response=rawResponse)
-
-from __future__ import annotations
-import re
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Generic, List, Optional
-import enum
-from ..wirespec import T, Wirespec, _raise
-from ..model.Cat import Cat
-
-class CatGenerator:
-    @staticmethod
-    def generate(generator: Wirespec.Generator, path: list[str]) -> Cat:
-        return Cat(kind='cat', name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
+        return ([] if (self.kind == 'dog') else ['kind'])
 
 from __future__ import annotations
 import re
@@ -161,11 +24,10 @@ from ..model.Dog import Dog
 class DogGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Dog:
-        return Dog(kind='dog', nickname=generator.generate(path + ['nickname'], Wirespec.GeneratorFieldNullable(generate=lambda p0: 'good "boy"')), tags=generator.generate(path + ['tags'], Wirespec.GeneratorFieldArray(generate=lambda p0: 'pet')), tagsByKey=generator.generate(path + ['tagsByKey'], Wirespec.GeneratorFieldDict(generate=lambda p0: 'pet')))
+        return Dog(kind='dog')
 
 from . import model
 from . import endpoint
-from . import client
 from . import wirespec
 
 
@@ -173,21 +35,3 @@ from . import wirespec
 
 
 
-
-from __future__ import annotations
-import re
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Generic, List, Optional
-import enum
-from .wirespec import T, Wirespec, _raise
-from .model.Dog import Dog
-from .endpoint.GetDogs import *
-from .client.GetDogsClient import GetDogsClient
-
-@dataclass
-class Client(GetDogs.Call):
-    serialization: Wirespec.Serialization
-    transportation: Wirespec.Transportation
-    async def get_dogs(self, sort: str) -> Response[Any]:
-        return await GetDogsClient(serialization=self.serialization, transportation=self.transportation).get_dogs(sort)
