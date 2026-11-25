@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
@@ -194,7 +195,8 @@ public open class PythonEmitter(
     }
 
     override fun emit(type: Type, module: Module): File {
-        val typeImports = type.importReferences().distinctBy { it.value }
+        // A member of a union subclasses it, so it imports the union next to the types of its fields.
+        val typeImports = (type.importReferences() + type.extends.filterIsInstance<Reference.Custom>()).distinctBy { it.value }
             .map { import(".${it.value}", it.value) }
         return type.convert()
             .sanitizeNames(sanitizationConfig)
