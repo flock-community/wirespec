@@ -52,7 +52,7 @@ internal object KotlinJsonRpc : JsonRpcDialect {
         |  method = ${name.literal()},
         |  params = ${params.paramsList()},
         |  onResult = { json -> ${resultValue("json")} },
-        |  onError = ${error?.let { "{ json -> $rpcName.Error(value = ${it.decode("json")}) }" } ?: "null"},
+        |  onError = ${error?.let { "$errorCode to { json: String -> $rpcName.Error(value = ${it.decode("json")}) }" } ?: "null"},
         |)
     """.trimMargin()
 
@@ -108,7 +108,7 @@ internal object KotlinJsonRpc : JsonRpcDialect {
             """
             |when (response) {
             |  is $rpcName.Result -> JsonRpc.Answer.Result(${result.encodeResult("response.value")})
-            |  is $rpcName.Error -> JsonRpc.Answer.Failure(JsonRpc.SERVER_ERROR, "Server error", ${error.encodeResult("response.value")})
+            |  is $rpcName.Error -> JsonRpc.Answer.Failure($errorCode, ${errorMessage.literal()}, ${error.encodeResult("response.value")})
             |}
             """.trimMargin()
     }
@@ -137,19 +137,19 @@ internal object KotlinJsonRpc : JsonRpcDialect {
     private fun String.literal(): String = "\"" + replace("\\", "\\\\").replace("\"", "\\\"").replace("$", "\\$") + "\""
 
     private val RUNTIME = """
-        |/** An error object a JSON-RPC server answered with, other than the error of the rpc itself. */
-        |public class JsonRpcException(public val code: Int, message: String) : RuntimeException(message)
+        |/** An error object a JSON-RPC server answered with, other than the error of the rpc itself. Its [data] is JSON. */
+        |public class JsonRpcException(public val code: Int, message: String, public val data: String?) : RuntimeException(message)
         |
-        |/** The codes of the errors JSON-RPC 2.0 defines, and the reading and writing of its messages. */
+        |/**
+        | * The codes of the errors JSON-RPC 2.0 defines, and the reading and writing of its messages, as the specification
+        | * writes them: https://www.jsonrpc.org/specification
+        | */
         |public object JsonRpc {
         |  public const val PARSE_ERROR: Int = -32700
         |  public const val INVALID_REQUEST: Int = -32600
         |  public const val METHOD_NOT_FOUND: Int = -32601
         |  public const val INVALID_PARAMS: Int = -32602
         |  public const val INTERNAL_ERROR: Int = -32603
-        |
-        |  /** The code of the error of an rpc itself, which is the data of the error object. */
-        |  public const val SERVER_ERROR: Int = -32000
         |
         |  /** What a server answers a request with: the JSON of a result, or an error object. */
         |  internal sealed interface Answer {
@@ -168,13 +168,16 @@ internal object KotlinJsonRpc : JsonRpcDialect {
         |      ?.let { json -> try { read(json) } catch (e: Exception) { throw InvalidParams() } }
         |  }
         |
-        |  /** Every request has id 1: a transportation answers a request with its own response, so the id needs no counter. */
+        |  /**
+        |   * Every request has id 1: a transportation answers a request with its own response, so the id needs no counter.
+        |   * An error object with the code of [onError] is the error of the rpc, which [onError] reads from its data.
+        |   */
         |  internal suspend fun <T> call(
         |    transportation: Wirespec.Transportation,
         |    method: String,
         |    params: List<Pair<String, String>>,
         |    onResult: (String) -> T,
-        |    onError: ((String) -> T)?,
+        |    onError: Pair<Int, (String) -> T>?,
         |  ): T {
         |    val request = "{\"jsonrpc\":\"2.0\",\"method\":" + encode(method) +
         |      (if (params.isEmpty()) "" else params.joinToString(",", ",\"params\":{", "}") { encode(it.first) + ":" + it.second }) +
@@ -188,26 +191,41 @@ internal object KotlinJsonRpc : JsonRpcDialect {
         |        body = request.encodeToByteArray(),
         |      ),
         |    )
-        |    val members = response.body?.decodeToString()?.let(::members)
-        |      ?: error("The JSON-RPC response to " + method + " is no object, status " + response.statusCode)
-        |    val failure = members["error"]?.takeIf { it != "null" }
-        |      ?.let { members(it) ?: error("The JSON-RPC error of " + method + " is no object") }
-        |    val code = failure?.get("code")?.toIntOrNull() ?: INTERNAL_ERROR
+        |    val members = response.body?.decodeToString()?.let(::response)
+        |      ?: error("The answer to " + method + " is no JSON-RPC 2.0 response, status " + response.statusCode)
+        |    val failure = members["error"]?.let(::members)
         |    val data = failure?.get("data")
         |    return when {
-        |      failure == null -> onResult(members["result"] ?: error("The JSON-RPC response to " + method + " has no result"))
-        |      code == SERVER_ERROR && onError != null && data != null -> onError(data)
-        |      else -> throw JsonRpcException(code, failure["message"]?.let { runCatching { decodeString(it) }.getOrNull() } ?: "")
+        |      failure == null -> onResult(members.getValue("result"))
+        |      onError != null && data != null && failure.getValue("code").toInt() == onError.first -> onError.second(data)
+        |      else -> throw JsonRpcException(failure.getValue("code").toInt(), decodeString(failure.getValue("message")), data)
         |    }
         |  }
         |
-        |  /** A batch is answered with the answers to its requests; a notification is not answered. */
+        |  /**
+        |   * The members of [json] when it is a response to a request with id 1: it has either a result or an error object with
+        |   * an integer code and a message, and the id of the request, or null when the server could not read it.
+        |   */
+        |  internal fun response(json: String): Map<String, String>? = json
+        |    .takeIf(::isJson)
+        |    ?.let(::members)
+        |    ?.takeIf { members ->
+        |      val error = members["error"]
+        |      val failure = error?.let(::members)
+        |      members["jsonrpc"]?.let(::stringOrNull) == "2.0" &&
+        |        (members["result"] == null) != (error == null) &&
+        |        (error == null || (failure?.get("code")?.toIntOrNull() != null && failure["message"]?.let(::stringOrNull) != null)) &&
+        |        (members["id"] == "1" || (members["id"] == "null" && error != null))
+        |    }
+        |
+        |  /** A batch is answered with the answers to its requests; a notification is not answered, and nor is a batch of them. */
         |  internal inline fun handle(body: ByteArray?, dispatch: (String, Params) -> Answer?): Wirespec.RawResponse {
         |    val json = body?.decodeToString()?.trim().orEmpty()
-        |    val batch = if (json.startsWith("[")) parts(json, '[', ']') else null
+        |    val valid = isJson(json)
+        |    val batch = if (valid) parts(json, '[', ']') else null
         |    val answer = when {
-        |      !json.startsWith("[") -> reply(json, dispatch)
-        |      batch == null -> write("null", Answer.Failure(PARSE_ERROR, "Parse error", null))
+        |      !valid -> write("null", Answer.Failure(PARSE_ERROR, "Parse error", null))
+        |      batch == null -> reply(json, dispatch)
         |      batch.isEmpty() -> write("null", Answer.Failure(INVALID_REQUEST, "Invalid Request", null))
         |      else -> batch.mapNotNull { reply(it, dispatch) }.takeIf { it.isNotEmpty() }?.joinToString(",", "[", "]")
         |    }
@@ -217,13 +235,18 @@ internal object KotlinJsonRpc : JsonRpcDialect {
         |    }
         |  }
         |
+        |  /**
+        |   * The answer to the request [json], or null for a notification. A request that is invalid is answered with its id,
+        |   * or with null when it has none, or one that is no String, Number or Null.
+        |   */
         |  internal inline fun reply(json: String, dispatch: (String, Params) -> Answer?): String? {
-        |    val members = members(json)
-        |      ?: return write("null", Answer.Failure(if (json.isEmpty() || json.startsWith("{")) PARSE_ERROR else INVALID_REQUEST, if (json.isEmpty() || json.startsWith("{")) "Parse error" else "Invalid Request", null))
+        |    val members = members(json) ?: return write("null", Answer.Failure(INVALID_REQUEST, "Invalid Request", null))
         |    val id = members["id"]
-        |    val method = members["method"]?.let { runCatching { decodeString(it) }.getOrNull() }
+        |    val method = members["method"]?.let(::stringOrNull)
         |    val params = params(members["params"])
-        |    if (members["jsonrpc"] != "\"2.0\"" || method == null || params == null) return write(id ?: "null", Answer.Failure(INVALID_REQUEST, "Invalid Request", null))
+        |    if (members["jsonrpc"]?.let(::stringOrNull) != "2.0" || method == null || params == null || (id != null && !isId(id))) {
+        |      return write(id?.takeIf(::isId) ?: "null", Answer.Failure(INVALID_REQUEST, "Invalid Request", null))
+        |    }
         |    val answer = try {
         |      dispatch(method, params) ?: Answer.Failure(METHOD_NOT_FOUND, "Method not found", null)
         |    } catch (e: InvalidParams) {
@@ -236,12 +259,16 @@ internal object KotlinJsonRpc : JsonRpcDialect {
         |    return id?.let { write(it, answer) }
         |  }
         |
+        |  /** Params are an Object, by name, or an Array, by position; a request may leave them out. */
         |  internal fun params(json: String?): Params? = when {
         |    json == null -> Params(emptyMap(), emptyList())
         |    json.startsWith("{") -> members(json)?.let { Params(it, emptyList()) }
         |    json.startsWith("[") -> parts(json, '[', ']')?.let { Params(emptyMap(), it) }
         |    else -> null
         |  }
+        |
+        |  /** An id is a String, a Number or Null. */
+        |  internal fun isId(json: String): Boolean = json == "null" || json.first() == '"' || json.first() == '-' || json.first() in '0'..'9'
         |
         |  internal fun write(id: String, answer: Answer): String = "{\"jsonrpc\":\"2.0\"," +
         |    when (answer) {
@@ -250,63 +277,143 @@ internal object KotlinJsonRpc : JsonRpcDialect {
         |    } +
         |    ",\"id\":" + id + "}"
         |
-        |  /** The members of a JSON object, each as the JSON of its value; null when [json] is no object. */
-        |  internal fun members(json: String): Map<String, String>? {
-        |    val members = parts(json.trim(), '{', '}') ?: return null
-        |    return members.associate { member ->
-        |      val end = stringEnd(member)
-        |      val key = if (end < 0) null else runCatching { decodeString(member.substring(0, end)) }.getOrNull()
-        |      val value = if (end < 0) "" else member.substring(end).trimStart()
-        |      if (key == null || !value.startsWith(":")) return null
-        |      key to value.substring(1).trim()
-        |    }
+        |  /** The members of the JSON object [json], each as the JSON of its value; null when it is no object. */
+        |  internal fun members(json: String): Map<String, String>? = parts(json.trim(), '{', '}')?.associate { member ->
+        |    val end = stringEnd(member, 0)
+        |    decodeString(member.substring(0, end)) to member.substring(end).trimStart().removePrefix(":").trim()
         |  }
         |
-        |  /** The JSON between [open] and [close] split at the commas outside of a nested value; null when it is no such JSON. */
+        |  /** The values of the JSON [json] between [open] and [close], split at the commas outside of a nested value. */
         |  internal fun parts(json: String, open: Char, close: Char): List<String>? {
         |    if (json.length < 2 || json.first() != open || json.last() != close) return null
         |    val parts = mutableListOf<String>()
         |    var depth = 0
-        |    var inString = false
-        |    var escaped = false
         |    var start = 1
-        |    for (index in 1 until json.length - 1) {
-        |      val char = json[index]
-        |      when {
-        |        inString && escaped -> escaped = false
-        |        inString && char == '\\' -> escaped = true
-        |        inString && char == '"' -> inString = false
-        |        inString -> Unit
-        |        char == '"' -> inString = true
-        |        char == '{' || char == '[' -> depth++
-        |        char == '}' || char == ']' -> if (--depth < 0) return null
-        |        char == ',' && depth == 0 -> {
+        |    var index = 1
+        |    while (index < json.length - 1) {
+        |      when (json[index]) {
+        |        '"' -> index = stringEnd(json, index) - 1
+        |        '{', '[' -> depth++
+        |        '}', ']' -> depth--
+        |        ',' -> if (depth == 0) {
         |          parts.add(json.substring(start, index).trim())
         |          start = index + 1
         |        }
         |      }
+        |      index++
         |    }
-        |    val last = json.substring(start, json.length - 1).trim()
-        |    return when {
-        |      inString || depth != 0 -> null
-        |      parts.isEmpty() && last.isEmpty() -> emptyList()
-        |      else -> (parts + last).takeIf { all -> all.none { it.isEmpty() } }
+        |    return json.substring(start, json.length - 1).trim().let { last -> if (parts.isEmpty() && last.isEmpty()) parts else parts + last }
+        |  }
+        |
+        |  /** Whether [json] is one JSON value, as RFC 8259 writes it. It reads nested values with a stack, so deep JSON cannot overflow. */
+        |  internal fun isJson(json: String): Boolean {
+        |    val closing = mutableListOf<Char>()
+        |    var index = 0
+        |    // A value comes next, the name of a member, or a comma or the end of an object or array.
+        |    var next = 'v'
+        |    while (true) {
+        |      index = whitespaceEnd(json, index)
+        |      if (index == json.length) return next == ',' && closing.isEmpty()
+        |      val char = json[index]
+        |      when {
+        |        next == 'v' && (char == '{' || char == '[') -> {
+        |          closing.add(if (char == '{') '}' else ']')
+        |          index = whitespaceEnd(json, index + 1)
+        |          next = when {
+        |            json.getOrNull(index) == closing.last() -> ','.also { closing.removeAt(closing.lastIndex); index++ }
+        |            char == '{' -> 'k'
+        |            else -> 'v'
+        |          }
+        |        }
+        |        next == 'v' -> {
+        |          index = scalarEnd(json, index)
+        |          if (index < 0) return false
+        |          next = ','
+        |        }
+        |        next == 'k' -> {
+        |          val end = stringEnd(json, index)
+        |          if (end < 0) return false
+        |          index = whitespaceEnd(json, end)
+        |          if (json.getOrNull(index) != ':') return false
+        |          index++
+        |          next = 'v'
+        |        }
+        |        closing.isEmpty() -> return false
+        |        char == ',' -> {
+        |          index++
+        |          next = if (closing.last() == '}') 'k' else 'v'
+        |        }
+        |        char == closing.last() -> {
+        |          closing.removeAt(closing.lastIndex)
+        |          index++
+        |        }
+        |        else -> return false
+        |      }
         |    }
         |  }
         |
-        |  /** The index after the JSON string that [json] starts with, or -1 when it starts with none. */
-        |  internal fun stringEnd(json: String): Int {
-        |    if (!json.startsWith("\"")) return -1
-        |    var escaped = false
-        |    for (index in 1 until json.length) {
+        |  private fun scalarEnd(json: String, start: Int): Int = when {
+        |    json[start] == '"' -> stringEnd(json, start)
+        |    json.startsWith("true", start) || json.startsWith("null", start) -> start + 4
+        |    json.startsWith("false", start) -> start + 5
+        |    else -> numberEnd(json, start)
+        |  }
+        |
+        |  /** The index after the number at [start], or -1 when there is none: a minus, an integer without leading zeros, a fraction and an exponent. */
+        |  private fun numberEnd(json: String, start: Int): Int {
+        |    var index = if (json.getOrNull(start) == '-') start + 1 else start
+        |    val first = json.getOrNull(index) ?: return -1
+        |    index = when (first) {
+        |      '0' -> index + 1
+        |      in '1'..'9' -> digitsEnd(json, index)
+        |      else -> return -1
+        |    }
+        |    if (json.getOrNull(index) == '.') {
+        |      val digits = index + 1
+        |      index = digitsEnd(json, digits)
+        |      if (index == digits) return -1
+        |    }
+        |    if (json.getOrNull(index) == 'e' || json.getOrNull(index) == 'E') {
+        |      val digits = if (json.getOrNull(index + 1) == '+' || json.getOrNull(index + 1) == '-') index + 2 else index + 1
+        |      index = digitsEnd(json, digits)
+        |      if (index == digits) return -1
+        |    }
+        |    return index
+        |  }
+        |
+        |  private fun digitsEnd(json: String, start: Int): Int {
+        |    var index = start
+        |    while (index < json.length && json[index] in '0'..'9') index++
+        |    return index
+        |  }
+        |
+        |  private fun whitespaceEnd(json: String, start: Int): Int {
+        |    var index = start
+        |    while (index < json.length && (json[index] == ' ' || json[index] == '\t' || json[index] == '\n' || json[index] == '\r')) index++
+        |    return index
+        |  }
+        |
+        |  /** The index after the JSON string at [start], or -1 when there is none: a control character or an unknown escape ends none. */
+        |  internal fun stringEnd(json: String, start: Int): Int {
+        |    if (json.getOrNull(start) != '"') return -1
+        |    var index = start + 1
+        |    while (index < json.length) {
+        |      val char = json[index]
         |      when {
-        |        escaped -> escaped = false
-        |        json[index] == '\\' -> escaped = true
-        |        json[index] == '"' -> return index + 1
+        |        char == '"' -> return index + 1
+        |        char < ' ' -> return -1
+        |        char != '\\' -> index++
+        |        else -> when (json.getOrNull(index + 1)) {
+        |          '"', '\\', '/', 'b', 'f', 'n', 'r', 't' -> index += 2
+        |          'u' -> if (index + 6 <= json.length && json.substring(index + 2, index + 6).all { it in "0123456789abcdefABCDEF" }) index += 6 else return -1
+        |          else -> return -1
+        |        }
         |      }
         |    }
         |    return -1
         |  }
+        |
+        |  internal fun stringOrNull(json: String): String? = runCatching { decodeString(json) }.getOrNull()
         |
         |  public fun encode(value: String): String = buildString {
         |    append('"')
@@ -325,7 +432,7 @@ internal object KotlinJsonRpc : JsonRpcDialect {
         |  }
         |
         |  public fun decodeString(json: String): String {
-        |    require(stringEnd(json) == json.length) { "No JSON string: " + json }
+        |    require(stringEnd(json, 0) == json.length) { "No JSON string: " + json }
         |    val value = StringBuilder()
         |    var index = 1
         |    while (index < json.length - 1) {

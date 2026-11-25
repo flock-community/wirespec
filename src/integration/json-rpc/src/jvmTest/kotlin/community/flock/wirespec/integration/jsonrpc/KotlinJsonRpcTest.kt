@@ -78,10 +78,12 @@ class KotlinJsonRpcTest {
     }
 
     @Test
-    fun `The error of an rpc is answered with the server error code and read as its Error`() = runBlocking<Unit> {
+    fun `The error of an rpc is an application defined error, with the error type as its message and the error as its data`() = runBlocking<Unit> {
         client.getUser(id = "2") shouldBe GetUser.Error(value = UserNotFound(id = "2"))
         answer("""{"jsonrpc":"2.0","method":"getUser","params":{"id":"2"},"id":7}""") shouldEqualJson
-            """{"jsonrpc":"2.0","error":{"code":-32000,"message":"Server error","data":{"id":"2"}},"id":7}"""
+            """{"jsonrpc":"2.0","error":{"code":1,"message":"UserNotFound","data":{"id":"2"}},"id":7}"""
+        answer("""{"jsonrpc":"2.0","method":"users/rename","params":{"id":"3","name":"Grace"},"id":8}""") shouldEqualJson
+            """{"jsonrpc":"2.0","error":{"code":404,"message":"Error","data":"No user 3"},"id":8}"""
     }
 
     @Test
@@ -130,6 +132,46 @@ class KotlinJsonRpcTest {
     }
 
     @Test
+    fun `Any JSON the server cannot parse is a parse error, wherever it is`() {
+        listOf("", "ping", """{"jsonrpc":"2.0","method":"ping","id":tru}""", """{"jsonrpc":"2.0","method":"ping","id":01}""", """{"jsonrpc":"2.0","method":"ping","id":1,}""", """{"jsonrpc":"2.0","method":"p\x"}""", "[".repeat(100_000))
+            .forEach { body -> answer(body) shouldEqualJson """{"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"},"id":null}""" }
+    }
+
+    @Test
+    fun `An id must be a String, a Number or Null, or it is an invalid request with id null`() {
+        answer("""{"jsonrpc":"2.0","method":"ping","id":{"a":1}}""") shouldEqualJson
+            """{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}"""
+        answer("""{"jsonrpc":"2.0","method":"ping","id":true}""") shouldEqualJson
+            """{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}"""
+        answer("""{"jsonrpc":"2.0","method":"ping","id":null}""") shouldEqualJson
+            """{"jsonrpc":"2.0","result":"pong \"quoted\" é","id":null}"""
+        answer("""{"jsonrpc":"2.0","method":"ping","id":-1.5e3}""") shouldEqualJson
+            """{"jsonrpc":"2.0","result":"pong \"quoted\" é","id":-1.5e3}"""
+    }
+
+    @Test
+    fun `The version is the String 2_0, however it is written`() {
+        answer("""{"jsonrpc":"2\u002e0","method":"ping","id":1}""") shouldEqualJson
+            """{"jsonrpc":"2.0","result":"pong \"quoted\" é","id":1}"""
+        answer("""{"jsonrpc":2.0,"method":"ping","id":1}""") shouldEqualJson
+            """{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":1}"""
+    }
+
+    @Test
+    fun `The client fails on an answer that is no JSON-RPC 2_0 response`() {
+        listOf(
+            """{"result":"pong","id":1}""",
+            """{"jsonrpc":"2.0","result":"pong","error":{"code":1,"message":"Both"},"id":1}""",
+            """{"jsonrpc":"2.0","result":"pong","id":2}""",
+            """{"jsonrpc":"2.0","error":{"code":"1","message":"Code"},"id":1}""",
+            """not json""",
+        ).forEach { body ->
+            val answering = JsonRpcClient(serialization) { Wirespec.RawResponse(statusCode = 200, headers = emptyMap(), body = body.encodeToByteArray()) }
+            shouldThrow<IllegalStateException> { runBlocking { answering.ping() } }
+        }
+    }
+
+    @Test
     fun `A service that throws is answered with an internal error`() {
         val failing = JsonRpcServer(
             serialization,
@@ -147,6 +189,15 @@ class KotlinJsonRpcTest {
         shouldThrow<JsonRpcException> { runBlocking { unknown.ping() } }.let {
             it.code shouldBe JsonRpc.METHOD_NOT_FOUND
             it.message shouldBe "Method not found"
+            it.data shouldBe null
+        }
+        val failing = JsonRpcClient(serialization) {
+            Wirespec.RawResponse(statusCode = 200, headers = emptyMap(), body = """{"jsonrpc":"2.0","error":{"code":-32000,"message":"Busy","data":{"retry":5}},"id":null}""".encodeToByteArray())
+        }
+        shouldThrow<JsonRpcException> { runBlocking { failing.getUser(id = "1") } }.let {
+            it.code shouldBe -32000
+            it.message shouldBe "Busy"
+            it.data shouldBe """{"retry":5}"""
         }
     }
 

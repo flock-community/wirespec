@@ -45,7 +45,7 @@ internal object PythonJsonRpc : JsonRpcDialect {
         |        ${name.literal()},
         |        [${params.joinToString(", ") { it.param() }}],
         |        lambda raw: ${resultValue("raw")},
-        |        ${error?.let { "lambda raw: $rpcName.Error(value=${it.decode("raw")})" } ?: "None"},
+        |        ${error?.let { "($errorCode, lambda raw: $rpcName.Error(value=${it.decode("raw")}))" } ?: "None"},
         |    )
     """.trimMargin()
 
@@ -99,7 +99,7 @@ internal object PythonJsonRpc : JsonRpcDialect {
         else ->
             """
             |if isinstance(response, $rpcName.Error):
-            |    return _Answer(None, SERVER_ERROR, "Server error", ${error.encodeResult("response.value")})
+            |    return _Answer(None, $errorCode, ${errorMessage.literal()}, ${error.encodeResult("response.value")})
             |return _Answer(${result.encodeResult("response.value")})
             """.trimMargin()
     }
@@ -146,22 +146,22 @@ internal object PythonJsonRpc : JsonRpcDialect {
     }
 
     private val RUNTIME = """
+        |# The codes of the errors JSON-RPC 2.0 defines, as the specification writes them: https://www.jsonrpc.org/specification
         |PARSE_ERROR = -32700
         |INVALID_REQUEST = -32600
         |METHOD_NOT_FOUND = -32601
         |INVALID_PARAMS = -32602
         |INTERNAL_ERROR = -32603
-        |# The code of the error of an rpc itself, which is the data of the error object.
-        |SERVER_ERROR = -32000
         |
         |
         |class JsonRpcError(Exception):
-        |    ${"\"\"\""}An error object a JSON-RPC server answered with, other than the error of the rpc itself.${"\"\"\""}
+        |    ${"\"\"\""}An error object a JSON-RPC server answered with, other than the error of the rpc itself. Its data is JSON.${"\"\"\""}
         |
-        |    def __init__(self, code: int, message: str):
+        |    def __init__(self, code: int, message: str, data: Optional[str]):
         |        super().__init__(message)
         |        self.code = code
         |        self.message = message
+        |        self.data = data
         |
         |
         |@dataclass
@@ -201,39 +201,61 @@ internal object PythonJsonRpc : JsonRpcDialect {
         |
         |
         |def _decode_string(raw: str) -> str:
-        |    value = _json.loads(raw)
+        |    value = _parse(raw)
         |    if not isinstance(value, str):
         |        raise ValueError("No JSON string: " + raw)
         |    return value
         |
         |
+        |def _reject(constant: str) -> Any:
+        |    raise ValueError(constant + " is no JSON")
+        |
+        |
         |def _parse(text: str) -> Any:
+        |    ${"\"\"\""}Reads JSON as RFC 8259 writes it: without NaN and Infinity, which the json module reads by default.${"\"\"\""}
+        |    return _json.loads(text, parse_constant=_reject)
+        |
+        |
+        |def _is_integer(value: Any) -> bool:
+        |    return isinstance(value, int) and not isinstance(value, bool)
+        |
+        |
+        |def _is_id(value: Any) -> bool:
+        |    ${"\"\"\""}An id is a String, a Number or Null.${"\"\"\""}
+        |    return value is None or isinstance(value, (str, float)) or _is_integer(value)
+        |
+        |
+        |def _response(text: str) -> Optional[dict[str, Any]]:
+        |    ${"\"\"\""}A response to a request with id 1: it has either a result or an error object with an integer code and a message, and the id of the request, or null when the server could not read it.${"\"\"\""}
         |    try:
-        |        return _json.loads(text)
-        |    except ValueError:
+        |        answer = _parse(text)
+        |    except (ValueError, RecursionError):
         |        return None
+        |    if not isinstance(answer, dict) or answer.get("jsonrpc") != "2.0" or ("result" in answer) == ("error" in answer):
+        |        return None
+        |    error = answer.get("error")
+        |    if "error" in answer and not (isinstance(error, dict) and _is_integer(error.get("code")) and isinstance(error.get("message"), str)):
+        |        return None
+        |    if not ((_is_integer(answer.get("id")) and answer.get("id") == 1) or (answer.get("id") is None and "id" in answer and "error" in answer)):
+        |        return None
+        |    return answer
         |
         |
-        |async def _call(transportation: Wirespec.Transportation, method: str, params: list[Optional[tuple[str, str]]], on_result: Callable[[str], Any], on_error: Optional[Callable[[str], Any]]) -> Any:
-        |    ${"\"\"\""}Every request has id 1: a transportation answers a request with its own response, so the id needs no counter.${"\"\"\""}
+        |async def _call(transportation: Wirespec.Transportation, method: str, params: list[Optional[tuple[str, str]]], on_result: Callable[[str], Any], on_error: Optional[tuple[int, Callable[[str], Any]]]) -> Any:
+        |    ${"\"\"\""}Every request has id 1: a transportation answers a request with its own response, so the id needs no counter. An error object with the code of on_error is the error of the rpc, which on_error reads from its data.${"\"\"\""}
         |    members = [_json.dumps(name) + ":" + raw for name, raw in (param for param in params if param is not None)]
         |    request = '{"jsonrpc":"2.0","method":' + _json.dumps(method) + ("" if not members else ',"params":{' + ",".join(members) + "}") + ',"id":1}'
         |    response = await transportation.transport(Wirespec.RawRequest(method="POST", path=[], queries={}, headers={"Content-Type": ["application/json"]}, body=request.encode("utf-8")))
-        |    answer = None if response.body is None else _parse(response.body.decode("utf-8"))
-        |    if not isinstance(answer, dict):
-        |        raise ValueError("The JSON-RPC response to " + method + " is no object, status " + str(response.statusCode))
-        |    error = answer.get("error")
-        |    if error is None:
-        |        if "result" not in answer:
-        |            raise ValueError("The JSON-RPC response to " + method + " has no result")
+        |    answer = None if response.body is None else _response(response.body.decode("utf-8", errors="replace"))
+        |    if answer is None:
+        |        raise ValueError("The answer to " + method + " is no JSON-RPC 2.0 response, status " + str(response.statusCode))
+        |    if "error" not in answer:
         |        return on_result(_json.dumps(answer["result"]))
-        |    if not isinstance(error, dict):
-        |        raise ValueError("The JSON-RPC error of " + method + " is no object")
-        |    code = error.get("code") if isinstance(error.get("code"), int) else INTERNAL_ERROR
-        |    if code == SERVER_ERROR and on_error is not None and "data" in error:
-        |        return on_error(_json.dumps(error["data"]))
-        |    message = error.get("message")
-        |    raise JsonRpcError(code, message if isinstance(message, str) else "")
+        |    error = answer["error"]
+        |    data = _json.dumps(error["data"]) if "data" in error else None
+        |    if on_error is not None and data is not None and error["code"] == on_error[0]:
+        |        return on_error[1](data)
+        |    raise JsonRpcError(error["code"], error["message"], data)
         |
         |
         |def _write(id: str, answer: _Answer) -> str:
@@ -244,13 +266,14 @@ internal object PythonJsonRpc : JsonRpcDialect {
         |    return '{"jsonrpc":"2.0",' + member + ',"id":' + id + "}"
         |
         |
-        |def _response(answer: Optional[str]) -> Wirespec.RawResponse:
+        |def _http(answer: Optional[str]) -> Wirespec.RawResponse:
         |    if answer is None:
         |        return Wirespec.RawResponse(statusCode=204, headers={}, body=None)
         |    return Wirespec.RawResponse(statusCode=200, headers={"Content-Type": ["application/json"]}, body=answer.encode("utf-8"))
         |
         |
         |def _params(value: Any) -> Optional[_Params]:
+        |    ${"\"\"\""}Params are an Object, by name, or an Array, by position; a request may leave them out.${"\"\"\""}
         |    if isinstance(value, dict):
         |        return _Params({name: _json.dumps(item) for name, item in value.items()}, [])
         |    if isinstance(value, list):
@@ -262,27 +285,28 @@ internal object PythonJsonRpc : JsonRpcDialect {
     private fun serverRuntime(isAsync: Boolean): String = (if (isAsync) "async " to "await " else "" to "").let { (async, await) ->
         """
         |${async}def _handle(body: Optional[bytes], dispatch: Callable[[str, _Params], Any]) -> Wirespec.RawResponse:
+        |    ${"\"\"\""}A batch is answered with the answers to its requests; a notification is not answered, and nor is a batch of them.${"\"\"\""}
         |    try:
-        |        message = _json.loads(body.decode("utf-8")) if body is not None else None
-        |    except ValueError:
-        |        return _response(_write("null", _Answer(None, PARSE_ERROR, "Parse error")))
-        |    if message is None:
-        |        return _response(_write("null", _Answer(None, PARSE_ERROR, "Parse error")))
+        |        message = _parse(body.decode("utf-8") if body is not None else "")
+        |    except (ValueError, RecursionError):
+        |        return _http(_write("null", _Answer(None, PARSE_ERROR, "Parse error")))
         |    if not isinstance(message, list):
-        |        return _response(${await}_reply(message, dispatch))
+        |        return _http(${await}_reply(message, dispatch))
         |    if not message:
-        |        return _response(_write("null", _Answer(None, INVALID_REQUEST, "Invalid Request")))
+        |        return _http(_write("null", _Answer(None, INVALID_REQUEST, "Invalid Request")))
         |    answers = [answer for answer in [${await}_reply(element, dispatch) for element in message] if answer is not None]
-        |    return _response("[" + ",".join(answers) + "]" if answers else None)
+        |    return _http("[" + ",".join(answers) + "]" if answers else None)
         |
         |
         |${async}def _reply(message: Any, dispatch: Callable[[str, _Params], Any]) -> Optional[str]:
+        |    ${"\"\"\""}The answer to one request, or None for a notification. A request that is invalid is answered with its id, or with null when it has none, or one that is no String, Number or Null.${"\"\"\""}
         |    if not isinstance(message, dict):
         |        return _write("null", _Answer(None, INVALID_REQUEST, "Invalid Request"))
-        |    id = _json.dumps(message["id"]) if "id" in message else None
+        |    has_id = "id" in message and _is_id(message["id"])
+        |    id = _json.dumps(message["id"]) if has_id else None
         |    method = message.get("method")
         |    params = _params(message.get("params", {}))
-        |    if message.get("jsonrpc") != "2.0" or not isinstance(method, str) or params is None:
+        |    if message.get("jsonrpc") != "2.0" or not isinstance(method, str) or params is None or ("id" in message and not has_id):
         |        return _write("null" if id is None else id, _Answer(None, INVALID_REQUEST, "Invalid Request"))
         |    try:
         |        answer = ${await}dispatch(method, params)

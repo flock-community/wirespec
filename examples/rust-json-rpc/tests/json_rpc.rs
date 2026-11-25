@@ -109,7 +109,7 @@ async fn any_json_rpc_client_can_call_the_server() {
         batch,
         json!([
             { "jsonrpc": "2.0", "result": { "id": "1", "name": "Ada", "email": null }, "id": 1 },
-            { "jsonrpc": "2.0", "error": { "code": -32000, "message": "Server error", "data": { "id": "2" } }, "id": "b" },
+            { "jsonrpc": "2.0", "error": { "code": 1, "message": "UserNotFound", "data": { "id": "2" } }, "id": "b" },
         ])
     );
 

@@ -54,7 +54,7 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |    ${name.literal()},
         |    ${params.paramsList()},
         |    json -> ${resultValue("json")},
-        |    ${error?.let { "json -> new $rpcName.Error(${it.decode("json")})" } ?: "null"}
+        |    ${error?.let { "new JsonRpc.RpcError<>($errorCode, json -> new $rpcName.Error(${it.decode("json")}))" } ?: "null"}
         |  );
         |}
     """.trimMargin()
@@ -123,7 +123,7 @@ internal object JavaJsonRpc : JsonRpcDialect {
         else ->
             "response instanceof $rpcName.Result result" +
                 " ? JsonRpc.Answer.result(${result.encodeResult("result.value()")})" +
-                " : JsonRpc.Answer.failure(JsonRpc.SERVER_ERROR, \"Server error\", ${error.encodeResult("(($rpcName.Error) response).value()")})"
+                " : JsonRpc.Answer.failure($errorCode, ${errorMessage.literal()}, ${error.encodeResult("(($rpcName.Error) response).value()")})"
     }
 
     /** The JSON of a value that can be empty or `Void`, as a result or the data of an error. */
@@ -193,31 +193,38 @@ internal object JavaJsonRpc : JsonRpcDialect {
     }
 
     private val EXCEPTION = """
-        |/** An error object a JSON-RPC server answered with, other than the error of the rpc itself. */
+        |/** An error object a JSON-RPC server answered with, other than the error of the rpc itself. Its data is JSON. */
         |public class JsonRpcException extends RuntimeException {
         |  private final int code;
+        |  private final String data;
         |
-        |  public JsonRpcException(int code, String message) {
+        |  public JsonRpcException(int code, String message, String data) {
         |    super(message);
         |    this.code = code;
+        |    this.data = data;
         |  }
         |
         |  public int getCode() {
         |    return code;
         |  }
+        |
+        |  public java.util.Optional<String> getData() {
+        |    return java.util.Optional.ofNullable(data);
+        |  }
         |}
     """.trimMargin()
 
     private val RUNTIME = """
-        |/** The codes of the errors JSON-RPC 2.0 defines, and the reading and writing of its messages. */
+        |/**
+        | * The codes of the errors JSON-RPC 2.0 defines, and the reading and writing of its messages, as the specification
+        | * writes them: https://www.jsonrpc.org/specification
+        | */
         |public final class JsonRpc {
         |  public static final int PARSE_ERROR = -32700;
         |  public static final int INVALID_REQUEST = -32600;
         |  public static final int METHOD_NOT_FOUND = -32601;
         |  public static final int INVALID_PARAMS = -32602;
         |  public static final int INTERNAL_ERROR = -32603;
-        |  /** The code of the error of an rpc itself, which is the data of the error object. */
-        |  public static final int SERVER_ERROR = -32000;
         |
         |  private JsonRpc() {
         |  }
@@ -231,6 +238,10 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |    static Answer failure(int code, String message, String data) {
         |      return new Answer(null, code, message, data);
         |    }
+        |  }
+        |
+        |  /** The error of an rpc: the code of its error object, and how to read the error from its data. */
+        |  record RpcError<T>(int code, java.util.function.Function<String, T> read) {
         |  }
         |
         |  static final class InvalidParams extends RuntimeException {
@@ -272,7 +283,7 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |    String method,
         |    java.util.List<java.util.Optional<java.util.Map.Entry<String, String>>> params,
         |    java.util.function.Function<String, T> onResult,
-        |    java.util.function.Function<String, T> onError
+        |    RpcError<T> onError
         |  ) {
         |    java.util.List<String> members = params.stream().flatMap(java.util.Optional::stream).map(it -> encode(it.getKey()) + ":" + it.getValue()).toList();
         |    String request = "{\"jsonrpc\":\"2.0\",\"method\":" + encode(method) +
@@ -287,52 +298,61 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |    )).thenApply(response -> read(method, response, onResult, onError));
         |  }
         |
-        |  private static <T> T read(String method, Wirespec.RawResponse response, java.util.function.Function<String, T> onResult, java.util.function.Function<String, T> onError) {
-        |    java.util.Map<String, String> members = response.body().map(body -> members(new String(body, StandardCharsets.UTF_8))).orElse(null);
+        |  /** An error object with the code of the error of the rpc is that error, which is read from its data. */
+        |  private static <T> T read(String method, Wirespec.RawResponse response, java.util.function.Function<String, T> onResult, RpcError<T> onError) {
+        |    java.util.Map<String, String> members = response.body().map(body -> response(new String(body, StandardCharsets.UTF_8))).orElse(null);
         |    if (members == null) {
-        |      throw new IllegalStateException("The JSON-RPC response to " + method + " is no object, status " + response.statusCode());
+        |      throw new IllegalStateException("The answer to " + method + " is no JSON-RPC 2.0 response, status " + response.statusCode());
         |    }
-        |    String error = members.get("error");
-        |    if (error == null || error.equals("null")) {
-        |      String result = members.get("result");
-        |      if (result == null) {
-        |        throw new IllegalStateException("The JSON-RPC response to " + method + " has no result");
-        |      }
-        |      return onResult.apply(result);
+        |    if (!members.containsKey("error")) {
+        |      return onResult.apply(members.get("result"));
         |    }
-        |    java.util.Map<String, String> failure = members(error);
-        |    if (failure == null) {
-        |      throw new IllegalStateException("The JSON-RPC error of " + method + " is no object");
-        |    }
-        |    int code = code(failure.get("code"));
+        |    java.util.Map<String, String> failure = members(members.get("error"));
+        |    int code = Integer.parseInt(failure.get("code"));
         |    String data = failure.get("data");
-        |    if (code == SERVER_ERROR && onError != null && data != null) {
-        |      return onError.apply(data);
+        |    if (onError != null && data != null && code == onError.code()) {
+        |      return onError.read().apply(data);
         |    }
-        |    String message = decodeStringOrNull(failure.get("message"));
-        |    throw new JsonRpcException(code, message == null ? "" : message);
+        |    throw new JsonRpcException(code, decodeString(failure.get("message")), data);
         |  }
         |
-        |  private static int code(String json) {
+        |  /**
+        |   * The members of a response to a request with id 1: it has either a result or an error object with an integer code
+        |   * and a message, and the id of the request, or null when the server could not read it. Null for any other JSON.
+        |   */
+        |  static java.util.Map<String, String> response(String json) {
+        |    java.util.Map<String, String> members = isJson(json) ? members(json) : null;
+        |    if (members == null || !"2.0".equals(stringOrNull(members.get("jsonrpc"))) || members.containsKey("result") == members.containsKey("error")) {
+        |      return null;
+        |    }
+        |    java.util.Map<String, String> failure = members.containsKey("error") ? members(members.get("error")) : null;
+        |    boolean validError = !members.containsKey("error") || (failure != null && isInteger(failure.get("code")) && stringOrNull(failure.get("message")) != null);
+        |    boolean validId = "1".equals(members.get("id")) || ("null".equals(members.get("id")) && members.containsKey("error"));
+        |    return validError && validId ? members : null;
+        |  }
+        |
+        |  private static boolean isInteger(String json) {
         |    try {
-        |      return json == null ? INTERNAL_ERROR : Integer.parseInt(json);
+        |      Integer.parseInt(json);
+        |      return true;
         |    } catch (NumberFormatException e) {
-        |      return INTERNAL_ERROR;
+        |      return false;
         |    }
         |  }
         |
-        |  /** A batch is answered with the answers to its requests; a notification is not answered. */
+        |  /** A batch is answered with the answers to its requests; a notification is not answered, and nor is a batch of them. */
         |  static java.util.concurrent.CompletableFuture<Wirespec.RawResponse> handle(
         |    java.util.Optional<byte[]> body,
         |    java.util.function.BiFunction<String, Params, java.util.concurrent.CompletableFuture<Answer>> dispatch
         |  ) {
         |    String json = body.map(it -> new String(it, StandardCharsets.UTF_8)).orElse("").trim();
-        |    java.util.List<String> batch = json.startsWith("[") ? parts(json, '[', ']') : null;
+        |    boolean valid = isJson(json);
+        |    java.util.List<String> batch = valid ? parts(json, '[', ']') : null;
         |    java.util.concurrent.CompletableFuture<String> answer;
-        |    if (!json.startsWith("[")) {
-        |      answer = reply(json, dispatch);
-        |    } else if (batch == null) {
+        |    if (!valid) {
         |      answer = java.util.concurrent.CompletableFuture.completedFuture(write("null", Answer.failure(PARSE_ERROR, "Parse error", null)));
+        |    } else if (batch == null) {
+        |      answer = reply(json, dispatch);
         |    } else if (batch.isEmpty()) {
         |      answer = java.util.concurrent.CompletableFuture.completedFuture(write("null", Answer.failure(INVALID_REQUEST, "Invalid Request", null)));
         |    } else {
@@ -347,20 +367,23 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |      : new Wirespec.RawResponse(200, java.util.Map.of("Content-Type", java.util.List.of("application/json")), java.util.Optional.of(it.getBytes(StandardCharsets.UTF_8))));
         |  }
         |
+        |  /**
+        |   * The answer to one request, or null for a notification. A request that is invalid is answered with its id, or with
+        |   * null when it has none, or one that is no String, Number or Null.
+        |   */
         |  private static java.util.concurrent.CompletableFuture<String> reply(
         |    String json,
         |    java.util.function.BiFunction<String, Params, java.util.concurrent.CompletableFuture<Answer>> dispatch
         |  ) {
         |    java.util.Map<String, String> members = members(json);
         |    if (members == null) {
-        |      boolean unparsable = json.isEmpty() || json.startsWith("{");
-        |      return java.util.concurrent.CompletableFuture.completedFuture(write("null", unparsable ? Answer.failure(PARSE_ERROR, "Parse error", null) : Answer.failure(INVALID_REQUEST, "Invalid Request", null)));
+        |      return java.util.concurrent.CompletableFuture.completedFuture(write("null", Answer.failure(INVALID_REQUEST, "Invalid Request", null)));
         |    }
         |    String id = members.get("id");
-        |    String method = decodeStringOrNull(members.get("method"));
+        |    String method = stringOrNull(members.get("method"));
         |    Params params = params(members.get("params"));
-        |    if (!"\"2.0\"".equals(members.get("jsonrpc")) || method == null || params == null) {
-        |      return java.util.concurrent.CompletableFuture.completedFuture(write(id == null ? "null" : id, Answer.failure(INVALID_REQUEST, "Invalid Request", null)));
+        |    if (!"2.0".equals(stringOrNull(members.get("jsonrpc"))) || method == null || params == null || (id != null && !isId(id))) {
+        |      return java.util.concurrent.CompletableFuture.completedFuture(write(id != null && isId(id) ? id : "null", Answer.failure(INVALID_REQUEST, "Invalid Request", null)));
         |    }
         |    java.util.concurrent.CompletableFuture<Answer> answer;
         |    try {
@@ -377,19 +400,24 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |    return cause instanceof InvalidParams ? Answer.failure(INVALID_PARAMS, "Invalid params", null) : Answer.failure(INTERNAL_ERROR, "Internal error", null);
         |  }
         |
+        |  /** Params are an Object, by name, or an Array, by position; a request may leave them out. */
         |  private static Params params(String json) {
         |    if (json == null) {
         |      return new Params(java.util.Map.of(), java.util.List.of());
         |    }
         |    if (json.startsWith("{")) {
-        |      java.util.Map<String, String> byName = members(json);
-        |      return byName == null ? null : new Params(byName, java.util.List.of());
+        |      return new Params(members(json), java.util.List.of());
         |    }
         |    if (json.startsWith("[")) {
-        |      java.util.List<String> byPosition = parts(json, '[', ']');
-        |      return byPosition == null ? null : new Params(java.util.Map.of(), byPosition);
+        |      return new Params(java.util.Map.of(), parts(json, '[', ']'));
         |    }
         |    return null;
+        |  }
+        |
+        |  /** An id is a String, a Number or Null. */
+        |  private static boolean isId(String json) {
+        |    char first = json.charAt(0);
+        |    return json.equals("null") || first == '"' || first == '-' || (first >= '0' && first <= '9');
         |  }
         |
         |  private static String write(String id, Answer answer) {
@@ -407,78 +435,182 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |    }
         |    java.util.Map<String, String> members = new java.util.LinkedHashMap<>();
         |    for (String member : parts) {
-        |      int end = stringEnd(member);
-        |      String value = end < 0 ? "" : member.substring(end).trim();
-        |      String key = end < 0 ? null : decodeStringOrNull(member.substring(0, end));
-        |      if (key == null || !value.startsWith(":")) {
-        |        return null;
-        |      }
-        |      members.put(key, value.substring(1).trim());
+        |      int end = stringEnd(member, 0);
+        |      String value = member.substring(end).trim();
+        |      members.put(decodeString(member.substring(0, end)), value.substring(1).trim());
         |    }
         |    return members;
         |  }
         |
-        |  /** The JSON between open and close split at the commas outside of a nested value; null when it is no such JSON. */
+        |  /** The values of the JSON between open and close, split at the commas outside of a nested value. */
         |  static java.util.List<String> parts(String json, char open, char close) {
         |    if (json.length() < 2 || json.charAt(0) != open || json.charAt(json.length() - 1) != close) {
         |      return null;
         |    }
         |    java.util.List<String> parts = new java.util.ArrayList<>();
         |    int depth = 0;
-        |    boolean inString = false;
-        |    boolean escaped = false;
         |    int start = 1;
         |    for (int index = 1; index < json.length() - 1; index++) {
         |      char c = json.charAt(index);
-        |      if (inString) {
-        |        if (escaped) {
-        |          escaped = false;
-        |        } else if (c == '\\') {
-        |          escaped = true;
-        |        } else if (c == '"') {
-        |          inString = false;
-        |        }
-        |      } else if (c == '"') {
-        |        inString = true;
+        |      if (c == '"') {
+        |        index = stringEnd(json, index) - 1;
         |      } else if (c == '{' || c == '[') {
         |        depth++;
         |      } else if (c == '}' || c == ']') {
-        |        if (--depth < 0) {
-        |          return null;
-        |        }
+        |        depth--;
         |      } else if (c == ',' && depth == 0) {
         |        parts.add(json.substring(start, index).trim());
         |        start = index + 1;
         |      }
         |    }
         |    String last = json.substring(start, json.length() - 1).trim();
-        |    if (inString || depth != 0) {
-        |      return null;
+        |    if (!parts.isEmpty() || !last.isEmpty()) {
+        |      parts.add(last);
         |    }
-        |    if (parts.isEmpty() && last.isEmpty()) {
-        |      return parts;
-        |    }
-        |    parts.add(last);
-        |    return parts.stream().anyMatch(String::isEmpty) ? null : parts;
+        |    return parts;
         |  }
         |
-        |  /** The index after the JSON string the JSON starts with, or -1 when it starts with none. */
-        |  static int stringEnd(String json) {
-        |    if (!json.startsWith("\"")) {
+        |  /** Whether the JSON is one JSON value, as RFC 8259 writes it. It reads nested values with a stack, so deep JSON cannot overflow. */
+        |  static boolean isJson(String json) {
+        |    java.util.Deque<Character> closing = new java.util.ArrayDeque<>();
+        |    int index = 0;
+        |    // A value comes next, the name of a member, or a comma or the end of an object or array.
+        |    char next = 'v';
+        |    while (true) {
+        |      index = whitespaceEnd(json, index);
+        |      if (index == json.length()) {
+        |        return next == ',' && closing.isEmpty();
+        |      }
+        |      char c = json.charAt(index);
+        |      if (next == 'v' && (c == '{' || c == '[')) {
+        |        closing.push(c == '{' ? '}' : ']');
+        |        index = whitespaceEnd(json, index + 1);
+        |        if (index < json.length() && json.charAt(index) == closing.peek()) {
+        |          closing.pop();
+        |          index++;
+        |          next = ',';
+        |        } else {
+        |          next = c == '{' ? 'k' : 'v';
+        |        }
+        |      } else if (next == 'v') {
+        |        index = scalarEnd(json, index);
+        |        if (index < 0) {
+        |          return false;
+        |        }
+        |        next = ',';
+        |      } else if (next == 'k') {
+        |        int end = stringEnd(json, index);
+        |        if (end < 0) {
+        |          return false;
+        |        }
+        |        index = whitespaceEnd(json, end);
+        |        if (index == json.length() || json.charAt(index) != ':') {
+        |          return false;
+        |        }
+        |        index++;
+        |        next = 'v';
+        |      } else if (closing.isEmpty()) {
+        |        return false;
+        |      } else if (c == ',') {
+        |        index++;
+        |        next = closing.peek() == '}' ? 'k' : 'v';
+        |      } else if (c == closing.peek()) {
+        |        closing.pop();
+        |        index++;
+        |      } else {
+        |        return false;
+        |      }
+        |    }
+        |  }
+        |
+        |  private static int scalarEnd(String json, int start) {
+        |    if (json.charAt(start) == '"') {
+        |      return stringEnd(json, start);
+        |    }
+        |    if (json.startsWith("true", start) || json.startsWith("null", start)) {
+        |      return start + 4;
+        |    }
+        |    if (json.startsWith("false", start)) {
+        |      return start + 5;
+        |    }
+        |    return numberEnd(json, start);
+        |  }
+        |
+        |  /** The index after the number at start, or -1 when there is none: a minus, an integer without leading zeros, a fraction and an exponent. */
+        |  private static int numberEnd(String json, int start) {
+        |    int index = start < json.length() && json.charAt(start) == '-' ? start + 1 : start;
+        |    if (index == json.length()) {
         |      return -1;
         |    }
-        |    boolean escaped = false;
-        |    for (int index = 1; index < json.length(); index++) {
+        |    char first = json.charAt(index);
+        |    if (first == '0') {
+        |      index++;
+        |    } else if (first >= '1' && first <= '9') {
+        |      index = digitsEnd(json, index);
+        |    } else {
+        |      return -1;
+        |    }
+        |    if (index < json.length() && json.charAt(index) == '.') {
+        |      int digits = index + 1;
+        |      index = digitsEnd(json, digits);
+        |      if (index == digits) {
+        |        return -1;
+        |      }
+        |    }
+        |    if (index < json.length() && (json.charAt(index) == 'e' || json.charAt(index) == 'E')) {
+        |      int digits = index + 1 < json.length() && (json.charAt(index + 1) == '+' || json.charAt(index + 1) == '-') ? index + 2 : index + 1;
+        |      index = digitsEnd(json, digits);
+        |      if (index == digits) {
+        |        return -1;
+        |      }
+        |    }
+        |    return index;
+        |  }
+        |
+        |  private static int digitsEnd(String json, int start) {
+        |    int index = start;
+        |    while (index < json.length() && json.charAt(index) >= '0' && json.charAt(index) <= '9') {
+        |      index++;
+        |    }
+        |    return index;
+        |  }
+        |
+        |  private static int whitespaceEnd(String json, int start) {
+        |    int index = start;
+        |    while (index < json.length() && " \t\n\r".indexOf(json.charAt(index)) >= 0) {
+        |      index++;
+        |    }
+        |    return index;
+        |  }
+        |
+        |  /** The index after the JSON string at start, or -1 when there is none: a control character or an unknown escape ends none. */
+        |  static int stringEnd(String json, int start) {
+        |    if (start >= json.length() || json.charAt(start) != '"') {
+        |      return -1;
+        |    }
+        |    int index = start + 1;
+        |    while (index < json.length()) {
         |      char c = json.charAt(index);
-        |      if (escaped) {
-        |        escaped = false;
-        |      } else if (c == '\\') {
-        |        escaped = true;
-        |      } else if (c == '"') {
+        |      if (c == '"') {
         |        return index + 1;
+        |      } else if (c < ' ') {
+        |        return -1;
+        |      } else if (c != '\\') {
+        |        index++;
+        |      } else if (index + 1 < json.length() && "\"\\/bfnrt".indexOf(json.charAt(index + 1)) >= 0) {
+        |        index += 2;
+        |      } else if (index + 5 < json.length() && json.charAt(index + 1) == 'u' && json.substring(index + 2, index + 6).chars().allMatch(it -> Character.digit(it, 16) >= 0)) {
+        |        index += 6;
+        |      } else {
+        |        return -1;
         |      }
         |    }
         |    return -1;
+        |  }
+        |
+        |  /** The value of a JSON string, or null when the JSON is no string. */
+        |  static String stringOrNull(String json) {
+        |    return json != null && stringEnd(json, 0) == json.length() ? decodeString(json) : null;
         |  }
         |
         |  public static String encode(String value) {
@@ -502,17 +634,8 @@ internal object JavaJsonRpc : JsonRpcDialect {
         |    return json.append('"').toString();
         |  }
         |
-        |  /** The value of a JSON string, or null when the JSON is no string. */
-        |  static String decodeStringOrNull(String json) {
-        |    try {
-        |      return json == null ? null : decodeString(json);
-        |    } catch (RuntimeException e) {
-        |      return null;
-        |    }
-        |  }
-        |
         |  public static String decodeString(String json) {
-        |    if (stringEnd(json) != json.length()) {
+        |    if (stringEnd(json, 0) != json.length()) {
         |      throw new IllegalArgumentException("No JSON string: " + json);
         |    }
         |    StringBuilder value = new StringBuilder();

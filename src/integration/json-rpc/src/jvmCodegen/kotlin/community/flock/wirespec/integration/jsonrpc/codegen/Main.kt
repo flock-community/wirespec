@@ -11,11 +11,15 @@ import community.flock.wirespec.integration.jsonrpc.extension.JsonRpcExtension
 
 // The generated code compiles against the Wirespec of the runtime library, so the shared file is not emitted.
 fun main(args: Array<String>) = codegen(args) {
-    val ast = wirespec()
-    emit("java", ast) { JavaEmitter(it).applyExtensions(nonEmptyListOf(JsonRpcExtension(it, FileExtension.Java))) }
-    emit("kotlin", ast) { KotlinEmitter(it).applyExtensions(nonEmptyListOf(JsonRpcExtension(it, FileExtension.Kotlin))) }
+    val users = wirespec("users.ws")
+    emit("java", users) { JavaEmitter(it).applyExtensions(nonEmptyListOf(JsonRpcExtension(it, FileExtension.Java))) }
+    emit("kotlin", users) { KotlinEmitter(it).applyExtensions(nonEmptyListOf(JsonRpcExtension(it, FileExtension.Kotlin))) }
     // With --sync the services are plain functions, while the transportation stays suspend.
-    emit("sync", ast) {
+    emit("sync", users) {
         KotlinEmitter(it).applyExtensions(nonEmptyListOf(SyncExtension(FileExtension.Kotlin), JsonRpcExtension(it, FileExtension.Kotlin)))
     }
+    // The methods of the examples of the JSON-RPC 2.0 specification, which the servers answer as the specification does.
+    val specification = wirespec("specification.ws")
+    emit("javaspec", specification) { JavaEmitter(it).applyExtensions(nonEmptyListOf(JsonRpcExtension(it, FileExtension.Java))) }
+    emit("kotlinspec", specification) { KotlinEmitter(it).applyExtensions(nonEmptyListOf(JsonRpcExtension(it, FileExtension.Kotlin))) }
 }

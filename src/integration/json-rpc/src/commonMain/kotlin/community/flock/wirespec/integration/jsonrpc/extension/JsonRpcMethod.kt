@@ -24,7 +24,21 @@ internal interface JsonRpcDialect {
  * parameters and result type the client and the server take as that language writes them.
  */
 internal class JsonRpcMethod(val rpc: Rpc, val service: Function) {
-    val name: String = rpc.annotations.methodName() ?: Name.of(rpc.identifier.value).camelCase()
+    /** JSON-RPC reserves the methods that start with `rpc.` for its own extensions. */
+    val name: String = (rpc.annotations.single(JsonRpcExtension.METHOD_ANNOTATION) ?: Name.of(rpc.identifier.value).camelCase())
+        .also { require(!it.startsWith("rpc.")) { "JSON-RPC reserves the method $it of rpc ${rpc.identifier.value}: a method name may not start with rpc." } }
+
+    /**
+     * The code of the error object the rpc answers its own error with. JSON-RPC reserves -32768 to -32000 for its own
+     * errors and leaves the other codes to the application, which the error of an rpc is part of.
+     */
+    val errorCode: Int = rpc.annotations.single(JsonRpcExtension.ERROR_ANNOTATION)
+        ?.let { code -> requireNotNull(code.toIntOrNull()) { "The error code $code of rpc ${rpc.identifier.value} is no integer" } }
+        ?.also { require(it !in RESERVED_CODES) { "JSON-RPC reserves the error code $it of rpc ${rpc.identifier.value}: use a code outside $RESERVED_CODES" } }
+        ?: JsonRpcExtension.ERROR_CODE
+
+    /** The message of that error object: the name of the error type in the contract. */
+    val errorMessage: String = (rpc.error as? Reference.Custom)?.value ?: "Error"
 
     /** The name of the rpc, and of its namespace, in the generated code. */
     val rpcName: String = Name.of(rpc.identifier.value).pascalCase()
@@ -45,7 +59,7 @@ internal class JsonRpcMethod(val rpc: Rpc, val service: Function) {
         .flatMap { it.customNames() }
         .distinct()
 
-    private fun List<Annotation>.methodName(): String? = find { it.name == JsonRpcExtension.METHOD_ANNOTATION }
+    private fun List<Annotation>.single(name: String): String? = find { it.name == name }
         ?.parameters?.firstOrNull()?.value
         ?.let { it as? Annotation.Value.Single }
         ?.value
@@ -59,6 +73,7 @@ internal class JsonRpcMethod(val rpc: Rpc, val service: Function) {
 
     private companion object {
         val RECEIVERS = setOf("self", "&self")
+        val RESERVED_CODES = -32768..-32000
     }
 }
 

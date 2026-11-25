@@ -59,7 +59,7 @@ class UsersTest {
             setBody("""[{"jsonrpc":"2.0","method":"createUser","params":["Ada"],"id":1},{"jsonrpc":"2.0","method":"getUser","params":{"id":"2"},"id":2}]""")
         }
         assertEquals(
-            """[{"jsonrpc":"2.0","result":{"id":"1","name":"Ada","email":null},"id":1},{"jsonrpc":"2.0","error":{"code":-32000,"message":"Server error","data":{"id":"2"}},"id":2}]""",
+            """[{"jsonrpc":"2.0","result":{"id":"1","name":"Ada","email":null},"id":1},{"jsonrpc":"2.0","error":{"code":1,"message":"UserNotFound","data":{"id":"2"}},"id":2}]""",
             batch.bodyAsText(),
         )
 

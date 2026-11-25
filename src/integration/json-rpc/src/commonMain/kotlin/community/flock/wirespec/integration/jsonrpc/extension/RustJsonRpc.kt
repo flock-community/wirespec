@@ -63,7 +63,7 @@ internal object RustJsonRpc : JsonRpcDialect {
         |${params.joinToString("\n") { it.push() }.prependIndent("    ")}
         |    match call(&self.transportation, ${name.literal()}, params).await? {
         |        Reply::Result(json) => Ok(${resultValue("json.as_str()")}),
-        |${error?.let { "        Reply::Error { code: SERVER_ERROR, data: Some(json), .. } => Ok($rpcName::Response::Error($rpcName::Error { value: ${it.decode("json.as_str()")}? })),\n" }.orEmpty()}        Reply::Error { code, message, .. } => Err($JSON_RPC_ERROR::Response { code, message }),
+        |${error?.let { "        Reply::Error { code: $errorCode, data: Some(json), .. } => Ok($rpcName::Response::Error($rpcName::Error { value: ${it.decode("json.as_str()")}? })),\n" }.orEmpty()}        Reply::Error { code, message, data } => Err($JSON_RPC_ERROR::Response { code, message, data }),
         |    }
         |}
     """.trimMargin()
@@ -94,14 +94,14 @@ internal object RustJsonRpc : JsonRpcDialect {
         |    pub service: Svc,
         |}
         |impl<S: Serialization, Svc: ${methods.joinToString(" + ") { "${it.rpcName}::Service" }}> JsonRpcServer<S, Svc> {
-        |    /// A batch is answered with the answers to its requests; a notification is not answered, so its response has status 204 and no body.
+        |    /// A batch is answered with the answers to its requests; a notification is not answered, and nor is a batch of them, so their response has status 204 and no body.
         |    pub async fn handle(&self, request: &RawRequest) -> RawResponse {
         |        let json = String::from_utf8_lossy(request.body.as_deref().unwrap_or_default()).trim().to_string();
-        |        let answer = if !json.starts_with('[') {
-        |            self.reply(&json).await
+        |        let answer = if !is_json(&json) {
+        |            Some(write("null", &Answer::failure(PARSE_ERROR, "Parse error")))
         |        } else {
         |            match parts(&json, '[', ']') {
-        |                None => Some(write("null", &Answer::failure(PARSE_ERROR, "Parse error"))),
+        |                None => self.reply(&json).await,
         |                Some(batch) if batch.is_empty() => Some(write("null", &Answer::failure(INVALID_REQUEST, "Invalid Request"))),
         |                Some(batch) => {
         |                    let mut replies = Vec::new();
@@ -120,16 +120,17 @@ internal object RustJsonRpc : JsonRpcDialect {
         |        }
         |    }
         |
+        |    /// The answer to one request, or None for a notification. A request that is invalid is answered with its id, or with null when it has none, or one that is no String, Number or Null.
         |    async fn reply(&self, json: &str) -> Option<String> {
         |        let Some(members) = members_of(json) else {
-        |            let answer = if json.is_empty() || json.starts_with('{') { Answer::failure(PARSE_ERROR, "Parse error") } else { Answer::failure(INVALID_REQUEST, "Invalid Request") };
-        |            return Some(write("null", &answer));
+        |            return Some(write("null", &Answer::failure(INVALID_REQUEST, "Invalid Request")));
         |        };
         |        let id = members.get("id").cloned();
         |        let method = members.get("method").and_then(|method| decode_string(method).ok());
         |        let params = params(members.get("params"));
-        |        let (Some(method), Some(params), Some("\"2.0\"")) = (method, params, members.get("jsonrpc").map(String::as_str)) else {
-        |            return Some(write(id.as_deref().unwrap_or("null"), &Answer::failure(INVALID_REQUEST, "Invalid Request")));
+        |        let version = members.get("jsonrpc").and_then(|version| decode_string(version).ok());
+        |        let (Some(method), Some(params), Some("2.0"), true) = (method, params, version.as_deref(), id.as_deref().is_none_or(is_id)) else {
+        |            return Some(write(id.as_deref().filter(|id| is_id(id)).unwrap_or("null"), &Answer::failure(INVALID_REQUEST, "Invalid Request")));
         |        };
         |        let answer = self.dispatch(&method, &params).await;
         |        id.map(|id| write(&id, &answer))
@@ -167,7 +168,7 @@ internal object RustJsonRpc : JsonRpcDialect {
             """
             |match response {
             |    $rpcName::Response::Result(response) => Answer::Result(${result.encodeResult("response.value")}),
-            |    $rpcName::Response::Error(response) => Answer::Failure { code: SERVER_ERROR, message: String::from("Server error"), data: Some(${error.encodeResult("response.value")}) },
+            |    $rpcName::Response::Error(response) => Answer::Failure { code: $errorCode, message: String::from(${errorMessage.literal()}), data: Some(${error.encodeResult("response.value")}) },
             |}
             """.trimMargin()
     }
@@ -228,19 +229,18 @@ internal object RustJsonRpc : JsonRpcDialect {
     }
 
     private val RUNTIME = """
+        |// The codes of the errors JSON-RPC 2.0 defines, as the specification writes them: https://www.jsonrpc.org/specification
         |pub const PARSE_ERROR: i64 = -32700;
         |pub const INVALID_REQUEST: i64 = -32600;
         |pub const METHOD_NOT_FOUND: i64 = -32601;
         |pub const INVALID_PARAMS: i64 = -32602;
         |pub const INTERNAL_ERROR: i64 = -32603;
-        |/// The code of the error of an rpc itself, which is the data of the error object.
-        |pub const SERVER_ERROR: i64 = -32000;
         |
         |/// Why a JSON-RPC call did not give the response of the rpc.
         |#[derive(Debug, Clone, PartialEq)]
         |pub enum JsonRpcError {
-        |    /// The server answered with an error object, other than the error of the rpc itself.
-        |    Response { code: i64, message: String },
+        |    /// The server answered with an error object, other than the error of the rpc itself. Its data is JSON.
+        |    Response { code: i64, message: String, data: Option<String> },
         |    /// The request could not be sent, or the response could not be read.
         |    Wirespec(WirespecError),
         |}
@@ -252,7 +252,7 @@ internal object RustJsonRpc : JsonRpcDialect {
         |impl std::fmt::Display for JsonRpcError {
         |    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         |        match self {
-        |            JsonRpcError::Response { code, message } => write!(f, "JSON-RPC error {}: {}", code, message),
+        |            JsonRpcError::Response { code, message, .. } => write!(f, "JSON-RPC error {}: {}", code, message),
         |            JsonRpcError::Wirespec(error) => write!(f, "{}", error),
         |        }
         |    }
@@ -280,18 +280,32 @@ internal object RustJsonRpc : JsonRpcDialect {
         |        body: Some(format!("{{\"jsonrpc\":\"2.0\",\"method\":{}{},\"id\":1}}", encode(method), params).into_bytes()),
         |    };
         |    let response = transportation.transport(&request).await?;
-        |    let invalid = |problem: &str| WirespecError::Deserialization(format!("The JSON-RPC response to {} {}, status {}", method, problem, response.status_code));
-        |    let members = response.body.as_deref().and_then(|body| members_of(&String::from_utf8_lossy(body))).ok_or_else(|| invalid("is no object"))?;
-        |    match members.get("error").filter(|error| error.as_str() != "null") {
-        |        None => Ok(Reply::Result(members.get("result").cloned().ok_or_else(|| invalid("has no result"))?)),
-        |        Some(error) => {
-        |            let error = members_of(error).ok_or_else(|| invalid("has an error that is no object"))?;
-        |            Ok(Reply::Error {
-        |                code: error.get("code").and_then(|code| code.parse().ok()).unwrap_or(INTERNAL_ERROR),
-        |                message: error.get("message").and_then(|message| decode_string(message).ok()).unwrap_or_default(),
+        |    response
+        |        .body
+        |        .as_deref()
+        |        .and_then(|body| reply_of(&String::from_utf8_lossy(body)))
+        |        .ok_or_else(|| JsonRpcError::Wirespec(WirespecError::Deserialization(format!("The answer to {} is no JSON-RPC 2.0 response, status {}", method, response.status_code))))
+        |}
+        |
+        |/// The reply of a response to a request with id 1: it has either a result or an error object with an integer code and a message, and the id of the request, or null when the server could not read it. None for any other JSON.
+        |fn reply_of(json: &str) -> Option<Reply> {
+        |    if !is_json(json) {
+        |        return None;
+        |    }
+        |    let members = members_of(json)?;
+        |    let version = members.get("jsonrpc").and_then(|version| decode_string(version).ok());
+        |    let id = members.get("id").map(String::as_str);
+        |    match (version.as_deref(), members.get("result"), members.get("error"), id) {
+        |        (Some("2.0"), Some(result), None, Some("1")) => Some(Reply::Result(result.clone())),
+        |        (Some("2.0"), None, Some(error), Some("1" | "null")) => {
+        |            let error = members_of(error)?;
+        |            Some(Reply::Error {
+        |                code: error.get("code")?.parse().ok()?,
+        |                message: decode_string(error.get("message")?).ok()?,
         |                data: error.get("data").cloned(),
         |            })
         |        }
+        |        _ => None,
         |    }
         |}
         |
@@ -354,70 +368,155 @@ internal object RustJsonRpc : JsonRpcDialect {
     """.trimMargin()
 
     private val SCANNER = """
+        |/// An id is a String, a Number or Null.
+        |fn is_id(json: &str) -> bool {
+        |    json == "null" || json.starts_with(['"', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+        |}
+        |
         |/// The members of a JSON object, each as the JSON of its value; None when the JSON is no object.
         |fn members_of(json: &str) -> Option<HashMap<String, String>> {
         |    parts(json.trim(), '{', '}')?
         |        .into_iter()
         |        .map(|member| {
-        |            let end = string_end(&member)?;
+        |            let end = string_end(member.as_bytes(), 0)?;
         |            let value = member[end..].trim_start().strip_prefix(':')?;
         |            Some((decode_string(&member[..end]).ok()?, value.trim().to_string()))
         |        })
         |        .collect()
         |}
         |
-        |/// The JSON between open and close split at the commas outside of a nested value; None when it is no such JSON.
+        |/// The values of the JSON between open and close, split at the commas outside of a nested value. The JSON is valid.
         |fn parts(json: &str, open: char, close: char) -> Option<Vec<String>> {
         |    let inner = json.strip_prefix(open)?.strip_suffix(close)?;
+        |    let bytes = inner.as_bytes();
         |    let mut parts = Vec::new();
-        |    let (mut depth, mut in_string, mut escaped, mut start) = (0, false, false, 0);
-        |    for (index, char) in inner.char_indices() {
-        |        match char {
-        |            _ if in_string && escaped => escaped = false,
-        |            '\\' if in_string => escaped = true,
-        |            '"' if in_string => in_string = false,
-        |            _ if in_string => {}
-        |            '"' => in_string = true,
-        |            '{' | '[' => depth += 1,
-        |            '}' | ']' => {
-        |                depth -= 1;
-        |                if depth < 0 {
-        |                    return None;
-        |                }
-        |            }
-        |            ',' if depth == 0 => {
+        |    let (mut depth, mut start, mut index) = (0, 0, 0);
+        |    while index < bytes.len() {
+        |        match bytes[index] {
+        |            b'"' => index = string_end(bytes, index)? - 1,
+        |            b'{' | b'[' => depth += 1,
+        |            b'}' | b']' => depth -= 1,
+        |            b',' if depth == 0 => {
         |                parts.push(inner[start..index].trim().to_string());
         |                start = index + 1;
         |            }
         |            _ => {}
         |        }
+        |        index += 1;
         |    }
         |    let last = inner[start..].trim().to_string();
-        |    if in_string || depth != 0 {
-        |        return None;
+        |    if !parts.is_empty() || !last.is_empty() {
+        |        parts.push(last);
         |    }
-        |    if parts.is_empty() && last.is_empty() {
-        |        return Some(parts);
-        |    }
-        |    parts.push(last);
-        |    Some(parts).filter(|parts| parts.iter().all(|part| !part.is_empty()))
+        |    Some(parts)
         |}
         |
-        |/// The index after the JSON string the JSON starts with, or None when it starts with none.
-        |fn string_end(json: &str) -> Option<usize> {
-        |    if !json.starts_with('"') {
-        |        return None;
-        |    }
-        |    let mut escaped = false;
-        |    for (index, char) in json.char_indices().skip(1) {
-        |        match char {
-        |            _ if escaped => escaped = false,
-        |            '\\' => escaped = true,
-        |            '"' => return Some(index + 1),
-        |            _ => {}
+        |/// Whether the JSON is one JSON value, as RFC 8259 writes it. It reads nested values with a stack, so deep JSON cannot overflow.
+        |fn is_json(json: &str) -> bool {
+        |    let bytes = json.as_bytes();
+        |    let mut closing = Vec::new();
+        |    let mut index = 0;
+        |    // A value comes next, the name of a member, or a comma or the end of an object or array.
+        |    let mut next = b'v';
+        |    loop {
+        |        index = whitespace_end(bytes, index);
+        |        let Some(&byte) = bytes.get(index) else {
+        |            return next == b',' && closing.is_empty();
+        |        };
+        |        match (next, byte) {
+        |            (b'v', b'{' | b'[') => {
+        |                closing.push(if byte == b'{' { b'}' } else { b']' });
+        |                index = whitespace_end(bytes, index + 1);
+        |                next = if bytes.get(index) == closing.last() {
+        |                    closing.pop();
+        |                    index += 1;
+        |                    b','
+        |                } else if byte == b'{' {
+        |                    b'k'
+        |                } else {
+        |                    b'v'
+        |                };
+        |            }
+        |            (b'v', _) => match scalar_end(bytes, index) {
+        |                Some(end) => {
+        |                    index = end;
+        |                    next = b',';
+        |                }
+        |                None => return false,
+        |            },
+        |            (b'k', _) => match string_end(bytes, index).map(|end| whitespace_end(bytes, end)) {
+        |                Some(end) if bytes.get(end) == Some(&b':') => {
+        |                    index = end + 1;
+        |                    next = b'v';
+        |                }
+        |                _ => return false,
+        |            },
+        |            (_, b',') if !closing.is_empty() => {
+        |                index += 1;
+        |                next = if closing.last() == Some(&b'}') { b'k' } else { b'v' };
+        |            }
+        |            (_, _) if closing.last() == Some(&byte) => {
+        |                closing.pop();
+        |                index += 1;
+        |            }
+        |            _ => return false,
         |        }
         |    }
-        |    None
+        |}
+        |
+        |fn scalar_end(bytes: &[u8], start: usize) -> Option<usize> {
+        |    match bytes[start] {
+        |        b'"' => string_end(bytes, start),
+        |        _ if bytes[start..].starts_with(b"true") || bytes[start..].starts_with(b"null") => Some(start + 4),
+        |        _ if bytes[start..].starts_with(b"false") => Some(start + 5),
+        |        _ => number_end(bytes, start),
+        |    }
+        |}
+        |
+        |/// The index after the number at start, or None when there is none: a minus, an integer without leading zeros, a fraction and an exponent.
+        |fn number_end(bytes: &[u8], start: usize) -> Option<usize> {
+        |    let integer = if bytes.get(start) == Some(&b'-') { start + 1 } else { start };
+        |    let mut index = match bytes.get(integer)? {
+        |        b'0' => integer + 1,
+        |        b'1'..=b'9' => digits_end(bytes, integer),
+        |        _ => return None,
+        |    };
+        |    if bytes.get(index) == Some(&b'.') {
+        |        index = Some(digits_end(bytes, index + 1)).filter(|end| *end > index + 1)?;
+        |    }
+        |    if matches!(bytes.get(index), Some(b'e' | b'E')) {
+        |        let digits = if matches!(bytes.get(index + 1), Some(b'+' | b'-')) { index + 2 } else { index + 1 };
+        |        index = Some(digits_end(bytes, digits)).filter(|end| *end > digits)?;
+        |    }
+        |    Some(index)
+        |}
+        |
+        |fn digits_end(bytes: &[u8], start: usize) -> usize {
+        |    start + bytes[start..].iter().take_while(|byte| byte.is_ascii_digit()).count()
+        |}
+        |
+        |fn whitespace_end(bytes: &[u8], start: usize) -> usize {
+        |    start + bytes[start..].iter().take_while(|byte| matches!(**byte, b' ' | b'\t' | b'\n' | b'\r')).count()
+        |}
+        |
+        |/// The index after the JSON string at start, or None when there is none: a control character or an unknown escape ends none.
+        |fn string_end(bytes: &[u8], start: usize) -> Option<usize> {
+        |    if bytes.get(start) != Some(&b'"') {
+        |        return None;
+        |    }
+        |    let mut index = start + 1;
+        |    loop {
+        |        match *bytes.get(index)? {
+        |            b'"' => return Some(index + 1),
+        |            byte if byte < 0x20 => return None,
+        |            b'\\' => match *bytes.get(index + 1)? {
+        |                b'"' | b'\\' | b'/' | b'b' | b'f' | b'n' | b'r' | b't' => index += 2,
+        |                b'u' if bytes.get(index + 2..index + 6).is_some_and(|hex| hex.iter().all(u8::is_ascii_hexdigit)) => index += 6,
+        |                _ => return None,
+        |            },
+        |            _ => index += 1,
+        |        }
+        |    }
         |}
         |
         |pub fn encode(value: &str) -> String {
@@ -439,7 +538,7 @@ internal object RustJsonRpc : JsonRpcDialect {
         |
         |pub fn decode_string(json: &str) -> Result<String, WirespecError> {
         |    let invalid = || WirespecError::Deserialization(format!("{} is no JSON string", json));
-        |    if string_end(json) != Some(json.len()) {
+        |    if string_end(json.as_bytes(), 0) != Some(json.len()) {
         |        return Err(invalid());
         |    }
         |    let mut value = String::new();

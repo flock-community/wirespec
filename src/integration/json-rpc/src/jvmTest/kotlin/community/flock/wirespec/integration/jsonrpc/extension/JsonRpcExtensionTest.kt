@@ -22,10 +22,12 @@ import community.flock.wirespec.emitters.python.PythonEmitter
 import community.flock.wirespec.emitters.rust.RustEmitter
 import community.flock.wirespec.emitters.scala.ScalaEmitter
 import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.Test
 
 class JsonRpcExtensionTest {
@@ -96,8 +98,8 @@ class JsonRpcExtensionTest {
     fun `TypeScript tells the Result of an rpc from its Error by its kind`() {
         TypeScriptEmitter().emitWithJsonRpc().file("JsonRpc.ts").let {
             it shouldContain "import {GetUser} from './rpc/GetUser'"
-            it shouldContain "(json) => ({ kind: \"Error\", value: this.serialization.deserializeBody<UserNotFound>(bytes(json), \"UserNotFound\") }),"
-            it shouldContain "return response.kind === \"Error\" ? failure(JsonRpc.SERVER_ERROR"
+            it shouldContain "[1, (json) => ({ kind: \"Error\", value: this.serialization.deserializeBody<UserNotFound>(bytes(json), \"UserNotFound\") })],"
+            it shouldContain "return response.kind === \"Error\" ? failure(1, \"UserNotFound\""
         }
     }
 
@@ -123,10 +125,30 @@ class JsonRpcExtensionTest {
             emitted.file("generated/json_rpc.rs").let {
                 it shouldContain "use super::rpc::get_user::GetUser;"
                 it shouldContain "pub async fn get_user(&self, id: &str) -> Result<GetUser::Response, JsonRpcError> {"
-                it shouldContain "Reply::Error { code: SERVER_ERROR, data: Some(json), .. } =>"
+                it shouldContain "Reply::Error { code: 1, data: Some(json), .. } =>"
                 it shouldContain "impl<S: Serialization, Svc: GetUser::Service + FindUsers::Service> JsonRpcServer<S, Svc> {"
                 it shouldContain "let response = GetUser::Service::get_user(&self.service, &id).await;"
             }
+        }
+    }
+
+    @Test
+    fun `The error of an rpc has the code of its annotation, which JSON-RPC leaves to the application`() {
+        val annotated = "type UserNotFound { id: String }\n@JsonRpcError(-1)\nrpc GetUser { id: String } -> String ! UserNotFound"
+        KotlinEmitter(packageName).emitWithJsonRpc(annotated).file("generated/JsonRpc.kt").let {
+            it shouldContain "onError = -1 to { json: String -> GetUser.Error("
+            it shouldContain "is GetUser.Error -> JsonRpc.Answer.Failure(-1, \"UserNotFound\","
+        }
+    }
+
+    @Test
+    fun `A contract that breaks the JSON-RPC specification fails`() {
+        listOf(
+            "@JsonRpcMethod(\"rpc.discover\")\nrpc Discover {} -> String" to "JSON-RPC reserves the method rpc.discover of rpc Discover",
+            "@JsonRpcError(-32001)\nrpc Ping {} -> String ! String" to "JSON-RPC reserves the error code -32001 of rpc Ping",
+            "@JsonRpcError(\"teapot\")\nrpc Ping {} -> String ! String" to "The error code teapot of rpc Ping is no integer",
+        ).forEach { (contract, message) ->
+            shouldThrow<IllegalArgumentException> { KotlinEmitter(packageName).emitWithJsonRpc(contract) }.message shouldStartWith message
         }
     }
 

@@ -1,0 +1,77 @@
+[
+  {
+    "example": "rpc call with positional parameters",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"subtract\", \"params\": [42, 23], \"id\": 1}",
+    "response": "{\"jsonrpc\": \"2.0\", \"result\": 19, \"id\": 1}"
+  },
+  {
+    "example": "rpc call with positional parameters",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"subtract\", \"params\": [23, 42], \"id\": 2}",
+    "response": "{\"jsonrpc\": \"2.0\", \"result\": -19, \"id\": 2}"
+  },
+  {
+    "example": "rpc call with named parameters",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"subtract\", \"params\": {\"subtrahend\": 23, \"minuend\": 42}, \"id\": 3}",
+    "response": "{\"jsonrpc\": \"2.0\", \"result\": 19, \"id\": 3}"
+  },
+  {
+    "example": "rpc call with named parameters",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"subtract\", \"params\": {\"minuend\": 42, \"subtrahend\": 23}, \"id\": 4}",
+    "response": "{\"jsonrpc\": \"2.0\", \"result\": 19, \"id\": 4}"
+  },
+  {
+    "example": "a Notification",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"update\", \"params\": [1,2,3,4,5]}",
+    "response": null
+  },
+  {
+    "example": "a Notification",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"foobar\"}",
+    "response": null
+  },
+  {
+    "example": "rpc call of non-existent method",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"foobar\", \"id\": \"1\"}",
+    "response": "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32601, \"message\": \"Method not found\"}, \"id\": \"1\"}"
+  },
+  {
+    "example": "rpc call with invalid JSON",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": \"foobar, \"params\": \"bar\", \"baz]",
+    "response": "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32700, \"message\": \"Parse error\"}, \"id\": null}"
+  },
+  {
+    "example": "rpc call with invalid Request object",
+    "request": "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\"}",
+    "response": "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32600, \"message\": \"Invalid Request\"}, \"id\": null}"
+  },
+  {
+    "example": "rpc call Batch, invalid JSON",
+    "request": "[\n  {\"jsonrpc\": \"2.0\", \"method\": \"sum\", \"params\": [1,2,4], \"id\": \"1\"},\n  {\"jsonrpc\": \"2.0\", \"method\"\n]",
+    "response": "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32700, \"message\": \"Parse error\"}, \"id\": null}"
+  },
+  {
+    "example": "rpc call with an empty Array",
+    "request": "[]",
+    "response": "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32600, \"message\": \"Invalid Request\"}, \"id\": null}"
+  },
+  {
+    "example": "rpc call with an invalid Batch (but not empty)",
+    "request": "[1]",
+    "response": "[\n  {\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32600, \"message\": \"Invalid Request\"}, \"id\": null}\n]"
+  },
+  {
+    "example": "rpc call with invalid Batch",
+    "request": "[1,2,3]",
+    "response": "[\n  {\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32600, \"message\": \"Invalid Request\"}, \"id\": null},\n  {\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32600, \"message\": \"Invalid Request\"}, \"id\": null},\n  {\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32600, \"message\": \"Invalid Request\"}, \"id\": null}\n]"
+  },
+  {
+    "example": "rpc call Batch",
+    "request": "[\n        {\"jsonrpc\": \"2.0\", \"method\": \"sum\", \"params\": [1,2,4], \"id\": \"1\"},\n        {\"jsonrpc\": \"2.0\", \"method\": \"notify_hello\", \"params\": [7]},\n        {\"jsonrpc\": \"2.0\", \"method\": \"subtract\", \"params\": [42,23], \"id\": \"2\"},\n        {\"foo\": \"boo\"},\n        {\"jsonrpc\": \"2.0\", \"method\": \"foo.get\", \"params\": {\"name\": \"myself\"}, \"id\": \"5\"},\n        {\"jsonrpc\": \"2.0\", \"method\": \"get_data\", \"id\": \"9\"} \n    ]",
+    "response": "[\n        {\"jsonrpc\": \"2.0\", \"result\": 7, \"id\": \"1\"},\n        {\"jsonrpc\": \"2.0\", \"result\": 19, \"id\": \"2\"},\n        {\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32600, \"message\": \"Invalid Request\"}, \"id\": null},\n        {\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32601, \"message\": \"Method not found\"}, \"id\": \"5\"},\n        {\"jsonrpc\": \"2.0\", \"result\": [\"hello\", 5], \"id\": \"9\"}\n    ]"
+  },
+  {
+    "example": "rpc call Batch (all notifications)",
+    "request": "[\n        {\"jsonrpc\": \"2.0\", \"method\": \"notify_sum\", \"params\": [1,2,4]},\n        {\"jsonrpc\": \"2.0\", \"method\": \"notify_hello\", \"params\": [7]}\n    ]",
+    "response": null
+  }
+]

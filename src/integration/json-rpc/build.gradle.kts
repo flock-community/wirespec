@@ -50,6 +50,8 @@ kotlin {
             // Kotlin tests drive the generated Java client and server too, so the compiler must see the Java sources.
             kotlin.srcDir(wirespecCodegen.outputDir.dir("java"))
             kotlin.srcDir(wirespecCodegen.outputDir.dir("sync"))
+            kotlin.srcDir(wirespecCodegen.outputDir.dir("javaspec"))
+            kotlin.srcDir(wirespecCodegen.outputDir.dir("kotlinspec"))
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:emitters:java"))
@@ -69,4 +71,8 @@ kotlin {
             }
         }
     }
+}
+
+tasks.named<JavaCompile>("compileJvmTestJava") {
+    source(wirespecCodegen.outputDir.dir("javaspec"))
 }

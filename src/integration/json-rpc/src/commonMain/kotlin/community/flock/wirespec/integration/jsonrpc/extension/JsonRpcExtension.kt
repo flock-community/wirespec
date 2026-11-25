@@ -35,8 +35,13 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
  * Wirespec names. The server reads params by name or by position, in the order of the fields.
  *
  * An rpc with an error type, `rpc GetUser { id: String } -> User ! UserNotFound`, answers its error as an error object
- * with code [SERVER_ERROR] and the error as its data. The client reads such an error as the `Error` of the rpc, and any
- * other error object as a `JsonRpcException`.
+ * with the name of the error type as its message, the error as its data, and code [ERROR_CODE], or the code of
+ * `@JsonRpcError(404)`. The client reads an error object with that code as the `Error` of the rpc, and any other error
+ * object as a `JsonRpcException`.
+ *
+ * The client and the server follow the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification): a method
+ * may not start with `rpc.`, and the code of the error of an rpc is one JSON-RPC leaves to the application, outside
+ * -32768 to -32000. The extension fails on a contract that breaks either.
  *
  * Register on any emitter but Wirespec; for any other [language] the IR is returned unchanged.
  */
@@ -71,10 +76,13 @@ public class JsonRpcExtension(
         ?: ir
 
     public companion object {
-        /** The code of the error object an rpc answers its own error with: JSON-RPC leaves this code to the implementation. */
-        public const val SERVER_ERROR: Int = -32000
+        /** The code of the error object an rpc answers its own error with, unless it is annotated with another one. */
+        public const val ERROR_CODE: Int = 1
 
         /** Names the method of an rpc, when it is not the name of the rpc in camel case. */
         public const val METHOD_ANNOTATION: String = "JsonRpcMethod"
+
+        /** Gives the code of the error object an rpc answers its own error with, when it is not [ERROR_CODE]. */
+        public const val ERROR_ANNOTATION: String = "JsonRpcError"
     }
 }

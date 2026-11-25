@@ -45,7 +45,7 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |    ${name.literal()},
         |    [${params.joinToString(", ") { it.param() }}],
         |    (json) => ${resultValue("json")},
-        |    ${error?.let { "(json) => ({ kind: \"Error\", value: ${it.decode("json")} })" } ?: "undefined"},
+        |    ${error?.let { "[$errorCode, (json) => ({ kind: \"Error\", value: ${it.decode("json")} })]" } ?: "undefined"},
         |  )
         |}
     """.trimMargin()
@@ -102,7 +102,7 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
 
     private fun JsonRpcMethod.answer(): String = when (val error = error) {
         null -> "result(${result.encodeResult("response")})"
-        else -> "response.kind === \"Error\" ? failure(JsonRpc.SERVER_ERROR, \"Server error\", ${error.encodeResult("response.value")}) : result(${result.encodeResult("response.value")})"
+        else -> "response.kind === \"Error\" ? failure($errorCode, ${errorMessage.literal()}, ${error.encodeResult("response.value")}) : result(${result.encodeResult("response.value")})"
     }
 
     /** The JSON of a value that can be undefined or void, as a result or the data of an error. */
@@ -146,20 +146,21 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
     }
 
     private val RUNTIME = """
-        |/** The codes of the errors JSON-RPC 2.0 defines. */
+        |/**
+        | * The codes of the errors JSON-RPC 2.0 defines, as the specification writes them:
+        | * https://www.jsonrpc.org/specification
+        | */
         |export const JsonRpc = {
         |  PARSE_ERROR: -32700,
         |  INVALID_REQUEST: -32600,
         |  METHOD_NOT_FOUND: -32601,
         |  INVALID_PARAMS: -32602,
         |  INTERNAL_ERROR: -32603,
-        |  /** The code of the error of an rpc itself, which is the data of the error object. */
-        |  SERVER_ERROR: -32000,
         |} as const
         |
-        |/** An error object a JSON-RPC server answered with, other than the error of the rpc itself. */
+        |/** An error object a JSON-RPC server answered with, other than the error of the rpc itself. Its data is JSON. */
         |export class JsonRpcError extends Error {
-        |  constructor(readonly code: number, message: string) {
+        |  constructor(readonly code: number, message: string, readonly data: string | undefined) {
         |    super(message)
         |  }
         |}
@@ -198,13 +199,16 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |
         |const text = (bytes: Uint8Array): string => new TextDecoder().decode(bytes)
         |
-        |/** Every request has id 1: a transportation answers a request with its own response, so the id needs no counter. */
+        |/**
+        | * Every request has id 1: a transportation answers a request with its own response, so the id needs no counter.
+        | * An error object with the code of onError is the error of the rpc, which onError reads from its data.
+        | */
         |async function call<T>(
         |  transportation: Wirespec.Transportation,
         |  method: string,
         |  params: ([string, string] | undefined)[],
         |  onResult: (json: string) => T,
-        |  onError: ((json: string) => T) | undefined,
+        |  onError: [number, (json: string) => T] | undefined,
         |): Promise<T> {
         |  const members = params.filter((param): param is [string, string] => param !== undefined).map(([name, json]) => encode(name) + ":" + json)
         |  const request = "{\"jsonrpc\":\"2.0\",\"method\":" + encode(method) + (members.length === 0 ? "" : ",\"params\":{" + members.join(",") + "}") + ",\"id\":1}"
@@ -215,31 +219,38 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |    headers: { "Content-Type": ["application/json"] },
         |    body: bytes(request),
         |  })
-        |  const answer = response.body === undefined ? undefined : membersOf(text(response.body))
-        |  if (answer === undefined) throw new Error("The JSON-RPC response to " + method + " is no object, status " + response.statusCode)
-        |  const error = answer["error"]
-        |  if (error === undefined || error === "null") {
-        |    const result = answer["result"]
-        |    if (result === undefined) throw new Error("The JSON-RPC response to " + method + " has no result")
-        |    return onResult(result)
-        |  }
-        |  const failure = membersOf(error)
-        |  if (failure === undefined) throw new Error("The JSON-RPC error of " + method + " is no object")
-        |  const code = failure["code"] === undefined || isNaN(Number(failure["code"])) ? JsonRpc.INTERNAL_ERROR : Number(failure["code"])
+        |  const answer = response.body === undefined ? undefined : responseOf(text(response.body))
+        |  if (answer === undefined) throw new Error("The answer to " + method + " is no JSON-RPC 2.0 response, status " + response.statusCode)
+        |  const failure = answer["error"] === undefined ? undefined : membersOf(answer["error"])
+        |  if (failure === undefined) return onResult(answer["result"])
+        |  const code = Number(failure["code"])
         |  const data = failure["data"]
-        |  if (code === JsonRpc.SERVER_ERROR && onError !== undefined && data !== undefined) return onError(data)
-        |  throw new JsonRpcError(code, decodeStringOrUndefined(failure["message"]) ?? "")
+        |  if (onError !== undefined && data !== undefined && code === onError[0]) return onError[1](data)
+        |  throw new JsonRpcError(code, decodeString(failure["message"]), data)
         |}
         |
-        |/** A batch is answered with the answers to its requests; a notification is not answered. */
+        |/**
+        | * The members of a response to a request with id 1: it has either a result or an error object with an integer code
+        | * and a message, and the id of the request, or null when the server could not read it. Undefined for any other JSON.
+        | */
+        |function responseOf(json: string): Record<string, string> | undefined {
+        |  const members = isJson(json) ? membersOf(json) : undefined
+        |  if (members === undefined || stringOrUndefined(members["jsonrpc"]) !== "2.0" || (members["result"] === undefined) === (members["error"] === undefined)) return undefined
+        |  const failure = members["error"] === undefined ? undefined : membersOf(members["error"])
+        |  const validError = members["error"] === undefined || (failure !== undefined && /^-?(0|[1-9][0-9]*)$/.test(failure["code"] ?? "") && stringOrUndefined(failure["message"]) !== undefined)
+        |  const validId = members["id"] === "1" || (members["id"] === "null" && members["error"] !== undefined)
+        |  return validError && validId ? members : undefined
+        |}
+        |
+        |/** A batch is answered with the answers to its requests; a notification is not answered, and nor is a batch of them. */
         |async function handle(body: Uint8Array | undefined, dispatch: (method: string, params: Params) => Promise<Answer | undefined>): Promise<Wirespec.RawResponse> {
         |  const json = body === undefined ? "" : text(body).trim()
-        |  const batch = json.startsWith("[") ? parts(json, "[", "]") : undefined
+        |  const batch = isJson(json) ? parts(json, "[", "]") : undefined
         |  let answer: string | undefined
-        |  if (!json.startsWith("[")) {
-        |    answer = await reply(json, dispatch)
-        |  } else if (batch === undefined) {
+        |  if (!isJson(json)) {
         |    answer = write("null", failure(JsonRpc.PARSE_ERROR, "Parse error"))
+        |  } else if (batch === undefined) {
+        |    answer = await reply(json, dispatch)
         |  } else if (batch.length === 0) {
         |    answer = write("null", failure(JsonRpc.INVALID_REQUEST, "Invalid Request"))
         |  } else {
@@ -251,17 +262,18 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |    : { statusCode: 200, headers: { "Content-Type": ["application/json"] }, body: bytes(answer) }
         |}
         |
+        |/**
+        | * The answer to one request, or undefined for a notification. A request that is invalid is answered with its id, or
+        | * with null when it has none, or one that is no String, Number or Null.
+        | */
         |async function reply(json: string, dispatch: (method: string, params: Params) => Promise<Answer | undefined>): Promise<string | undefined> {
         |  const members = membersOf(json)
-        |  if (members === undefined) {
-        |    const unparsable = json === "" || json.startsWith("{")
-        |    return write("null", unparsable ? failure(JsonRpc.PARSE_ERROR, "Parse error") : failure(JsonRpc.INVALID_REQUEST, "Invalid Request"))
-        |  }
+        |  if (members === undefined) return write("null", failure(JsonRpc.INVALID_REQUEST, "Invalid Request"))
         |  const id = members["id"]
-        |  const method = decodeStringOrUndefined(members["method"])
+        |  const method = stringOrUndefined(members["method"])
         |  const params = paramsOf(members["params"])
-        |  if (members["jsonrpc"] !== "\"2.0\"" || method === undefined || params === undefined) {
-        |    return write(id ?? "null", failure(JsonRpc.INVALID_REQUEST, "Invalid Request"))
+        |  if (stringOrUndefined(members["jsonrpc"]) !== "2.0" || method === undefined || params === undefined || (id !== undefined && !isId(id))) {
+        |    return write(id !== undefined && isId(id) ? id : "null", failure(JsonRpc.INVALID_REQUEST, "Invalid Request"))
         |  }
         |  let answer: Answer
         |  try {
@@ -272,17 +284,17 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |  return id === undefined ? undefined : write(id, answer)
         |}
         |
+        |/** Params are an Object, by name, or an Array, by position; a request may leave them out. */
         |function paramsOf(json: string | undefined): Params | undefined {
         |  if (json === undefined) return new Params({}, [])
-        |  if (json.startsWith("{")) {
-        |    const byName = membersOf(json)
-        |    return byName === undefined ? undefined : new Params(byName, [])
-        |  }
-        |  if (json.startsWith("[")) {
-        |    const byPosition = parts(json, "[", "]")
-        |    return byPosition === undefined ? undefined : new Params({}, byPosition)
-        |  }
+        |  if (json.startsWith("{")) return new Params(membersOf(json) ?? {}, [])
+        |  if (json.startsWith("[")) return new Params({}, parts(json, "[", "]") ?? [])
         |  return undefined
+        |}
+        |
+        |/** An id is a String, a Number or Null. */
+        |function isId(json: string): boolean {
+        |  return json === "null" || json[0] === "\"" || json[0] === "-" || (json[0] >= "0" && json[0] <= "9")
         |}
         |
         |function write(id: string, answer: Answer): string {
@@ -294,6 +306,16 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
     """.trimMargin()
 
     private val SCANNER = """
+        |/** Whether the JSON is one JSON value: JSON.parse reads the grammar of RFC 8259, and fails on JSON too deep to read. */
+        |function isJson(json: string): boolean {
+        |  try {
+        |    JSON.parse(json)
+        |    return true
+        |  } catch {
+        |    return false
+        |  }
+        |}
+        |
         |/** The members of a JSON object, each as the JSON of its value; undefined when the JSON is no object. */
         |function membersOf(json: string): Record<string, string> | undefined {
         |  const members = parts(json.trim(), "{", "}")
@@ -301,51 +323,37 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |  const object: Record<string, string> = {}
         |  for (const member of members) {
         |    const end = stringEnd(member)
-        |    const key = end < 0 ? undefined : decodeStringOrUndefined(member.substring(0, end))
-        |    const value = end < 0 ? "" : member.substring(end).trim()
-        |    if (key === undefined || !value.startsWith(":")) return undefined
-        |    object[key] = value.substring(1).trim()
+        |    object[decodeString(member.substring(0, end))] = member.substring(end).trim().substring(1).trim()
         |  }
         |  return object
         |}
         |
-        |/** The JSON between open and close split at the commas outside of a nested value; undefined when it is no such JSON. */
+        |/** The values of the JSON between open and close, split at the commas outside of a nested value. */
         |function parts(json: string, open: string, close: string): string[] | undefined {
         |  if (json.length < 2 || json[0] !== open || json[json.length - 1] !== close) return undefined
         |  const parts: string[] = []
         |  let depth = 0
-        |  let inString = false
-        |  let escaped = false
         |  let start = 1
         |  for (let index = 1; index < json.length - 1; index++) {
         |    const c = json[index]
-        |    if (inString) {
-        |      if (escaped) escaped = false
-        |      else if (c === "\\") escaped = true
-        |      else if (c === "\"") inString = false
-        |    } else if (c === "\"") inString = true
+        |    if (c === "\"") index = stringEnd(json, index) - 1
         |    else if (c === "{" || c === "[") depth++
-        |    else if (c === "}" || c === "]") {
-        |      if (--depth < 0) return undefined
-        |    } else if (c === "," && depth === 0) {
+        |    else if (c === "}" || c === "]") depth--
+        |    else if (c === "," && depth === 0) {
         |      parts.push(json.substring(start, index).trim())
         |      start = index + 1
         |    }
         |  }
         |  const last = json.substring(start, json.length - 1).trim()
-        |  if (inString || depth !== 0) return undefined
-        |  if (parts.length === 0 && last === "") return parts
-        |  parts.push(last)
-        |  return parts.some((part) => part === "") ? undefined : parts
+        |  if (parts.length > 0 || last !== "") parts.push(last)
+        |  return parts
         |}
         |
-        |/** The index after the JSON string the JSON starts with, or -1 when it starts with none. */
-        |function stringEnd(json: string): number {
-        |  if (!json.startsWith("\"")) return -1
-        |  let escaped = false
-        |  for (let index = 1; index < json.length; index++) {
-        |    if (escaped) escaped = false
-        |    else if (json[index] === "\\") escaped = true
+        |/** The index after the JSON string at start, which is valid JSON; -1 when there is none. */
+        |function stringEnd(json: string, start: number = 0): number {
+        |  if (json[start] !== "\"") return -1
+        |  for (let index = start + 1; index < json.length; index++) {
+        |    if (json[index] === "\\") index++
         |    else if (json[index] === "\"") return index + 1
         |  }
         |  return -1
@@ -356,11 +364,12 @@ internal object TypeScriptJsonRpc : JsonRpcDialect {
         |}
         |
         |export function decodeString(json: string): string {
-        |  if (stringEnd(json) !== json.length) throw new Error("No JSON string: " + json)
-        |  return JSON.parse(json) as string
+        |  const value: unknown = JSON.parse(json)
+        |  if (typeof value !== "string") throw new Error("No JSON string: " + json)
+        |  return value
         |}
         |
-        |function decodeStringOrUndefined(json: string | undefined): string | undefined {
+        |function stringOrUndefined(json: string | undefined): string | undefined {
         |  try {
         |    return json === undefined ? undefined : decodeString(json)
         |  } catch {

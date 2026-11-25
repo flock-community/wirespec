@@ -184,6 +184,10 @@ notification.
 
 ## On the wire
 
+The client and the server follow the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification). The servers
+of every language answer each example in section 7 of the specification as it does; the tests of the integration hold
+those examples as they are written there.
+
 A request names the method of the rpc, and its params are an object with the fields of the rpc under their Wirespec
 names. A field without a value is left out, and an rpc without fields has no params:
 
@@ -196,36 +200,53 @@ names. A field without a value is left out, and an rpc without fields has no par
 ```
 
 - **Method.** The method of an rpc is its name in camel case: `GetUser` is `getUser`. To serve or call an existing API,
-  name it with `@JsonRpcMethod`, as `RenameUser` is `users/rename`.
+  name it with `@JsonRpcMethod`, as `RenameUser` is `users/rename`. JSON-RPC reserves the methods that start with
+  `rpc.`, so the extension fails on a method named like that.
 - **Params.** The server reads params by name, and by position in the order of the fields. A field that is not
-  nullable must be there.
+  nullable must be there. Params that are no Object or Array make the request invalid.
 - **Results.** A result of type `Unit` is `null`. An rpc whose result is nullable answers `null` for no result.
-- **Batches.** The server answers a batch with an array of the answers to its requests, in order.
-- **Notifications.** The server calls the service for a request without an `id`, and does not answer it.
-- **Ids.** The server answers with the `id` of the request as it was. The client sends every request with id 1: the
-  transportation answers a request with its own response, so the id needs no counter.
+- **Batches.** The server answers a batch with an array of the answers to its requests, in order. A batch of
+  notifications is not answered, just like one notification.
+- **Notifications.** The server calls the service for a request without an `id`, and does not answer it, not even
+  with an error.
+- **Ids.** The server answers with the `id` of the request as it was. An `id` must be a String, a Number or Null: a
+  request with any other `id` is invalid, and is answered with `id` null. The client sends every request with id 1:
+  the transportation answers a request with its own response, so the id needs no counter.
+- **Responses.** The client reads a response only when it is JSON-RPC 2.0: it has `"jsonrpc": "2.0"`, either a result
+  or an error object with an integer code and a message, and id 1, or null with an error. It fails on any other answer.
 
 ## Errors
 
-An rpc with an [error type](../language/rpc.mdx#errors) answers its error as an error object with code `-32000`,
-`JsonRpc.SERVER_ERROR`, and the error as its data:
+An rpc with an [error type](../language/rpc.mdx#errors) answers its error as an error object with the name of the
+error type as its message, and the error as its data. Its code is `1`, or the code of `@JsonRpcError`:
 
-```json
-{"jsonrpc":"2.0","error":{"code":-32000,"message":"Server error","data":{"id":"2"}},"id":1}
+```wirespec
+@JsonRpcMethod("users/rename")
+@JsonRpcError(404)
+rpc RenameUser { id: String, name: String } -> Unit ! UserNotFound
 ```
 
-The client reads that error object as the `Error` of the rpc. Every other error object fails the call with a
-`JsonRpcException`, or a `JsonRpcError` in TypeScript, Python and Rust, that holds its code and message. The server
-answers with the errors JSON-RPC defines:
+```json
+{"jsonrpc":"2.0","error":{"code":404,"message":"UserNotFound","data":{"id":"2"}},"id":1}
+```
 
-| Code     | Message          | When                                                                     |
-|----------|------------------|--------------------------------------------------------------------------|
-| `-32700` | Parse error      | The body is no JSON                                                      |
-| `-32600` | Invalid Request  | The request is no JSON-RPC 2.0 request, or the batch is empty            |
-| `-32601` | Method not found | No rpc has the method                                                    |
+JSON-RPC reserves the codes from -32768 to -32000 for its own errors, and leaves the others to the application, which
+the error of an rpc is part of. So the extension fails on an rpc whose `@JsonRpcError` is in that range.
+
+The client reads an error object with the code of the rpc and data as the `Error` of the rpc. Every other error object
+fails the call with a `JsonRpcException`, or a `JsonRpcError` in TypeScript, Python and Rust, that holds its code, its
+message and its data as JSON. The server answers with the errors JSON-RPC defines:
+
+| Code     | Message          | When                                                                              |
+|----------|------------------|-----------------------------------------------------------------------------------|
+| `-32700` | Parse error      | The body is no JSON, anywhere in it                                               |
+| `-32600` | Invalid Request  | The JSON is no JSON-RPC 2.0 request, or the batch is empty                        |
+| `-32601` | Method not found | No rpc has the method                                                             |
 | `-32602` | Invalid params   | A param that is not nullable is missing, or the serialization cannot read a param |
-| `-32603` | Internal error   | The service threw. A Rust service cannot fail, so it never gets this one |
-| `-32000` | Server error     | The rpc returned its error type, which is the data                       |
+| `-32603` | Internal error   | The service threw. A Rust service cannot fail, so it never gets this one          |
+
+JSON nested too deeply to read is a parse error too, never a crash: Java, Kotlin, Scala and Rust read it without
+recursion, and TypeScript and Python catch the failure of their own parser.
 
 ## Languages
 

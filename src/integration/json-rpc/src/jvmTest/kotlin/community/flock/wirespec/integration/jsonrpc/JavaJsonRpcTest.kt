@@ -93,8 +93,10 @@ class JavaJsonRpcTest {
         answer("""{"jsonrpc":"2.0","method":"nope","id":"x"}""") shouldEqualJson
             """{"jsonrpc":"2.0","error":{"code":-32601,"message":"Method not found"},"id":"x"}"""
         answer("""{"jsonrpc":"2.0","method":"getUser","params":{"id":"2"},"id":3}""") shouldEqualJson
-            """{"jsonrpc":"2.0","error":{"code":-32000,"message":"Server error","data":{"id":"2"}},"id":3}"""
-        answer("""nope""") shouldEqualJson """{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}"""
+            """{"jsonrpc":"2.0","error":{"code":1,"message":"UserNotFound","data":{"id":"2"}},"id":3}"""
+        answer("""nope""") shouldEqualJson """{"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"},"id":null}"""
+        answer("""1""") shouldEqualJson """{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}"""
+        answer("""{"jsonrpc":"2.0","method":"ping","id":[1]}""") shouldEqualJson """{"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid Request"},"id":null}"""
         server.handle(Wirespec.RawRequest("POST", emptyList(), emptyMap(), emptyMap(), Optional.of("""{"jsonrpc":"2.0","method":"ping"}""".toByteArray()))).join().statusCode() shouldBe 204
     }
 
