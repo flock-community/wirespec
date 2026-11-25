@@ -75,6 +75,7 @@ private fun compileFixtures(emitterFactory: () -> Emitter): Map<String, () -> St
     "compileNestedTypeTest" to { compile(CompileNestedTypeTest, emitterFactory) },
     "compileComplexModelTest" to { compile(CompileComplexModelTest, emitterFactory) },
     "compileNestedValidationTest" to { compile(CompileNestedValidationTest, emitterFactory) },
+    "compileLiteralTest" to { compile(CompileLiteralTest, emitterFactory) },
     "compileAnyTest" to { compile(CompileAnyTest, emitterFactory) },
     "compileDefaultValueTest" to { compile(CompileDefaultValueTest, emitterFactory) },
 )

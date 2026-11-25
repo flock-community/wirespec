@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.test.CompileDefaultValueTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileLiteralTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileNestedValidationTest
@@ -153,6 +154,11 @@ class JavaEmitterTest {
     @Test
     fun compileNestedValidationTest() {
         CompileNestedValidationTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileNestedValidationTest
+    }
+
+    @Test
+    fun compileLiteralTest() {
+        CompileLiteralTest.compiler { JavaEmitter() } shouldBeRight EmitterFixtures.compileLiteralTest
     }
 
     @Test

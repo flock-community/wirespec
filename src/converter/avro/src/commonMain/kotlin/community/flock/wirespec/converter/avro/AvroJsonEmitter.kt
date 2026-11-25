@@ -51,6 +51,8 @@ public object AvroJsonEmitter : Emitter {
     public fun Reference.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
         is Reference.Dict -> AvroModel.MapType(type = "map", values = reference.emit(module, hasEmitted))
         is Reference.Iterable -> AvroModel.ArrayType(type = "array", items = reference.emit(module, hasEmitted))
+        // Avro has no literal types, so a string literal type is written as a string.
+        is Reference.Literal -> AvroModel.SimpleType("string")
         is Reference.Primitive -> {
             when (val type = type) {
                 is Reference.Primitive.Type.String -> AvroModel.SimpleType("string")

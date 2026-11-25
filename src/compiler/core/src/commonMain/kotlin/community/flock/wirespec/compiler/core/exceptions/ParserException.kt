@@ -69,8 +69,14 @@ internal class InvalidDefaultValueException(fileUri: FileUri, fieldName: String,
     ParserException(
         fileUri,
         coordinates = coordinates,
-        message = "Invalid default value $value for field $fieldName of type ${reference.value}${if (reference.isNullable) "?" else ""}",
+        message = "Invalid default value $value for field $fieldName of type ${reference.label()}",
     )
+
+/** How a type reads in a message: a string literal type between its quotes, and a nullable type with its `?`. */
+private fun Reference.label(): String = when (this) {
+    is Reference.Literal -> "\"$value\""
+    is Reference.Any, is Reference.Custom, is Reference.Dict, is Reference.Iterable, is Reference.Primitive, is Reference.Unit -> value
+} + if (isNullable) "?" else ""
 
 internal sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :
     EatTokenException(

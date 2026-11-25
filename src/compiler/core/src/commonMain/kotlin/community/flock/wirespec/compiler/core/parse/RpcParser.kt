@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.ExclamationMark
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 internal object RpcParser {
@@ -55,7 +56,7 @@ internal object RpcParser {
 
     private fun TokenProvider.parseReference(): Either<WirespecException, Reference> = either {
         when (token.type) {
-            is WirespecType -> parseType().bind()
+            is WirespecType, is LiteralString -> parseType().bind()
             else -> raiseWrongToken<WirespecType>().bind()
         }
     }

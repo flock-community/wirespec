@@ -1,0 +1,184 @@
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+public data class Cat(
+  val kind: String,
+  val name: String
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    if ((kind == "cat")) emptyList<String>() else listOf<String>("kind")
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+
+public data class Dog(
+  val kind: String,
+  val nickname: String?,
+  val tags: List<String>,
+  val tagsByKey: Map<String, String>
+) : Wirespec.Shape {
+  override fun validate(): List<String> =
+    (if ((kind == "dog")) emptyList<String>() else listOf<String>("kind")) + (nickname?.let { if ((it == "good \"boy\"")) emptyList<String>() else listOf<String>("nickname") } ?: emptyList<String>()) + tags.flatMapIndexed { i, el -> if ((el == "pet")) emptyList<String>() else listOf<String>("tags[${i}]") } + tagsByKey.entries.flatMap { (k, v) -> if ((v == "pet")) emptyList<String>() else listOf<String>("tagsByKey[${k}]") }
+}
+
+package community.flock.wirespec.generated.endpoint
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Dog
+
+public object GetDogs : Wirespec.Endpoint {
+  public object Path : Wirespec.Path
+  public data class Queries(
+      val sort: String
+    ) : Wirespec.Queries
+  public object RequestHeaders : Wirespec.Request.Headers
+  public data class Request(
+      override val path: Path,
+      override val method: Wirespec.Method,
+      override val queries: Queries,
+      override val headers: RequestHeaders,
+      override val body: Unit
+    ) : Wirespec.Request<Unit> {
+      public constructor(sort: String) : this(Path, Wirespec.Method.GET, Queries(sort = sort), RequestHeaders, Unit)
+    }
+  public sealed interface Response<T: Any> : Wirespec.Response<T>
+  public sealed interface Response2XX<T: Any> : Response<T>
+  public sealed interface ResponseListDog : Response<List<Dog>>
+  public object Response200Headers : Wirespec.Response.Headers
+  public data class Response200(
+      override val status: Int,
+      override val headers: Response200Headers,
+      override val body: List<Dog>
+    ) : Response2XX<List<Dog>>, ResponseListDog {
+      public constructor(body: List<Dog>) : this(200, Response200Headers, body)
+    }
+  public fun interface Handler : Wirespec.Handler {
+      public suspend fun getDogs(request: Request): Response<*>
+  }
+  public fun interface Call : Wirespec.Call {
+      public suspend fun getDogs(sort: String): Response<*>
+  }
+  public fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    Wirespec.RawRequest(
+      method = request.method.name,
+      path = listOf<String>("dogs"),
+      queries = mapOf<String, List<String>>("sort" to serialization.serializeParam<String>(request.queries.sort, typeOf<String>())),
+      headers = emptyMap<String, List<String>>(),
+      body = null
+    )
+  public fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    Request(sort = (request.queries["sort"]?.let { serialization.deserializeParam<String>(it, typeOf<String>()) } ?: error("Param sort cannot be null")))
+  public fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse {
+    when(val r = response) {
+        is Response200 -> {
+          return Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = emptyMap<String, List<String>>(),
+            body = serialization.serializeBody(r.body, typeOf<List<Dog>>())
+          )
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.status))
+        }
+    }
+  }
+  public fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> {
+    when (response.statusCode) {
+        200 -> {
+          return Response200(body = (response.body?.let { serialization.deserializeBody<List<Dog>>(it, typeOf<List<Dog>>()) } ?: error("body is null")))
+        }
+        else -> {
+          error(("Cannot match response with status: " + response.statusCode))
+        }
+    }
+  }
+  public object api : Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+    override val pathTemplate: String = "/dogs"
+    override val method: String = "GET"
+    override fun server(serialization: Wirespec.Serialization): Wirespec.ServerEdge<Request, Response<*>> = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun from(request: Wirespec.RawRequest) = fromRawRequest(serialization, request)
+      override fun to(response: Response<*>) = toRawResponse(serialization, response)
+    }
+    override fun client(serialization: Wirespec.Serialization): Wirespec.ClientEdge<Request, Response<*>> = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun to(request: Request) = toRawRequest(serialization, request)
+      override fun from(response: Wirespec.RawResponse) = fromRawResponse(serialization, response)
+    }
+  }
+}
+
+package community.flock.wirespec.generated.client
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Dog
+import community.flock.wirespec.generated.endpoint.GetDogs
+
+public data class GetDogsClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : GetDogs.Call {
+  override suspend fun getDogs(sort: String): GetDogs.Response<*> {
+    val request = GetDogs.Request(sort = sort)
+    val rawRequest = GetDogs.toRawRequest(serialization, request)
+    val rawResponse = transportation.transport(rawRequest)
+    return GetDogs.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Cat
+
+public object CatGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Cat =
+    Cat(
+      kind = "cat",
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      ))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Dog
+
+public object DogGenerator {
+  public fun generate(generator: Wirespec.Generator, path: List<String>): Dog =
+    Dog(
+      kind = "dog",
+      nickname = generator.generate(path + listOf<String>("nickname"), Wirespec.GeneratorFieldNullable(generate = { p0 -> "good \"boy\"" })),
+      tags = generator.generate(path + listOf<String>("tags"), Wirespec.GeneratorFieldArray(generate = { p0 -> "pet" })),
+      tagsByKey = generator.generate(path + listOf<String>("tagsByKey"), Wirespec.GeneratorFieldDict(generate = { p0 -> "pet" }))
+    )
+}
+
+package community.flock.wirespec.generated
+
+import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.typeOf
+import community.flock.wirespec.generated.model.Dog
+import community.flock.wirespec.generated.endpoint.GetDogs
+import community.flock.wirespec.generated.client.GetDogsClient
+
+public data class Client(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) : GetDogs.Call {
+  override suspend fun getDogs(sort: String): GetDogs.Response<*> =
+    GetDogsClient(
+      serialization = serialization,
+      transportation = transportation
+    ).getDogs(sort)
+}

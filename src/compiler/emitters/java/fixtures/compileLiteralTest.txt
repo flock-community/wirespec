@@ -1,0 +1,213 @@
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record Cat (
+  String kind,
+  String name
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return ((kind().equals("cat")) ? java.util.List.<String>of() : java.util.List.<String>of("kind"));
+  }
+};
+
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record Dog (
+  String kind,
+  java.util.Optional<String> nickname,
+  java.util.List<String> tags,
+  java.util.Map<String, String> tagsByKey
+) implements Wirespec.Shape {
+  @Override
+  public java.util.List<String> validate() {
+    return java.util.stream.Stream.of(((kind().equals("dog")) ? java.util.List.<String>of() : java.util.List.<String>of("kind")), nickname().map(it -> ((it.equals("good \"boy\"")) ? java.util.List.<String>of() : java.util.List.<String>of("nickname"))).orElse(java.util.List.<String>of()), java.util.stream.IntStream.range(0, tags().size()).mapToObj(i -> ((tags().get(i).equals("pet")) ? java.util.List.<String>of() : java.util.List.<String>of("tags[" + i + "]"))).flatMap(java.util.Collection::stream).toList(), tagsByKey().keySet().stream().map(k -> ((tagsByKey().get(k).equals("pet")) ? java.util.List.<String>of() : java.util.List.<String>of("tagsByKey[" + k + "]"))).flatMap(java.util.Collection::stream).toList()).flatMap(java.util.Collection::stream).toList();
+  }
+};
+
+package community.flock.wirespec.generated.endpoint;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Dog;
+
+public interface GetDogs extends Wirespec.Endpoint {
+  public static record Path () implements Wirespec.Path {
+  };
+  public static record Queries (
+    String sort
+  ) implements Wirespec.Queries {
+  };
+  public static record RequestHeaders () implements Wirespec.Request.Headers {
+  };
+  public static record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
+    public Request(String sort) {
+      this(new Path(), Wirespec.Method.GET, new Queries(sort), new RequestHeaders(), null);
+    }
+  };
+  public sealed interface Response<T> extends Wirespec.Response<T> permits Response2XX, ResponseListDog {}
+  public sealed interface Response2XX<T> extends Response<T> permits Response200 {}
+  public sealed interface ResponseListDog extends Response<java.util.List<Dog>> permits Response200 {}
+  public static record Response200Headers () implements Wirespec.Response.Headers {
+  };
+  public static record Response200 (
+    Integer status,
+    Response200Headers headers,
+    java.util.List<Dog> body
+  ) implements Response2XX<java.util.List<Dog>>, ResponseListDog {
+    public Response200(java.util.List<Dog> body) {
+      this(200, new Response200Headers(), body);
+    }
+  };
+  public interface Handler extends Wirespec.Handler {
+    public java.util.concurrent.CompletableFuture<Response<?>> getDogs(Request request);
+  }
+  public interface Call extends Wirespec.Call {
+    public java.util.concurrent.CompletableFuture<Response<?>> getDogs(String sort);
+  }
+  public static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+    return new Wirespec.RawRequest(
+      request.method().name(),
+      java.util.List.<String>of("dogs"),
+      java.util.Map.<String, java.util.List<String>>ofEntries(java.util.Map.entry("sort", serialization.<String>serializeParam(request.queries().sort(), Wirespec.getType(String.class, null)))),
+      java.util.Collections.emptyMap(),
+      java.util.Optional.empty()
+    );
+  }
+  public static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    return new Request(java.util.Optional.ofNullable(request.queries().get("sort")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, null))).orElseThrow(() -> new IllegalStateException("Param sort cannot be null")));
+  }
+  public static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
+    if (response instanceof Response200 r) {
+      return new Wirespec.RawResponse(
+        r.status(),
+        java.util.Collections.emptyMap(),
+        java.util.Optional.of(serialization.serializeBody(r.body(), Wirespec.getType(Dog.class, java.util.List.class)))
+      );
+    } else {
+      throw new IllegalStateException(("Cannot match response with status: " + response.status()));
+    }
+  }
+  public static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    switch (response.statusCode()) {
+        case 200 -> {
+          return new Response200(response.body().map(it -> serialization.<java.util.List<Dog>>deserializeBody(it, Wirespec.getType(Dog.class, java.util.List.class))).orElseThrow(() -> new IllegalStateException("body is null")));
+        }
+        default -> {
+          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
+        }
+    }
+  }
+  public static record Api () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+    @Override
+    public String getPathTemplate() {
+      return "/dogs";
+    }
+    @Override
+    public String getMethod() {
+      return "GET";
+    }
+    @Override
+    public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
+      return new Wirespec.ServerEdge<>() {
+      @Override public Request from(Wirespec.RawRequest request) {
+          return fromRawRequest(serialization, request);
+      }
+      @Override public Wirespec.RawResponse to(Response<?> response) {
+          return toRawResponse(serialization, response);
+      }
+      };
+    }
+    @Override
+    public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
+      return new Wirespec.ClientEdge<>() {
+      @Override public Wirespec.RawRequest to(Request request) {
+          return toRawRequest(serialization, request);
+      }
+      @Override public Response<?> from(Wirespec.RawResponse response) {
+          return fromRawResponse(serialization, response);
+      }
+      };
+    }
+  };
+  Api api = new Api();
+}
+
+package community.flock.wirespec.generated.client;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Dog;
+import community.flock.wirespec.generated.endpoint.GetDogs;
+
+public record GetDogsClient (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements GetDogs.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<GetDogs.Response<?>> getDogs(String sort) {
+    final var request = new GetDogs.Request(sort);
+    final var rawRequest = GetDogs.toRawRequest(serialization(), request);
+    return transportation().transport(rawRequest).thenApply(rawResponse -> GetDogs.fromRawResponse(serialization(), rawResponse));
+  }
+};
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Cat;
+
+public interface CatGenerator {
+  public static Cat generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Cat(
+      "cat",
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))
+    );
+  }
+}
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Dog;
+
+public interface DogGenerator {
+  public static Dog generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Dog(
+      "dog",
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("nickname")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldNullable<>((p0) -> "good \"boy\"")),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("tags")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldArray<>((p0) -> "pet")),
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("tagsByKey")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldDict<>((p0) -> "pet"))
+    );
+  }
+}
+
+package community.flock.wirespec.generated;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Dog;
+import community.flock.wirespec.generated.endpoint.GetDogs;
+import community.flock.wirespec.generated.client.GetDogsClient;
+
+public record Client (
+  Wirespec.Serialization serialization,
+  Wirespec.Transportation transportation
+) implements GetDogs.Call {
+  @Override
+  public java.util.concurrent.CompletableFuture<GetDogs.Response<?>> getDogs(String sort) {
+    return new GetDogsClient(
+      serialization(),
+      transportation()
+    ).getDogs(sort);
+  }
+};

@@ -492,7 +492,7 @@ public object TypeScriptGenerator :
         }
         is Type.Nullable -> "${type.emit()} | undefined"
         is Type.IntegerLiteral -> value.toString()
-        is Type.StringLiteral -> "\"$value\""
+        is Type.StringLiteral -> "\"${value.escapeStringLiteral('"')}\""
         is Type.Function -> {
             val params = parameterTypes.mapIndexed { i, t -> "p$i: ${t.emit()}" }.joinToString(", ")
             "($params) => ${returnType.emit()}"

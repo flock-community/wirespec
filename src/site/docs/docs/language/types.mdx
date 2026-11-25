@@ -122,6 +122,26 @@ type Person {
 }
 ```
 
+### String literal types
+
+A field can take one string as its type. The only value it admits is that string:
+
+```wirespec
+type Cat {
+    kind: "cat",
+    name: String
+}
+```
+
+A string literal type goes wherever a type goes, also as an optional, in a list, in a dictionary, and in the parameters
+and bodies of an endpoint. It supports the same escapes as a string default: `\"`, `\\`, `\n`, `\r` and `\t`.
+
+TypeScript has literal types of its own, so there `kind` is the type `"cat"`. In Java, Kotlin, Python, Rust and Scala
+the field is a string, and the generated `validate` function reports the field when it holds another value. OpenAPI and
+AsyncAPI write it as a string with one value. Avro and GraphQL have no such type, and write it as a string.
+
+A default on such a field can only be the literal itself: `kind: "cat" = "cat"`.
+
 ### Default values
 
 A field can declare a default value with `=`. The default is used when a value for the field is not provided, for

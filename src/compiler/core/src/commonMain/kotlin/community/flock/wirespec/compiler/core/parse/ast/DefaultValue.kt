@@ -14,6 +14,8 @@ public sealed interface DefaultValue {
  * the value has to match the field's type, precision and bounds. An integer is accepted on a
  * `Number` field and becomes a [DefaultValue.NumberValue] with a decimal point.
  *
+ * On a string literal type the only default is that literal itself.
+ *
  * On a reference to another definition the default becomes a [DefaultValue.EnumValue]. Whether that
  * definition is an enum with this entry needs the other definitions, see [isEntryOf].
  */
@@ -22,6 +24,7 @@ public fun DefaultValue.coerceTo(reference: Reference): DefaultValue? = when (th
     else -> when (reference) {
         is Reference.Primitive -> coerceTo(reference.type)
         is Reference.Custom -> toEnumValue()
+        is Reference.Literal -> takeIf { it is DefaultValue.StringValue && it.value == reference.value }
         is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Iterable -> null
     }
 }

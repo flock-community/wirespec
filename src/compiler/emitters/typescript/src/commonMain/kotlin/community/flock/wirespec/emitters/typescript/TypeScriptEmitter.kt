@@ -45,6 +45,7 @@ import community.flock.wirespec.compiler.core.ir.transformChildren
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
 import community.flock.wirespec.compiler.core.ir.generator.Generator
 import community.flock.wirespec.compiler.core.ir.generator.TypeScriptGenerator
+import community.flock.wirespec.compiler.core.ir.generator.escapeStringLiteral
 import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
@@ -417,6 +418,7 @@ public open class TypeScriptEmitter : IrEmitter {
         is Reference.Unit -> "undefined"
         is Reference.Any -> "any"
         is Reference.Custom -> ref.value.sanitizeSymbol()
+        is Reference.Literal -> "\"${ref.value.escapeStringLiteral('"')}\""
         is Reference.Primitive -> when (ref.type) {
             is Reference.Primitive.Type.String -> "string"
             is Reference.Primitive.Type.Integer -> "number"

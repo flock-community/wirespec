@@ -102,7 +102,7 @@ internal object TypeParser {
 
     fun TokenProvider.parseDict(): Either<WirespecException, Reference.Dict> = parseToken {
         when (token.type) {
-            is WirespecType -> Reference.Dict(
+            is WirespecType, is LiteralString -> Reference.Dict(
                 reference = parseType().bind(),
                 isNullable = when (token.type) {
                     is RightCurly -> {
@@ -137,6 +137,13 @@ internal object TypeParser {
             is TypeIdentifier -> {
                 Reference.Custom(
                     value = previousToken.shouldBeDefined().bind().value,
+                    isNullable = isNullable().bind(),
+                )
+            }
+
+            is LiteralString -> {
+                Reference.Literal(
+                    value = previousToken.literal(),
                     isNullable = isNullable().bind(),
                 )
             }
@@ -337,7 +344,7 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
 
     val reference = when (token.type) {
         is LeftCurly -> parseDict().bind()
-        is WirespecType -> parseType().bind()
+        is WirespecType, is LiteralString -> parseType().bind()
         else -> raiseWrongToken<WirespecType>().bind()
     }
 
@@ -361,7 +368,7 @@ private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, referen
 }
 
 private fun Token.toDefaultValue(): DefaultValue? = when (type) {
-    is LiteralString -> DefaultValue.StringValue(value.removeSurrounding("\"").unescape())
+    is LiteralString -> DefaultValue.StringValue(literal())
     is Integer -> DefaultValue.IntegerValue(value)
     is Number -> DefaultValue.NumberValue(value)
     is WirespecType -> DefaultValue.EnumValue(value)
@@ -376,6 +383,9 @@ private fun Token.toDefaultValue(): DefaultValue? = when (type) {
 
     else -> null
 }
+
+/** The text of a [LiteralString] token: without its quotes, and with its escapes read. */
+private fun Token.literal(): String = value.removeSurrounding("\"").unescape()
 
 private fun String.unescape(): String = Regex("\\\\(.)").replace(this) { match ->
     when (val escaped = match.groupValues[1]) {

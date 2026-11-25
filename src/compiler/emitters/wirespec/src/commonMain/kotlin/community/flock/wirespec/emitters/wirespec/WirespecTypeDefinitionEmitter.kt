@@ -57,6 +57,7 @@ internal interface WirespecTypeDefinitionEmitter : TypeDefinitionEmitter, Wiresp
         is Reference.Unit -> "Unit${emitNullable()}"
         is Reference.Any -> "Any${emitNullable()}"
         is Reference.Custom -> "$value${emitNullable()}"
+        is Reference.Literal -> "\"${value.escape()}\"${emitNullable()}"
         // The parser reads the `?` of a String before its constraint, and that of a number after it.
         is Reference.Primitive -> when (val t = type) {
             is Reference.Primitive.Type.String -> "String${emitNullable()}${t.constraint?.emit().orEmpty()}"

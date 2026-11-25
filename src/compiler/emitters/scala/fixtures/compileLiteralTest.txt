@@ -1,0 +1,190 @@
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class Cat(
+  val kind: String,
+  val name: String
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    if ((kind == "cat")) List.empty[String] else List("kind")
+}
+
+package community.flock.wirespec.generated.model
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+
+case class Dog(
+  val kind: String,
+  val nickname: Option[String],
+  val tags: List[String],
+  val tagsByKey: Map[String, String]
+) extends Wirespec.Shape {
+  override def validate(): List[String] =
+    (if ((kind == "dog")) List.empty[String] else List("kind")) ++ (nickname.map(it => if ((it == "good \"boy\"")) List.empty[String] else List("nickname")).getOrElse(List.empty[String])) ++ tags.zipWithIndex.flatMap { case (el, i) => if ((el == "pet")) List.empty[String] else List(s"tags[${i}]") } ++ tagsByKey.toList.flatMap { case (k, v) => if ((v == "pet")) List.empty[String] else List(s"tagsByKey[${k}]") }
+}
+
+package community.flock.wirespec.generated.endpoint
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Dog
+
+object GetDogs extends Wirespec.Endpoint {
+  object Path extends Wirespec.Path
+  case class Queries(
+      val sort: String
+    ) extends Wirespec.Queries
+  object RequestHeaders extends Wirespec.Request.Headers
+  case class Request(
+      override val path: Path.type,
+      override val method: Wirespec.Method,
+      override val queries: Queries,
+      override val headers: RequestHeaders.type,
+      override val body: Unit
+    ) extends Wirespec.Request[Unit] {
+      def this(sort: String) = this(Path, Wirespec.Method.GET, Queries(sort = sort), RequestHeaders, ())
+    }
+  sealed trait Response[T] extends Wirespec.Response[T]
+  sealed trait Response2XX[T] extends Response[T]
+  sealed trait ResponseListDog extends Response[List[Dog]]
+  object Response200Headers extends Wirespec.Response.Headers
+  case class Response200(
+      override val status: Int,
+      override val headers: Response200Headers.type,
+      override val body: List[Dog]
+    ) extends Response2XX[List[Dog]] with ResponseListDog {
+      def this(body: List[Dog]) = this(200, Response200Headers, body)
+    }
+  trait Handler[F[_]] extends Wirespec.Handler {
+      def getDogs(request: Request): F[Response[?]]
+  }
+  trait Call[F[_]] extends Wirespec.Call {
+      def getDogs(sort: String): F[Response[?]]
+  }
+  def toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+    new Wirespec.RawRequest(
+      method = request.method.toString,
+      path = List("dogs"),
+      queries = Map("sort" -> serialization.serializeParam[String](request.queries.sort, scala.reflect.classTag[String])),
+      headers = Map.empty,
+      body = None
+    )
+  def fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+    new Request(sort = (request.queries.get("sort").map(it => serialization.deserializeParam[String](it, scala.reflect.classTag[String])).getOrElse(throw new IllegalStateException("Param sort cannot be null"))))
+  def toRawResponse(serialization: Wirespec.Serializer, response: Response[?]): Wirespec.RawResponse = {
+    response match {
+        case r: Response200 => {
+          new Wirespec.RawResponse(
+            statusCode = r.status,
+            headers = Map.empty,
+            body = Some(serialization.serializeBody(r.body, scala.reflect.classTag[List[Dog]]))
+          )
+        }
+        case _ => {
+          throw new IllegalStateException(("Cannot match response with status: " + response.status))
+        }
+    }
+  }
+  def fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response[?] = {
+    response.statusCode match {
+        case 200 => {
+          new Response200(body = (response.body.map(it => serialization.deserializeBody[List[Dog]](it, scala.reflect.classTag[List[Dog]])).getOrElse(throw new IllegalStateException("body is null"))))
+        }
+        case _ => {
+          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode))
+        }
+    }
+  }
+  object Client extends Wirespec.Client[Request, Response[?]] {
+    override val pathTemplate: String = "/dogs"
+    override val method: String = "GET"
+    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("dogs"))
+    override def client(serialization: Wirespec.Serialization): Wirespec.ClientEdge[Request, Response[?]] = new Wirespec.ClientEdge[Request, Response[?]] {
+      override def to(request: Request): Wirespec.RawRequest = toRawRequest(serialization, request)
+      override def from(response: Wirespec.RawResponse): Response[?] = fromRawResponse(serialization, response)
+    }
+  }
+  object Server extends Wirespec.Server[Request, Response[?]] {
+    override val pathTemplate: String = "/dogs"
+    override val method: String = "GET"
+    override val pathSegments: List[Wirespec.PathSegment] = List(Wirespec.Literal("dogs"))
+    override def server(serialization: Wirespec.Serialization): Wirespec.ServerEdge[Request, Response[?]] = new Wirespec.ServerEdge[Request, Response[?]] {
+      override def from(request: Wirespec.RawRequest): Request = fromRawRequest(serialization, request)
+      override def to(response: Response[?]): Wirespec.RawResponse = toRawResponse(serialization, response)
+    }
+  }
+}
+
+package community.flock.wirespec.generated.client
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Dog
+import community.flock.wirespec.generated.endpoint.GetDogs
+
+case class GetDogsClient(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) extends GetDogs.Call[[A] =>> A] {
+  override def getDogs(sort: String): GetDogs.Response[?] = {
+    val request = new GetDogs.Request(sort = sort)
+    val rawRequest = GetDogs.toRawRequest(serialization, request)
+    val rawResponse = transportation.transport(rawRequest)
+    GetDogs.fromRawResponse(serialization, rawResponse)
+  }
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Cat
+
+object CatGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Cat =
+    new Cat(
+      kind = "cat",
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      ))
+    )
+}
+
+package community.flock.wirespec.generated.generator
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Dog
+
+object DogGenerator {
+  def generate(generator: Wirespec.Generator, path: List[String]): Dog =
+    new Dog(
+      kind = "dog",
+      nickname = generator.generate(path ++ List("nickname"), new Wirespec.GeneratorFieldNullable(generate = (p0) => "good \"boy\"")),
+      tags = generator.generate(path ++ List("tags"), new Wirespec.GeneratorFieldArray(generate = (p0) => "pet")),
+      tagsByKey = generator.generate(path ++ List("tagsByKey"), new Wirespec.GeneratorFieldDict(generate = (p0) => "pet"))
+    )
+}
+
+package community.flock.wirespec.generated
+
+import community.flock.wirespec.scala.Wirespec
+import scala.reflect.ClassTag
+import community.flock.wirespec.generated.model.Dog
+import community.flock.wirespec.generated.endpoint.GetDogs
+import community.flock.wirespec.generated.client.GetDogsClient
+
+case class Client(
+  val serialization: Wirespec.Serialization,
+  val transportation: Wirespec.Transportation
+) extends GetDogs.Call[[A] =>> A] {
+  override def getDogs(sort: String): GetDogs.Response[?] =
+    new GetDogsClient(
+      serialization = serialization,
+      transportation = transportation
+    ).getDogs(sort)
+}

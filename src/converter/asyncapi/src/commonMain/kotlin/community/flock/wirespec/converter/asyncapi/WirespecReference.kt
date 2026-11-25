@@ -3,12 +3,14 @@ package community.flock.wirespec.converter.asyncapi
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive.Type.Precision
 import community.flock.wirespec.compiler.core.parse.ast.StringFormat
+import kotlinx.serialization.json.JsonPrimitive
 
 /** A reference as written in Wirespec, such as `Todo`, `String?[]`, `String?(uuid)` or `{ Integer }`, to name a type in an annotation. */
 internal fun Reference.toWirespec(): String = when (this) {
     is Reference.Any -> "Any"
     is Reference.Unit -> "Unit"
     is Reference.Custom -> value
+    is Reference.Literal -> JsonPrimitive(value).toString()
     is Reference.Dict -> "{ ${reference.toWirespec()} }"
     is Reference.Iterable -> "${reference.toWirespec()}[]"
     is Reference.Primitive -> when (val type = type) {

@@ -910,6 +910,7 @@ public fun ReferenceWirespec.convert(): Type = when (this) {
     is ReferenceWirespec.Custom -> Type.Custom(Name.of(value).pascalCase())
     is ReferenceWirespec.Dict -> Type.Dict(Type.String, reference.convert())
     is ReferenceWirespec.Iterable -> Type.Array(reference.convert())
+    is ReferenceWirespec.Literal -> Type.StringLiteral(value)
     is ReferenceWirespec.Primitive -> when (val t = type) {
         ReferenceWirespec.Primitive.Type.Boolean -> Type.Boolean
         ReferenceWirespec.Primitive.Type.Bytes -> Type.Bytes
@@ -964,7 +965,18 @@ public fun ReferenceWirespec.convertConstraint(value: Expression): Expression = 
     else -> Literal(true, Type.Boolean)
 }
 
-private fun ReferenceWirespec.toTypeDescriptor(): TypeDescriptor = TypeDescriptor(convert())
+private fun ReferenceWirespec.toTypeDescriptor(): TypeDescriptor = TypeDescriptor(withoutLiterals().convert())
+
+/**
+ * A type descriptor names the runtime type a value is (de)serialized as. No target has a runtime type for a string
+ * literal type, so it is described as the String it is written as.
+ */
+private fun ReferenceWirespec.withoutLiterals(): ReferenceWirespec = when (this) {
+    is ReferenceWirespec.Literal -> ReferenceWirespec.Primitive(ReferenceWirespec.Primitive.Type.String(constraint = null), isNullable)
+    is ReferenceWirespec.Iterable -> copy(reference = reference.withoutLiterals())
+    is ReferenceWirespec.Dict -> copy(reference = reference.withoutLiterals())
+    is ReferenceWirespec.Any, is ReferenceWirespec.Custom, is ReferenceWirespec.Primitive, is ReferenceWirespec.Unit -> this
+}
 
 private fun deserializeParamExpression(
     map: Expression,

@@ -474,4 +474,53 @@ class ParseTypeTest {
             .shouldBeLeft()
             .head.message shouldBe "Default values are only allowed on the fields of a type and the parameters of an rpc, not on: limit"
     }
+
+    @Test
+    fun testStringLiteralType() {
+        val source =
+            // language=ws
+            """
+            |type Dog {
+            |    kind: "dog",
+            |    nickname: "good \"boy\""?,
+            |    tags: "pet"[],
+            |    tagsByKey: {"pet"},
+            |    sort: "name" = "name"
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .shape.fields
+            .map { it.reference } shouldBe listOf(
+            Reference.Literal("dog", isNullable = false),
+            Reference.Literal("good \"boy\"", isNullable = true),
+            Reference.Iterable(Reference.Literal("pet", isNullable = false), isNullable = false),
+            Reference.Dict(Reference.Literal("pet", isNullable = false), isNullable = false),
+            Reference.Literal("name", isNullable = false),
+        )
+    }
+
+    @Test
+    fun testStringLiteralTypeOutsideAType() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetDogs GET /dogs ? {sort: "name"} -> {
+            |  200 -> "ok"
+            |}
+            |channel Events -> "ping"
+            """.trimMargin()
+
+        parser(source).shouldBeRight().shouldHaveSize(2)
+    }
+
+    @Test
+    fun testStringLiteralTypeOnlyTakesItselfAsDefault() {
+        parser("type Foo { kind: \"cat\" = \"dog\" }")
+            .shouldBeLeft()
+            .head.message shouldBe "Invalid default value \"dog\" for field kind of type \"cat\""
+    }
 }

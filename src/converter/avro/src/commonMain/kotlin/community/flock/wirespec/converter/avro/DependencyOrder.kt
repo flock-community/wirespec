@@ -40,5 +40,5 @@ private fun Reference.customNames(): List<String> = when (this) {
     is Reference.Custom -> listOf(value)
     is Reference.Iterable -> reference.customNames()
     is Reference.Dict -> reference.customNames()
-    is Reference.Primitive, is Reference.Any, is Reference.Unit -> emptyList()
+    is Reference.Primitive, is Reference.Literal, is Reference.Any, is Reference.Unit -> emptyList()
 }

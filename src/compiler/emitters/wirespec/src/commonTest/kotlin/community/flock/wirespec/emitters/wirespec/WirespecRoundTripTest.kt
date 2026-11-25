@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileComplexModelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileLiteralTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompilePartTest
@@ -55,6 +56,7 @@ class WirespecRoundTripTest {
             CompileComplexModelTest,
             CompileEnumTest,
             CompileFullEndpointTest,
+            CompileLiteralTest,
             CompileMinimalEndpointTest,
             CompileNestedTypeTest,
             CompilePartTest,

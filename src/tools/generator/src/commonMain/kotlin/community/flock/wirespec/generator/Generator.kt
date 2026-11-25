@@ -50,6 +50,7 @@ private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
     }
 
     is Reference.Custom -> generateObject(resolveReference(ref), random)
+    is Reference.Literal -> JsonPrimitive(ref.value)
     is Reference.Unit -> JsonNull
     is Reference.Any -> throw NotImplementedError("Cannot generate Any")
 }

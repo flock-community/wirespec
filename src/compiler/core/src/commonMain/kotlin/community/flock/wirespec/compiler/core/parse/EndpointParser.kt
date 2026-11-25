@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
@@ -43,7 +44,7 @@ internal object EndpointParser {
             with(TypeParser) {
                 when (token.type) {
                     is LeftCurly -> parseDict().bind()
-                    is WirespecType -> parseType().bind()
+                    is WirespecType, is LiteralString -> parseType().bind()
                     else -> null
                 }
             },
@@ -115,7 +116,7 @@ internal object EndpointParser {
         val reference = with(TypeParser) {
             when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseType().bind()
+                is WirespecType, is LiteralString -> parseType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }
@@ -145,7 +146,7 @@ internal object EndpointParser {
         val reference = with(TypeParser) {
             when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseType().bind()
+                is WirespecType, is LiteralString -> parseType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }
