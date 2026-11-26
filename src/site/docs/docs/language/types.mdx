@@ -141,13 +141,15 @@ TypeScript has literal types of its own, so there `kind` is the type `"cat"`. In
 the field is a string, and the generated `validate` function reports the field when it holds another value. OpenAPI and
 AsyncAPI write it as a string with one value. Avro and GraphQL have no such type, and write it as a string.
 
-Kotlin and Java fill the literal in, so you do not pass it:
+Kotlin, Java, Python and Rust fill the literal in, so you do not pass it:
 
 - In Kotlin the field has the literal as its default: `Cat(name = "Tom")`.
+- In Python the field has the literal as its default, and is keyword-only: `Cat(name="Tom")`.
 - In Java the record has a second constructor without the field: `new Cat("Tom")`. The canonical constructor, with
-  every field, stays for the serialization.
+  every field, stays for the serialization: a record cannot hide it.
+- In Rust the struct has a `new` function without the field: `Cat::new(String::from("Tom"))`.
 
-In Python, Rust and Scala you pass the literal yourself.
+In Scala you pass the literal yourself.
 
 A default on such a field can only be the literal itself: `kind: "cat" = "cat"`.
 

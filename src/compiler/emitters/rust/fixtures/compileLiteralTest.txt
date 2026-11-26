@@ -7,6 +7,14 @@ pub struct Dog {
     pub name: String,
 }
 impl Dog {
+    pub fn new(name: String) -> Self {
+        Dog {
+            kind: String::from("dog"),
+            name: name
+        }
+    }
+}
+impl Dog {
     pub fn validate(&self) -> Vec<String> {
         return if (self.kind == String::from("dog")) { Vec::<String>::new() } else { vec![String::from("kind")] };
     }
