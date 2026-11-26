@@ -4,6 +4,7 @@ use regex;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Dog {
     pub kind: String,
+    pub name: String,
 }
 impl Dog {
     pub fn validate(&self) -> Vec<String> {
@@ -18,7 +19,7 @@ use super::super::model::dog::Dog;
 pub struct DogGenerator;
 impl DogGenerator {
     pub fn generate(generator: &impl Generator, path: Vec<String>) -> Dog {
-        return Dog { kind: String::from("dog") };
+        return Dog { kind: String::from("dog"), name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
     }
 }
 

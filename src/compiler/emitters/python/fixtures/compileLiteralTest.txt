@@ -9,6 +9,7 @@ from ..wirespec import T, Wirespec, _raise
 @dataclass
 class Dog(Wirespec.Shape):
     kind: str
+    name: str
     def validate(self) -> list[str]:
         return ([] if (self.kind == 'dog') else ['kind'])
 
@@ -24,7 +25,7 @@ from ..model.Dog import Dog
 class DogGenerator:
     @staticmethod
     def generate(generator: Wirespec.Generator, path: list[str]) -> Dog:
-        return Dog(kind='dog')
+        return Dog(kind='dog', name=generator.generate(path + ['name'], Wirespec.GeneratorFieldString(regex=None, annotations=[])))
 
 from . import model
 from . import endpoint

@@ -6,7 +6,8 @@ public object CompileLiteralTest : Fixture {
         // language=ws
         """
         |type Dog {
-        |  kind: "dog"
+        |  kind: "dog",
+        |  name: String
         |}
         """.trimMargin()
 

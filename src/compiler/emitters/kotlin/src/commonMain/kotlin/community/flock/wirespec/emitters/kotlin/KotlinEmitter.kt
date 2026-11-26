@@ -221,6 +221,7 @@ public open class KotlinEmitter(
         type.convert()
             .sanitizeNames(modelSanitizationConfig)
             .sanitizeEnumDefaults { it.sanitizeEnum() }
+            .withLiteralDefaults()
             .ensureEmptyStructHasConstructor()
 
     override fun emit(enum: Enum, module: Module): File = enum

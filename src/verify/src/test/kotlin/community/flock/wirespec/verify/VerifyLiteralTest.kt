@@ -24,6 +24,7 @@ class VerifyLiteralTest : FunSpec({
                 main {
                     assign("dog", construct(type("Dog")) {
                         arg("kind", literal("dog"))
+                        arg("name", literal("Rex"))
                     })
                     assign("errors", functionCall("validate", receiver = VariableReference("dog")))
                     assign("expected", literalList(string))
@@ -43,6 +44,7 @@ class VerifyLiteralTest : FunSpec({
                 main {
                     assign("dog", construct(type("Dog")) {
                         arg("kind", literal("cat"))
+                        arg("name", literal("Rex"))
                     })
                     assign("errors", functionCall("validate", receiver = VariableReference("dog")))
                     assign(

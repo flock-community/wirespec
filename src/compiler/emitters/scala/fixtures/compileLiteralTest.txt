@@ -4,7 +4,8 @@ import community.flock.wirespec.scala.Wirespec
 import scala.reflect.ClassTag
 
 case class Dog(
-  val kind: String
+  val kind: String,
+  val name: String
 ) extends Wirespec.Shape {
   override def validate(): List[String] =
     if ((kind == "dog")) List.empty[String] else List("kind")
@@ -18,5 +19,11 @@ import community.flock.wirespec.generated.model.Dog
 
 object DogGenerator {
   def generate(generator: Wirespec.Generator, path: List[String]): Dog =
-    new Dog(kind = "dog")
+    new Dog(
+      kind = "dog",
+      name = generator.generate(path ++ List("name"), new Wirespec.GeneratorFieldString(
+        regex = None,
+        annotations = List.empty[Map[String, Any]]
+      ))
+    )
 }

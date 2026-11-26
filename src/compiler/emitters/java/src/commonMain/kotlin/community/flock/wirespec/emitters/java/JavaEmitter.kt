@@ -158,6 +158,7 @@ public open class JavaEmitter(
     override fun emit(type: AstType, module: Module): File =
         type.convert()
             .sanitizeNames(sanitizationConfig)
+            .withLiteralConstructor()
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()

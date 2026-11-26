@@ -2,10 +2,15 @@ package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.ir.Field
+import community.flock.wirespec.compiler.core.ir.File
 import community.flock.wirespec.compiler.core.ir.Import
+import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
 import community.flock.wirespec.compiler.core.ir.RawElement
+import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Type
 import community.flock.wirespec.compiler.core.ir.import
 import community.flock.wirespec.compiler.core.ir.raw
 import community.flock.wirespec.compiler.core.ir.transform
@@ -43,4 +48,14 @@ private fun buildApiObject(endpoint: Endpoint): RawElement {
         |  }
         |}
     """.trimMargin().let(::raw)
+}
+
+/** A string literal type admits one value, so the field takes that value as its default. */
+internal fun File.withLiteralDefaults(): File = transform {
+    matchingElements { struct: Struct -> struct.copy(fields = struct.fields.map { (it as? Field)?.withLiteralDefault() ?: it }) }
+}
+
+private fun Field.withLiteralDefault(): Field = when (val type = type) {
+    is Type.StringLiteral -> copy(initializer = Literal(type.value, Type.String))
+    else -> this
 }

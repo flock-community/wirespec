@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.jackson;
 
+import community.flock.wirespec.integration.jackson.java.generated.model.Dog;
 import community.flock.wirespec.integration.jackson.java.generated.model.IntRefinedLowerAndUpper;
 import community.flock.wirespec.integration.jackson.java.generated.model.IntRefinedLowerBound;
 import community.flock.wirespec.integration.jackson.java.generated.model.IntRefinedNoBound;
@@ -73,6 +74,14 @@ public abstract class AbstractWirespecModuleJavaTest {
               "numberRefinedLowerAndUpper" : 4.0
             }""";
 
+    protected final String dogJson =
+            //language=json
+            """
+            {
+              "kind" : "dog",
+              "name" : "Rex"
+            }""";
+
     /** Pretty-print {@code value} as JSON using the module under test. */
     protected abstract String serialize(Object value) throws Exception;
 
@@ -97,5 +106,15 @@ public abstract class AbstractWirespecModuleJavaTest {
     @Test
     public void deserializeJavaRefined2() throws Exception {
         assertEquals(typeWithAllRefined, deserialize(typeJson, TypeWithAllRefined.class));
+    }
+
+    @Test
+    public void serializeJavaLiteral() throws Exception {
+        assertEquals(dogJson, serialize(new Dog("Rex")));
+    }
+
+    @Test
+    public void deserializeJavaLiteral() throws Exception {
+        assertEquals(new Dog("Rex"), deserialize(dogJson, Dog.class));
     }
 }

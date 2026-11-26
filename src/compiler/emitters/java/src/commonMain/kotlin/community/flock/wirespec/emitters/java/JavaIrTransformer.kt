@@ -3,13 +3,18 @@ package community.flock.wirespec.emitters.java
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.ir.Assignment
+import community.flock.wirespec.compiler.core.ir.Constructor
 import community.flock.wirespec.compiler.core.ir.Element
+import community.flock.wirespec.compiler.core.ir.Expression
+import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.File
 import community.flock.wirespec.compiler.core.ir.FunctionCall
 import community.flock.wirespec.compiler.core.ir.Import
 import community.flock.wirespec.compiler.core.ir.Interface
+import community.flock.wirespec.compiler.core.ir.Literal
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.Namespace
+import community.flock.wirespec.compiler.core.ir.Parameter
 import community.flock.wirespec.compiler.core.ir.Precision
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.RawExpression
@@ -19,6 +24,7 @@ import community.flock.wirespec.compiler.core.ir.Type
 import community.flock.wirespec.compiler.core.ir.TypeDescriptor
 import community.flock.wirespec.compiler.core.ir.VariableReference
 import community.flock.wirespec.compiler.core.ir.converter.convert
+import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.ir.function
 import community.flock.wirespec.compiler.core.ir.import
 import community.flock.wirespec.compiler.core.ir.plus
@@ -33,6 +39,30 @@ import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
 internal fun Definition.buildModelImports(packageName: PackageName): List<Import> = importReferences()
     .filter { identifier.value != it.value }
     .map { import("${packageName.value}.model", Name.of(it.value).pascalCase()) }
+
+/**
+ * A string literal type admits one value, so a record with such a field gets a second constructor that takes the other
+ * fields and fills that value in. Java has no default for a record component, and the canonical constructor has to
+ * stay: the serialization builds the record with it.
+ */
+internal fun File.withLiteralConstructor(): File = transform {
+    matchingElements { struct: Struct -> struct.literalConstructor()?.let { struct.copy(constructors = struct.constructors + it) } ?: struct }
+}
+
+private fun Struct.literalConstructor(): Constructor? = fieldList()
+    .takeIf { fields -> fields.any { it.type is Type.StringLiteral } }
+    ?.let { fields ->
+        Constructor(
+            parameters = fields.filterNot { it.type is Type.StringLiteral }.map { Parameter(it.name, it.type) },
+            body = fields.map { Assignment(it.name, it.literalOrParameter(), isProperty = true) },
+            visibility = null,
+        )
+    }
+
+private fun Field.literalOrParameter(): Expression = when (val type = type) {
+    is Type.StringLiteral -> Literal(type.value, Type.String)
+    else -> VariableReference(name)
+}
 
 internal fun File.applyRefinedStructShape(refined: Refined): File = transform {
     matchingElements { struct: Struct ->

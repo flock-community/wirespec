@@ -4,7 +4,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
 public data class Dog(
-  val kind: String
+  val kind: String = "dog",
+  val name: String
 ) : Wirespec.Shape {
   override fun validate(): List<String> =
     if ((kind == "dog")) emptyList<String>() else listOf<String>("kind")
@@ -18,5 +19,11 @@ import community.flock.wirespec.generated.model.Dog
 
 public object DogGenerator {
   public fun generate(generator: Wirespec.Generator, path: List<String>): Dog =
-    Dog(kind = "dog")
+    Dog(
+      kind = "dog",
+      name = generator.generate(path + listOf<String>("name"), Wirespec.GeneratorFieldString(
+        regex = null,
+        annotations = emptyList<Map<String, Any>>()
+      ))
+    )
 }

@@ -1,13 +1,16 @@
 package community.flock.wirespec.integration.kotlinxserialization.extension
 
 import community.flock.wirespec.compiler.core.ir.Enum
+import community.flock.wirespec.compiler.core.ir.Field
 import community.flock.wirespec.compiler.core.ir.HasName
 import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.RawElement
 import community.flock.wirespec.compiler.core.ir.Struct
+import community.flock.wirespec.compiler.core.ir.Type
 import community.flock.wirespec.compiler.core.ir.Union
 import community.flock.wirespec.compiler.core.ir.extension.IrExtension
+import community.flock.wirespec.compiler.core.ir.fieldList
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
@@ -20,6 +23,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Union as UnionDefinition
  *
  * - records and refined types get `@Serializable` + `@SerialName("<wirespec name>")`
  * - unions and enums get `@Serializable`
+ * - a field of a string literal type gets `@EncodeDefault`, so its literal is always written
  *
  * Refined types are emitted as `@JvmInline value class`, which kotlinx.serialization
  * flattens to the wrapped primitive: `{"id":"42"}` instead of `{"id":{"value":"42"}}`.
@@ -63,10 +67,11 @@ public class KotlinxSerializationExtension : IrExtension {
         elements = elements.flatMap { element ->
             when {
                 element is Struct && element.name.pascalCase() in serialNames ->
-                    listOf(
+                    listOfNotNull(
+                        experimentalOptIn.takeIf { element.literalFields().isNotEmpty() },
                         serializable,
                         serialName(serialNames.getValue(element.name.pascalCase())),
-                        if (element.name.pascalCase() in refinedNames) element.copy(kind = Struct.Kind.VALUE_CLASS) else element,
+                        if (element.name.pascalCase() in refinedNames) element.copy(kind = Struct.Kind.VALUE_CLASS) else element.encodingLiteralFields(),
                     )
                 element is HasName && (element is Union || element is Enum) && element.name.pascalCase() in serializableOnlyNames ->
                     listOf(serializable, element)
@@ -76,7 +81,20 @@ public class KotlinxSerializationExtension : IrExtension {
         },
     )
 
+    /**
+     * A field of a string literal type has that literal as its default, and kotlinx.serialization leaves a property
+     * that still has its default out of the JSON. The literal is part of the contract, so it is always written.
+     */
+    private fun Struct.encodingLiteralFields(): Struct = literalFields()
+        .let { literals -> copy(fields = fields.flatMap { field -> if (field in literals) listOf(encodeDefault, field) else listOf(field) }) }
+
+    private fun Struct.literalFields(): List<Field> = fieldList().filter { it.type is Type.StringLiteral }
+
     private companion object {
+        val encodeDefault = RawElement("@kotlinx.serialization.EncodeDefault")
+
+        // `@EncodeDefault` is an experimental API of kotlinx.serialization.
+        val experimentalOptIn = RawElement("@kotlin.OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)")
         val serializable = RawElement("@kotlinx.serialization.Serializable")
         fun serialName(name: String) = RawElement("@kotlinx.serialization.SerialName(\"$name\")")
     }

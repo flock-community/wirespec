@@ -2,6 +2,7 @@ import {Wirespec} from '../Wirespec'
 
 export type Dog = {
   "kind": "dog",
+  "name": string,
 }
 export function validateDog(obj: Dog): string[] {
   return ((obj.kind === 'dog') ? [] as string[] : ['kind']);
@@ -12,7 +13,7 @@ import {Dog} from '../model/Dog'
 
 export namespace DogGenerator {
   export function generate(generator: Wirespec.Generator, path: string[]): Dog {
-    return { kind: 'dog' };
+    return { kind: 'dog', name: generator.generate([...path, ...['name']], { kind: 'string', regex: undefined, annotations: [] as Record<string, any>[] }) };
   }
 }
 
