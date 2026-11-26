@@ -6,6 +6,7 @@ import arrow.core.raise.ensure
 import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
 import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
+import community.flock.wirespec.compiler.core.exceptions.InvalidLiteralTypeException
 import community.flock.wirespec.compiler.core.exceptions.LiteralTypeModifierException
 import community.flock.wirespec.compiler.core.exceptions.LiteralTypeNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
@@ -355,14 +356,20 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
     )
 }
 
-/** A string literal type is the whole type of a field of a type: it takes no `?` and no `[]`. */
+/**
+ * A string literal type is the whole type of a field of a type: it takes no `?` and no `[]`. Its value is made of
+ * letters, digits, `-` and `_`, so every target can write it as it is.
+ */
 private fun TokenProvider.parseLiteralType(identifier: FieldIdentifier, allowLiteralTypes: Boolean) = parseToken { literal ->
     ensure(allowLiteralTypes) { LiteralTypeNotAllowedException(fileUri, identifier.value, literal.coordinates) }
+    ensure(literal.literal().matches(literalTypeValue)) { InvalidLiteralTypeException(fileUri, literal.value, literal.coordinates) }
     when (token.type) {
         is QuestionMark, is Brackets -> raise(LiteralTypeModifierException(fileUri, identifier.value, token.coordinates))
         else -> Reference.Literal(value = literal.literal(), isNullable = false)
     }
 }
+
+private val literalTypeValue = Regex("[A-Za-z0-9_-]+")
 
 private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowFieldDefaults: Boolean) = parseToken { equals ->
     if (!allowFieldDefaults) raise(DefaultValueNotAllowedException(fileUri, identifier.value, equals.coordinates))

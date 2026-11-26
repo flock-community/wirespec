@@ -18,7 +18,7 @@ internal fun String.prefixIfNotEmpty(prefix: String): String = if (isEmpty()) th
 internal fun String.wrapIfNotEmpty(prefix: String, suffix: String): String = if (isEmpty()) this else "$prefix$this$suffix"
 
 /** Escapes the string for a literal delimited by [quote]; [escaped] lists further characters the language treats as special. */
-public fun String.escapeStringLiteral(quote: Char, vararg escaped: Char): String = asIterable().joinToString("") {
+internal fun String.escapeStringLiteral(quote: Char, vararg escaped: Char): String = asIterable().joinToString("") {
     when (it) {
         '\\' -> "\\\\"
         '\n' -> "\\n"

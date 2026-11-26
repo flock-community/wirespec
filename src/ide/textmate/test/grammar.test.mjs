@@ -73,10 +73,9 @@ describe("types", () => {
   });
 
   it("highlights string literal types", () => {
-    expectScopes(`type Cat {\n  kind: "c\\"at",\n  name: String\n}`, [
+    expectScopes(`type Cat {\n  kind: "cat",\n  name: String\n}`, [
       ["kind", "variable.other.property.wirespec"],
-      ['"c', "string.quoted.double.wirespec"],
-      ['\\"', "constant.character.escape.wirespec"],
+      ['"cat"', "string.quoted.double.wirespec"],
       ["String", "support.type.primitive.wirespec"],
     ]);
   });

@@ -72,6 +72,13 @@ internal class LiteralTypeNotAllowedException(fileUri: FileUri, fieldName: Strin
         message = "A string literal type is only allowed on the fields of a type, not on: $fieldName",
     )
 
+internal class InvalidLiteralTypeException(fileUri: FileUri, literal: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A string literal type can only have letters, digits, - and _: $literal",
+    )
+
 internal class LiteralTypeModifierException(fileUri: FileUri, fieldName: String, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,

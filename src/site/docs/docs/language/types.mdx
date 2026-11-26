@@ -134,8 +134,8 @@ type Cat {
 ```
 
 A string literal type is the whole type of a field of a type. It cannot be optional, and it does not go in a list or a
-dictionary, in a part, or in the parameters and bodies of an endpoint, a channel or an rpc. It supports the same escapes
-as a string default: `\"`, `\\`, `\n`, `\r` and `\t`.
+dictionary, in a part, or in the parameters and bodies of an endpoint, a channel or an rpc. Its value is made of
+letters, digits, `-` and `_`: `"cat"`, `"guide-dog"` and `"V2_beta"`, but not `"guide dog"` or `""`.
 
 TypeScript has literal types of its own, so there `kind` is the type `"cat"`. In Java, Kotlin, Python, Rust and Scala
 the field is a string, and the generated `validate` function reports the field when it holds another value. OpenAPI and

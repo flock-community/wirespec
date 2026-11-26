@@ -482,7 +482,7 @@ class ParseTypeTest {
             """
             |type Dog {
             |    kind: "dog",
-            |    sound: "\"woof\"" = "\"woof\""
+            |    sound: "Woof_woof-2" = "Woof_woof-2"
             |}
             """.trimMargin()
 
@@ -493,7 +493,7 @@ class ParseTypeTest {
             .shape.fields
             .map { it.reference } shouldBe listOf(
             Reference.Literal("dog", isNullable = false),
-            Reference.Literal("\"woof\"", isNullable = false),
+            Reference.Literal("Woof_woof-2", isNullable = false),
         )
     }
 
@@ -516,6 +516,15 @@ class ParseTypeTest {
             "channel Foo -> \"cat\"",
             "type Foo = \"cat\"",
         ).forEach { source -> parser(source).shouldBeLeft() }
+    }
+
+    @Test
+    fun testStringLiteralTypeOnlyHasLettersDigitsDashAndUnderscore() {
+        listOf("good boy", "", "caf\u00e9", "a.b", "a/b", "\\\"cat\\\"").forEach { value ->
+            parser("type Foo { kind: \"$value\" }")
+                .shouldBeLeft()
+                .head.message shouldBe "A string literal type can only have letters, digits, - and _: \"$value\""
+        }
     }
 
     @Test
