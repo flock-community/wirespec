@@ -1,0 +1,15 @@
+[package]
+name = "wirespec-json-rpc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Validates refined types; every generated file imports it.
+regex = "1"
+# Serialization: the RustSerde extension makes every model a serde type.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Transportation: reqwest for the client, actix-web for the server.
+reqwest = "0.12"
+actix-web = "4"
+tokio = { version = "1", features = ["macros", "rt"] }

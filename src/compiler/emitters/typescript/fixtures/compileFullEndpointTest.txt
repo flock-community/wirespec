@@ -238,6 +238,7 @@ export const client = (serialization: Wirespec.Serialization, transportation: Wi
 })
 
 export {PutTodo} from './PutTodo'
+
 export {PotentialTodoDto} from './PotentialTodoDto'
 export {Token} from './Token'
 export {TodoDto} from './TodoDto'

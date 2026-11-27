@@ -1,0 +1,274 @@
+---
+title: JSON-RPC
+slug: /integration/json-rpc
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import { Languages } from "@site/src/components/Languages";
+
+:::caution[Experimental]
+<Languages languages={["Java", "Kotlin", "Scala", "TypeScript", "Python", "Rust"]} />
+
+This integration is experimental: its API, generated code and options may still change between releases.
+:::
+
+The `json-rpc` integration ships an [IR extension](../plugins/plugins.md#ir-extensions) that sends and serves the
+[rpcs](../language/rpc.mdx) of a contract as [JSON-RPC 2.0](https://www.jsonrpc.org/specification) methods. It works
+the way the generated code works for an [endpoint](../language/endpoints.mdx): the code is dependency-free, and you bring
+the two things that depend on your stack.
+
+- A **`Wirespec.Transportation`** moves a message: an HTTP client, a WebSocket, a pipe to another process.
+- A **`Wirespec.Serialization`** reads and writes the values: Jackson, kotlinx.serialization, serde_json, or your own.
+
+The generated code writes and reads the JSON-RPC envelope itself, `{"jsonrpc":"2.0","method":...,"id":...}`, and hands
+every param, result and error to the serialization. So the transportations and serializations you already use for your
+endpoints work for JSON-RPC as they are.
+
+## Setup
+
+The extension is bundled with every Wirespec plugin as `JsonRpc`.
+
+<Tabs groupId="build-tool">
+  <TabItem value="gradle" label="Gradle">
+    ```kotlin title="build.gradle.kts"
+    import community.flock.wirespec.integration.jsonrpc.extension.JsonRpcExtension
+    import community.flock.wirespec.plugin.Language
+    import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+
+    tasks.register<CompileWirespecTask>("wirespec-kotlin") {
+        input = layout.projectDirectory.dir("src/main/wirespec")
+        output = layout.buildDirectory.dir("generated")
+        packageName = "community.flock.users"
+        language = Language.Kotlin
+        extensionClasses = listOf(JsonRpcExtension::class.java)
+    }
+    ```
+  </TabItem>
+  <TabItem value="maven" label="Maven">
+    ```xml title="pom.xml"
+    <configuration>
+        <input>${project.basedir}/src/main/wirespec</input>
+        <output>${project.build.directory}/generated-sources</output>
+        <packageName>community.flock.users</packageName>
+        <language>Kotlin</language>
+        <extensionClasses>
+            <extensionClass>JsonRpc</extensionClass>
+        </extensionClasses>
+    </configuration>
+    ```
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+    ```shell
+    wirespec compile -i ./src/main/wirespec -o ./src/generated -l Rust -p '' --shared -e JsonRpc -e RustSerde
+    ```
+  </TabItem>
+</Tabs>
+
+The generated code compiles against the shared `Wirespec` file: its `Transportation`, `Serialization`, `RawRequest` and
+`RawResponse`. For Java, Kotlin and Scala that is the `community.flock.wirespec.integration:wirespec` library or the
+emitted shared file; for TypeScript, Python and Rust, emit the shared file along with it (`--shared`).
+
+## The contract
+
+The examples on this page use this contract:
+
+```wirespec
+type User { name: String, email: String? }
+type UserNotFound { id: String }
+
+rpc GetUser { id: String } -> User ! UserNotFound
+rpc FindUsers { name: String? } -> User[]
+
+@JsonRpcMethod("users/rename")
+rpc RenameUser { id: String, name: String } -> Unit ! UserNotFound
+```
+
+Next to the `model` and `rpc` files, the extension writes one file in the root package, next to the `Client` of the
+endpoints. Java has a file per class:
+
+| Language   | File                                                                        |
+|------------|-----------------------------------------------------------------------------|
+| Kotlin     | `JsonRpc.kt`                                                                |
+| Java       | `JsonRpcClient.java`, `JsonRpcServer.java`, `JsonRpcException.java`, `JsonRpc.java` |
+| Scala      | `JsonRpc.scala`                                                             |
+| TypeScript | `JsonRpc.ts`                                                                |
+| Python     | `JsonRpc.py`                                                                |
+| Rust       | `json_rpc.rs`, declared in the `mod.rs` of the root                         |
+
+It holds:
+
+- a **`JsonRpcClient`** with a function for every rpc;
+- a **`JsonRpcServer`** that answers requests by calling a service that implements the `Service` of every rpc;
+- a **`JsonRpcException`** (`JsonRpcError` in TypeScript, Python and Rust) for an error object the server answered with;
+- **`JsonRpc`**, with the codes of the errors JSON-RPC defines.
+
+## The client
+
+The client takes the serialization and the transportation, just like the `Client` of the endpoints, and has a function
+for every rpc. It posts a request as the body of a `Wirespec.RawRequest`, and reads the result from the body of the
+response.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    val client = JsonRpcClient(serialization, transportation)
+
+    when (val response = client.getUser(id = "1")) {
+        is GetUser.Result -> println(response.value.name)
+        is GetUser.Error -> println("No user ${response.value.id}")
+    }
+    ```
+
+    The client implements the `Service` of every rpc, so it can stand in wherever your code takes one.
+  </TabItem>
+  <TabItem value="rust" label="Rust">
+    ```rust
+    let client = JsonRpcClient { serialization: Json, transportation: Http::new("http://localhost:8080/rpc") };
+
+    match client.get_user("1").await? {
+        GetUser::Response::Result(result) => println!("{}", result.value.name),
+        GetUser::Response::Error(error) => println!("No user {}", error.value.id),
+    }
+    ```
+
+    The Rust `Service` of an rpc cannot fail, so the client does not implement it: its functions return a `Result`, with
+    a `JsonRpcError` when the request could not be sent, the response could not be read, or the server answered with an
+    error object.
+  </TabItem>
+</Tabs>
+
+The request goes to the path of the raw request, which is empty: the transportation decides where it goes, so point it
+at the JSON-RPC endpoint of the server, such as `http://localhost:8080/rpc`.
+
+## The server
+
+The server takes the serialization and a service that implements the `Service` of every rpc. Its `handle` reads a
+request from the body of a `Wirespec.RawRequest`, calls the service and answers with a `Wirespec.RawResponse`. Hand it
+the requests of one route of your web framework, or the messages of any other channel.
+
+<Tabs groupId="language">
+  <TabItem value="kotlin" label="Kotlin">
+    ```kotlin
+    class Users : GetUser.Service, FindUsers.Service, RenameUser.Service {
+        override suspend fun getUser(id: String): GetUser.Response = ...
+        override suspend fun findUsers(name: String?): List<User> = ...
+        override suspend fun renameUser(id: String, name: String): RenameUser.Response = ...
+    }
+
+    val server = JsonRpcServer(serialization, Users())
+
+    // In a route of your web framework
+    val response: Wirespec.RawResponse = server.handle(rawRequest)
+    ```
+  </TabItem>
+  <TabItem value="rust" label="Rust">
+    ```rust
+    struct Users;
+    impl GetUser::Service for Users {
+        async fn get_user(&self, id: &str) -> GetUser::Response { ... }
+    }
+    impl FindUsers::Service for Users { ... }
+    impl RenameUser::Service for Users { ... }
+
+    let server = JsonRpcServer { serialization: Json, service: Users };
+
+    // In a route of your web framework
+    let response: RawResponse = server.handle(&raw_request).await;
+    ```
+  </TabItem>
+</Tabs>
+
+A response has status 200 and a JSON body, or status 204 and no body when there is nothing to answer, such as for a
+notification.
+
+## On the wire
+
+The client and the server follow the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification). The servers
+of every language answer each example in section 7 of the specification as it does; the tests of the integration hold
+those examples as they are written there.
+
+A request names the method of the rpc, and its params are an object with the fields of the rpc under their Wirespec
+names. A field without a value is left out, and an rpc without fields has no params:
+
+```json
+{"jsonrpc":"2.0","method":"getUser","params":{"id":"1"},"id":1}
+```
+
+```json
+{"jsonrpc":"2.0","result":{"name":"Ada","email":null},"id":1}
+```
+
+- **Method.** The method of an rpc is its name in camel case: `GetUser` is `getUser`. To serve or call an existing API,
+  name it with `@JsonRpcMethod`, as `RenameUser` is `users/rename`. JSON-RPC reserves the methods that start with
+  `rpc.`, so the extension fails on a method named like that.
+- **Params.** The server reads params by name, and by position in the order of the fields. A field that is not
+  nullable must be there. Params that are no Object or Array make the request invalid.
+- **Results.** A result of type `Unit` is `null`. An rpc whose result is nullable answers `null` for no result.
+- **Batches.** The server answers a batch with an array of the answers to its requests, in order. A batch of
+  notifications is not answered, just like one notification.
+- **Notifications.** The server calls the service for a request without an `id`, and does not answer it, not even
+  with an error.
+- **Ids.** The server answers with the `id` of the request as it was. An `id` must be a String, a Number or Null: a
+  request with any other `id` is invalid, and is answered with `id` null. The client sends every request with id 1:
+  the transportation answers a request with its own response, so the id needs no counter.
+- **Responses.** The client reads a response only when it is JSON-RPC 2.0: it has `"jsonrpc": "2.0"`, either a result
+  or an error object with an integer code and a message, and id 1, or null with an error. It fails on any other answer.
+
+## Errors
+
+An rpc with an [error type](../language/rpc.mdx#errors) answers its error as an error object with the name of the
+error type as its message, and the error as its data. Its code is `1`, or the code of `@JsonRpcError`:
+
+```wirespec
+@JsonRpcMethod("users/rename")
+@JsonRpcError(404)
+rpc RenameUser { id: String, name: String } -> Unit ! UserNotFound
+```
+
+```json
+{"jsonrpc":"2.0","error":{"code":404,"message":"UserNotFound","data":{"id":"2"}},"id":1}
+```
+
+JSON-RPC reserves the codes from -32768 to -32000 for its own errors, and leaves the others to the application, which
+the error of an rpc is part of. So the extension fails on an rpc whose `@JsonRpcError` is in that range.
+
+The client reads an error object with the code of the rpc and data as the `Error` of the rpc. Every other error object
+fails the call with a `JsonRpcException`, or a `JsonRpcError` in TypeScript, Python and Rust, that holds its code, its
+message and its data as JSON. The server answers with the errors JSON-RPC defines:
+
+| Code     | Message          | When                                                                              |
+|----------|------------------|-----------------------------------------------------------------------------------|
+| `-32700` | Parse error      | The body is no JSON, anywhere in it                                               |
+| `-32600` | Invalid Request  | The JSON is no JSON-RPC 2.0 request, or the batch is empty                        |
+| `-32601` | Method not found | No rpc has the method                                                             |
+| `-32602` | Invalid params   | A param that is not nullable is missing, or the serialization cannot read a param |
+| `-32603` | Internal error   | The service threw. A Rust service cannot fail, so it never gets this one          |
+
+JSON nested too deeply to read is a parse error too, never a crash: Java, Kotlin, Scala and Rust read it without
+recursion, and TypeScript and Python catch the failure of their own parser.
+
+## Languages
+
+The client and the server follow the language they are generated for:
+
+- **Kotlin** sends through a `suspend` transportation. With `--sync`, the server's `handle` is a plain function that
+  calls the services on the thread that handles the request, and the client has the same functions, without
+  implementing the `Service`, as the transportation still suspends.
+- **Java** works with `CompletableFuture`s in the same way: with `--sync`, `handle` returns the `RawResponse` itself.
+- **Scala** is synchronous, like its `Service` and `Transportation`.
+- **TypeScript** tells the `Result` of an rpc from its `Error` by its `kind`: a service returns
+  `{ kind: "Error", value }`, and so does the client. The bytes of a message are read and written with
+  `TextEncoder` and `TextDecoder`, which every runtime has.
+- **Python** reads the envelope with the `json` module of its standard library.
+- **Rust** gets a module of its own, `json_rpc`. Its client returns a `Result`. The values go through your
+  `Serialization`, so with serde, register the [Serde](./integration-rust-serde.mdx) extension too.
+
+A value of type `String` is written and read by the generated code, not by the serialization: the Wirespec
+serializations write a body of type `String` as text, not as JSON.
+
+## Example
+
+The [Kotlin](https://github.com/flock-community/wirespec/tree/master/examples/gradle-json-rpc) and
+[Rust](https://github.com/flock-community/wirespec/tree/master/examples/rust-json-rpc) examples serve a contract over
+HTTP with a JSON-RPC server, and call it with the client.

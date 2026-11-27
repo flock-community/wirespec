@@ -104,7 +104,7 @@ The compile mojo supports the following parameters:
 - **shared**: Whether to emit shared Wirespec code. Default is 'true'.
 - **specTitle**: The title of the spec, instead of the one it declares. Used by `OpenAPIV2`, `OpenAPIV3` and `AsyncAPI`, see [The title and version of the spec](./plugins.md#the-title-and-version-of-the-spec).
 - **specVersion**: The version of the spec, instead of the one it declares, such as `${project.version}`. Used by `OpenAPIV2`, `OpenAPIV3` and `AsyncAPI`.
-- **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, when the emitter is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `GraphQLClient`, `Jackson`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `RustSerde`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
+- **extensionClasses**: List of the IR extensions to apply to the intermediate representation before code generation, when the emitter is an `IrEmitter`. Each entry is the name of an [extension bundled with the plugin](./plugins.md#ir-extensions) (`Avro`, `GraphQLClient`, `Jackson`, `JsonRpc`, `JvmBuilder`, `KotestDsl`, `KotlinxSerialization`, `RustSerde`, `SpringMappingAnnotations` or `SpringNativeHints`), which applies to the languages it supports, or the fully qualified name of an `IrExtension` class of your own.
 
 ### Wirespec files from the classpath
 

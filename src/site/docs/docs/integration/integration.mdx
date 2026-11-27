@@ -9,7 +9,8 @@ import { Languages } from "@site/src/components/Languages";
 Wirespec has integrations with major frameworks, including Spring for enterprise application development, Jackson,
 kotlinx.serialization and Serde for JSON processing, Avro for data serialization and schema management, WireMock for type-safe
 HTTP stubbing in tests, and Kotest for property-based scenario tests driven by your contract. For the JVM languages it can
-also add builders to the generated models, and a typed GraphQL client for the rpcs of a GraphQL schema.
+also add builders to the generated models, and a typed GraphQL client for the rpcs of a GraphQL schema. For every
+language it can send and serve the rpcs as JSON-RPC.
 
 ## Overview
 
@@ -19,6 +20,7 @@ also add builders to the generated models, and a typed GraphQL client for the rp
 | [Builders](./integration-builders.mdx)                           | An immutable builder for every model                               | <Languages languages={["Java", "Kotlin", "Scala"]} /> |              |
 | [GraphQL client](./integration-graphql.mdx)                      | A typed GraphQL client and query builder for the rpcs              | <Languages languages={["Java", "Kotlin", "Scala"]} /> | Experimental |
 | [Jackson](./integration-jackson.mdx)                             | A Jackson module and annotations for the models                    | <Languages languages={["Java", "Kotlin"]} />          |              |
+| [JSON-RPC](./integration-json-rpc.mdx)                           | A JSON-RPC 2.0 client and server for the rpcs                      | <Languages languages={["Java", "Kotlin", "Scala", "TypeScript", "Python", "Rust"]} /> | Experimental |
 | [Kotest](./integration-kotest.mdx)                               | A Kotest scenario DSL for the models, endpoints, channels and rpcs | <Languages languages={["Kotlin"]} />                  |              |
 | [kotlinx.serialization](./integration-kotlinx-serialization.mdx) | `@Serializable` and `@SerialName` on the models                    | <Languages languages={["Kotlin"]} />                  |              |
 | [Serde](./integration-rust-serde.mdx)                            | Serde serialization for the models                                 | <Languages languages={["Rust"]} />                    | Experimental |

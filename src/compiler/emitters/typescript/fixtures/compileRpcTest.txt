@@ -13,9 +13,11 @@ import {type User} from '../model'
 export namespace GetUser {
   export type Response = Result | Error
   export type Result = {
+    "kind": "Result",
     "value": User,
   }
   export type Error = {
+    "kind": "Error",
     "value": string,
   }
   export interface Service {
@@ -41,5 +43,6 @@ export namespace UserGenerator {
 }
 
 export {User} from './User'
+
 export {GetUser} from './GetUser'
 export {Ping} from './Ping'
