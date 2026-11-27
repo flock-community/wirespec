@@ -47,7 +47,7 @@ public fun Extension.toIrExtension(packageName: PackageName, language: FileExten
     when (it) {
         Extension.Avro -> AvroExtension(packageName, language)
         Extension.GraphQLClient -> GraphQLClientExtension(packageName, language)
-        Extension.Jackson -> JacksonExtension()
+        Extension.Jackson -> JacksonExtension(language)
         Extension.JvmBuilder -> JvmBuilderExtension(language)
         Extension.KotestDsl -> KotestDslExtension(packageName)
         Extension.KotlinxSerialization -> KotlinxSerializationExtension()

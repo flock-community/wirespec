@@ -21,7 +21,8 @@ The extension annotates the top-level model declarations of each generated Kotli
 
 - records and refined types get `@Serializable` and `@SerialName("<wirespec name>")`
 - refined types are emitted as `@JvmInline value class`, so they serialize as their bare value
-- `union` and `enum` types get `@Serializable`
+- `enum` types get `@Serializable`
+- `union` types get a serializer of their own, see [Unions](#unions)
 
 For example, this definition:
 
@@ -31,7 +32,6 @@ type Todo {
   name: String
 }
 type TodoId = String(/^[0-9]+$/g)
-type UserAccount = UserAccountPassword | UserAccountToken
 ```
 
 is emitted as:
@@ -48,9 +48,6 @@ data class Todo(
 @kotlinx.serialization.SerialName("TodoId")
 @kotlin.jvm.JvmInline
 value class TodoId(/* ... */)
-
-@kotlinx.serialization.Serializable
-sealed interface UserAccount
 ```
 
 Because `TodoId` is a value class, kotlinx.serialization flattens it to the wrapped value:
@@ -59,6 +56,51 @@ Because `TodoId` is a value class, kotlinx.serialization flattens it to the wrap
 
 The annotations are emitted fully qualified, so the generated code stays dependency-free apart from the
 kotlinx.serialization runtime — no imports are added.
+
+### Unions
+
+kotlinx.serialization writes a sealed interface with a `type` property of its own. The extension leaves that
+out: a member of a union is written as it is. You declare the field that tells the members apart yourself,
+with a string literal type in every member, and name it on the union with `@KotlinxSerializationDiscriminator`:
+
+```wirespec
+@KotlinxSerializationDiscriminator("kind")
+type Pet = Dog | Cat
+
+type Dog {
+  kind: "dog",
+  name: String
+}
+
+type Cat {
+  kind: "cat",
+  lives: Integer
+}
+```
+
+The union gets a serializer that picks the member by that field:
+
+```kotlin
+@kotlinx.serialization.Serializable(with = PetSerializer::class)
+sealed interface Pet
+
+object PetSerializer : kotlinx.serialization.json.JsonContentPolymorphicSerializer<Pet>(Pet::class) {
+  override fun selectDeserializer(element: kotlinx.serialization.json.JsonElement): kotlinx.serialization.DeserializationStrategy<Pet> =
+    when (val literal = ((element as? kotlinx.serialization.json.JsonObject)?.get("kind") as? kotlinx.serialization.json.JsonPrimitive)?.content) {
+      "dog" -> Dog.serializer()
+      "cat" -> Cat.serializer()
+      else -> throw kotlinx.serialization.SerializationException("Pet has no member with the kind '$literal'")
+    }
+}
+```
+
+A `Dog` is written as `{"kind":"dog","name":"Rex"}`, and a `Pet` with `"kind": "cat"` is read as a `Cat`.
+
+- Compilation fails when a member of the union does not have the field as a string literal, or when two
+  members have the same literal.
+- A union without `@KotlinxSerializationDiscriminator` is written the same way, but reading it throws a
+  `SerializationException`: nothing in the JSON says which member it is.
+- The serializer of a union works on JSON, so the generated code needs `kotlinx-serialization-json`.
 
 :::note
 Endpoint-internal structs (the `Path`, `Request`, `Response` types nested inside an endpoint) are left

@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 class KotlinxSerializationExtensionTest {
@@ -40,6 +41,16 @@ class KotlinxSerializationExtensionTest {
         |}
         |type UserAccountToken {
         |  token: String
+        |}
+        |@KotlinxSerializationDiscriminator("kind")
+        |type Pet = Dog | Cat
+        |type Dog {
+        |  kind: "dog",
+        |  name: String
+        |}
+        |type Cat {
+        |  kind: "cat",
+        |  lives: Integer
         |}
         |enum Color { Red, Green, Blue }
         """.trimMargin()
@@ -77,13 +88,39 @@ class KotlinxSerializationExtensionTest {
     }
 
     @Test
-    fun `Should annotate unions with Serializable but no SerialName`() {
+    fun `Should read a union with a discriminator by that field`() {
+        val union = emit().single { it.file.endsWith("Pet.kt") }.result
+
+        assertContains(
+            union,
+            """
+            |@kotlinx.serialization.Serializable(with = PetSerializer::class)
+            |public sealed interface Pet
+            |public object PetSerializer : kotlinx.serialization.json.JsonContentPolymorphicSerializer<Pet>(Pet::class) {
+            |  override fun selectDeserializer(element: kotlinx.serialization.json.JsonElement): kotlinx.serialization.DeserializationStrategy<Pet> =
+            |    when (val literal = ((element as? kotlinx.serialization.json.JsonObject)?.get("kind") as? kotlinx.serialization.json.JsonPrimitive)?.content) {
+            |      "dog" -> Dog.serializer()
+            |      "cat" -> Cat.serializer()
+            |      else -> throw kotlinx.serialization.SerializationException("Pet has no member with the kind '${'$'}literal'")
+            |    }
+            |}
+            """.trimMargin(),
+        )
+    }
+
+    @Test
+    fun `Should not read a union without a discriminator`() {
         val union = emit().single { it.file.endsWith("UserAccount.kt") }.result
 
         assertContains(
             union,
-            """@kotlinx.serialization.Serializable
+            """
+            |@kotlinx.serialization.Serializable(with = UserAccountSerializer::class)
             |public sealed interface UserAccount
+            |public object UserAccountSerializer : kotlinx.serialization.json.JsonContentPolymorphicSerializer<UserAccount>(UserAccount::class) {
+            |  override fun selectDeserializer(element: kotlinx.serialization.json.JsonElement): kotlinx.serialization.DeserializationStrategy<UserAccount> =
+            |    throw kotlinx.serialization.SerializationException("UserAccount cannot be read: name the field that tells its members apart with @KotlinxSerializationDiscriminator")
+            |}
             """.trimMargin(),
         )
         assertFalse("@kotlinx.serialization.SerialName" in union, "Unions should not get a @SerialName annotation")
@@ -121,6 +158,23 @@ class KotlinxSerializationExtensionTest {
         assertFalse(
             "@kotlinx.serialization" in generator,
             "Generator helper objects are not models and must not be annotated",
+        )
+    }
+
+    @Test
+    fun `Should report a discriminator that is not a literal in every member`() {
+        val ast = parse(
+            """
+            |@KotlinxSerializationDiscriminator("kind")
+            |type Pet = Dog | Cat
+            |type Dog { kind: "dog" }
+            |type Cat { kind: String }
+            """.trimMargin(),
+        )
+
+        assertEquals(
+            listOf("@KotlinxSerializationDiscriminator(\"kind\") on union 'Pet': its member 'Cat' is not a type with a field 'kind' of a string literal type"),
+            KotlinxSerializationExtension().validate(ast).map { it.message },
         )
     }
 }

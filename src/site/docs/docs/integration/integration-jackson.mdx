@@ -99,25 +99,39 @@ imports accordingly.
 Instead of (or in addition to) registering the runtime module, you can let Wirespec write the Jackson
 annotations directly into the generated code. This integration ships an
 [IR extension](../plugins/plugins.md#ir-extensions) that adds the annotations during compilation, so
-polymorphic `union` types round-trip without any extra mapper configuration.
+a `union` with a discriminator round-trips without any extra mapper configuration.
 
 The extension annotates the top-level model declarations of each generated file:
 
 - record fields get `@JsonProperty("<wirespec name>")`, preserving the original field name even when the
   emitter has to sanitize a reserved keyword.
-- `union` types get `@JsonTypeInfo(... property = "type")`, and each union member gets
-  `@JsonTypeName("<wirespec name>")`, so polymorphic values round-trip through a `type` discriminator.
-  Subtypes are resolved from the sealed hierarchy that the Java (`permits`) and Kotlin (`sealed interface`)
-  emitters generate.
+- a `union` with `@JacksonDiscriminator` gets `@JsonTypeInfo` and `@JsonSubTypes` on the field the
+  annotation names.
 
-For example, this definition:
+### Unions
+
+The extension adds no property of its own to the JSON. You declare the field that tells the members of a
+union apart yourself, with a string literal type in every member, and name it on the union with
+`@JacksonDiscriminator`:
 
 ```wirespec
 type Todo {
   id: TodoId,
   name: String
 }
-type UserAccount = UserAccountPassword | UserAccountToken
+
+@JacksonDiscriminator("kind")
+type Pet = Dog | Cat
+
+type Dog {
+  kind: "dog",
+  name: String
+}
+
+type Cat {
+  kind: "cat",
+  lives: Integer
+}
 ```
 
 is emitted as (Kotlin shown; the Java emitter produces the same annotations on records and the sealed
@@ -129,16 +143,21 @@ data class Todo(
   @com.fasterxml.jackson.annotation.JsonProperty("name") val name: String,
 )
 
-@com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME, include = com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY, property = "type")
-sealed interface UserAccount
-
-@com.fasterxml.jackson.annotation.JsonTypeName("UserAccountPassword")
-data class UserAccountPassword(/* ... */)
+@com.fasterxml.jackson.annotation.JsonTypeInfo(use = com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME, include = com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXISTING_PROPERTY, property = "kind", visible = true)
+@com.fasterxml.jackson.annotation.JsonSubTypes(com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = Dog::class, name = "dog"), com.fasterxml.jackson.annotation.JsonSubTypes.Type(value = Cat::class, name = "cat"))
+sealed interface Pet
 ```
 
+A `Dog` is written as `{"kind":"dog","name":"Rex"}`, and a `Pet` with `"kind": "cat"` is read as a `Cat`.
+
+- Compilation fails when a member of the union does not have the field as a string literal, or when two
+  members have the same literal.
+- A union without `@JacksonDiscriminator` is not annotated. Jackson writes its members as they are, and
+  cannot read one back: nothing in the JSON says which member it is.
+
 The annotations are emitted fully qualified against `com.fasterxml.jackson.annotation` (shared by Jackson 2
-and 3) and use only syntax that is valid in **both Java and Kotlin**, so the generated code stays
-dependency-free apart from the jackson-annotations runtime — no imports are added.
+and 3), so the generated code stays dependency-free apart from the jackson-annotations runtime — no imports
+are added.
 
 :::note
 Endpoint-internal structs (the `Path`, `Request`, `Response` types nested inside an endpoint) are left

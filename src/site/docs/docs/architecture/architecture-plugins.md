@@ -45,8 +45,12 @@ The built-in emitters are customised with **IR extensions** rather than replaced
 ```kotlin
 fun interface IrExtension {
     fun extend(ir: IR, ast: AST): IR
+
+    fun validate(ast: AST): List<EmitterException> = emptyList()
 }
 ```
+
+An extension that reads annotations of its own reports in `validate` what keeps it from extending the IR, such as a `@JacksonDiscriminator` that names a field a member of the union does not have. The compiler collects these errors with those of the emitter, before anything is emitted.
 
 An extension can add files, drop files, or reshape the elements of existing ones — annotate a struct, append a method, wrap a namespace. Because it operates on the IR rather than on generated text, one extension can serve several target languages and the generator still renders idiomatic code. Extensions are written in Kotlin: the IR is an Arrow `NonEmptyList`, a Kotlin value class that Java code cannot implement an interface against.
 

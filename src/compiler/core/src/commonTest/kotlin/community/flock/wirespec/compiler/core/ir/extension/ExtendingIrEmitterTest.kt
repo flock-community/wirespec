@@ -7,8 +7,10 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.exceptions.EmitterException
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.File
+import community.flock.wirespec.compiler.core.ir.IR
 import community.flock.wirespec.compiler.core.ir.Name
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.emit.IrEmitter
@@ -99,5 +101,16 @@ class ExtendingIrEmitterTest {
         val extension = IrExtension { ir, _ -> ir }
 
         assertIs<ExtendingIrEmitter>(TestEmitter.applyExtensions(nonEmptyListOf(extension)))
+    }
+
+    @Test
+    fun shouldReportWhatKeepsAnExtensionFromExtending() {
+        val error = EmitterException(FileUri("test.ws"), "Foo cannot be extended")
+        val failing = object : IrExtension {
+            override fun extend(ir: IR, ast: AST) = ir
+            override fun validate(ast: AST) = listOf(error)
+        }
+
+        assertEquals(listOf(error), TestEmitter.applyExtensions(nonEmptyListOf(failing)).validate(ast))
     }
 }
