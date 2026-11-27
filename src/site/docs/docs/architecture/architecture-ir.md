@@ -6,7 +6,7 @@ slug: /architecture/ir
 
 # IR Model
 
-The IR pipeline described on this page runs **inside an emitter** — specifically, emitters that opt into the IR approach (e.g., `JavaEmitter`, `KotlinEmitter`, `PythonEmitter`, `RustEmitter`, `ScalaEmitter`, `TypeScriptEmitter`). It sits between the parser's AST and the final string output, replacing the direct AST-walking that older emitters used. For where IR-based emitters fit in the overall compiler flow, see [Architecture](./architecture.md).
+The IR pipeline described on this page runs **inside an emitter** — specifically, emitters that opt into the IR approach (e.g., `JavaEmitter`, `KotlinEmitter`, `PythonEmitter`, `PhpEmitter`, `RustEmitter`, `ScalaEmitter`, `TypeScriptEmitter`). It sits between the parser's AST and the final string output, replacing the direct AST-walking that older emitters used. For where IR-based emitters fit in the overall compiler flow, see [Architecture](./architecture.md).
 
 Wirespec compiles `.ws` source files into code for multiple target languages. After parsing Wirespec source into an AST, an IR-based emitter uses an **Intermediate Representation (IR)** — a language-neutral tree that sits between the parser and code generation. This page explains the IR pipeline and the model each Wirespec definition is converted into.
 
@@ -74,7 +74,7 @@ File("Address") {
 }
 ```
 
-Every IR emitter applies the `ValidateExtension` to the complete IR before any other [IR extension](./architecture-plugins.md#ir-extensions). It gives each model struct a `Function("validate") → Array(String)` that checks every refined type and constrained primitive the model holds, at any depth inside lists, dicts, nullables and other models, and collects the path of each invalid value, such as `address.postalCode`, `tags[1]` or `labels[home]`. Because the extension sees the whole AST, a model can reference definitions from any module. The function follows the language: a method on the model, taking `self` in Python and Rust, or a `validate<Model>(obj)` function next to a TypeScript type.
+Every IR emitter applies the `ValidateExtension` to the complete IR before any other [IR extension](./architecture-plugins.md#ir-extensions). It gives each model struct a `Function("validate") → Array(String)` that checks every refined type and constrained primitive the model holds, at any depth inside lists, dicts, nullables and other models, and collects the path of each invalid value, such as `address.postalCode`, `tags[1]` or `labels[home]`. Because the extension sees the whole AST, a model can reference definitions from any module. The function follows the language: a method on the model, taking `self` in Python and Rust and reading `$this` in PHP, or a `validate<Model>(obj)` function next to a TypeScript type.
 
 ## Enum
 

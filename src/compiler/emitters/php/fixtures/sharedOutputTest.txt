@@ -1,0 +1,436 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Wirespec\Request;
+
+interface Headers
+{
+}
+
+namespace Community\Flock\Wirespec\Generated\Wirespec\Response;
+
+interface Headers
+{
+}
+
+namespace Community\Flock\Wirespec\Generated\Wirespec;
+
+interface Model
+{
+}
+
+interface Shape extends Model
+{
+    /**
+     * @return list<string>
+     */
+    public function validate(): array;
+}
+
+interface Enum extends Model
+{
+}
+
+/**
+ * @template T
+ */
+interface Refined extends Model
+{
+    public function validate(): bool;
+}
+
+interface Endpoint
+{
+}
+
+interface Channel
+{
+}
+
+interface Rpc
+{
+}
+
+interface Path
+{
+}
+
+interface Queries
+{
+}
+
+interface Headers
+{
+}
+
+interface Handler
+{
+}
+
+interface Call
+{
+}
+
+enum Method: string
+{
+    case GET = 'GET';
+    case PUT = 'PUT';
+    case POST = 'POST';
+    case DELETE = 'DELETE';
+    case OPTIONS = 'OPTIONS';
+    case HEAD = 'HEAD';
+    case PATCH = 'PATCH';
+    case TRACE = 'TRACE';
+}
+
+/**
+ * @template T
+ */
+interface Request
+{
+}
+
+/**
+ * @template T
+ */
+interface Response
+{
+}
+
+interface BodySerializer
+{
+    /**
+     * @template T
+     * @param T $t
+     */
+    public function serializeBody(mixed $t, string $type): string;
+}
+
+interface BodyDeserializer
+{
+    /**
+     * @template T
+     * @return T
+     */
+    public function deserializeBody(string $raw, string $type): mixed;
+}
+
+interface BodySerialization extends BodySerializer, BodyDeserializer
+{
+}
+
+interface PathSerializer
+{
+    /**
+     * @template T
+     * @param T $t
+     */
+    public function serializePath(mixed $t, string $type): string;
+}
+
+interface PathDeserializer
+{
+    /**
+     * @template T
+     * @return T
+     */
+    public function deserializePath(string $raw, string $type): mixed;
+}
+
+interface PathSerialization extends PathSerializer, PathDeserializer
+{
+}
+
+interface ParamSerializer
+{
+    /**
+     * @template T
+     * @param T $value
+     * @return list<string>
+     */
+    public function serializeParam(mixed $value, string $type): array;
+}
+
+interface ParamDeserializer
+{
+    /**
+     * @template T
+     * @param list<string> $values
+     * @return T
+     */
+    public function deserializeParam(array $values, string $type): mixed;
+}
+
+interface ParamSerialization extends ParamSerializer, ParamDeserializer
+{
+}
+
+interface Serializer extends BodySerializer, PathSerializer, ParamSerializer
+{
+}
+
+interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer
+{
+}
+
+interface Serialization extends Serializer, Deserializer
+{
+}
+
+final readonly class RawRequest
+{
+    /**
+     * @param list<string> $path
+     * @param array<string, list<string>> $queries
+     * @param array<string, list<string>> $headers
+     */
+    public function __construct(
+        public string $method,
+        public array $path,
+        public array $queries,
+        public array $headers,
+        public ?string $body,
+    ) {
+    }
+}
+
+final readonly class RawResponse
+{
+    /**
+     * @param array<string, list<string>> $headers
+     */
+    public function __construct(
+        public int $statusCode,
+        public array $headers,
+        public ?string $body,
+    ) {
+    }
+}
+
+interface Transportation
+{
+    public function transport(RawRequest $request): RawResponse;
+}
+
+/**
+ * @template T
+ */
+interface GeneratorField
+{
+}
+
+/**
+ * @implements GeneratorField<string>
+ */
+final readonly class GeneratorFieldString implements GeneratorField
+{
+    /**
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public ?string $regex,
+        public array $annotations,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<int>
+ */
+final readonly class GeneratorFieldInteger64 implements GeneratorField
+{
+    /**
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public ?int $min,
+        public ?int $max,
+        public array $annotations,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<int>
+ */
+final readonly class GeneratorFieldInteger32 implements GeneratorField
+{
+    /**
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public ?int $min,
+        public ?int $max,
+        public array $annotations,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<float>
+ */
+final readonly class GeneratorFieldNumber64 implements GeneratorField
+{
+    /**
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public ?float $min,
+        public ?float $max,
+        public array $annotations,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<float>
+ */
+final readonly class GeneratorFieldNumber32 implements GeneratorField
+{
+    /**
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public ?float $min,
+        public ?float $max,
+        public array $annotations,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<bool>
+ */
+final readonly class GeneratorFieldBoolean implements GeneratorField
+{
+    /**
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public array $annotations,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<string>
+ */
+final readonly class GeneratorFieldBytes implements GeneratorField
+{
+    /**
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public array $annotations,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<string>
+ */
+final readonly class GeneratorFieldEnum implements GeneratorField
+{
+    /**
+     * @param list<string> $values
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public array $values,
+        public array $annotations,
+        public string $type,
+    ) {
+    }
+}
+
+/**
+ * @implements GeneratorField<string>
+ */
+final readonly class GeneratorFieldUnion implements GeneratorField
+{
+    /**
+     * @param list<string> $variants
+     * @param list<array<string, mixed>> $annotations
+     */
+    public function __construct(
+        public array $variants,
+        public array $annotations,
+        public string $type,
+    ) {
+    }
+}
+
+/**
+ * @template T
+ * @implements GeneratorField<list<T>>
+ */
+final readonly class GeneratorFieldArray implements GeneratorField
+{
+    /**
+     * @param \Closure(list<string>): T $generate
+     */
+    public function __construct(
+        public \Closure $generate,
+    ) {
+    }
+}
+
+/**
+ * @template T
+ * @implements GeneratorField<T|null>
+ */
+final readonly class GeneratorFieldNullable implements GeneratorField
+{
+    /**
+     * @param \Closure(list<string>): T $generate
+     */
+    public function __construct(
+        public \Closure $generate,
+    ) {
+    }
+}
+
+/**
+ * @template T
+ * @implements GeneratorField<T>
+ */
+final readonly class GeneratorFieldShape implements GeneratorField
+{
+    /**
+     * @param array<string, list<array<string, mixed>>> $annotations
+     * @param \Closure(list<string>): T $generate
+     */
+    public function __construct(
+        public array $annotations,
+        public \Closure $generate,
+        public string $type,
+    ) {
+    }
+}
+
+/**
+ * @template V
+ * @implements GeneratorField<array<string, V>>
+ */
+final readonly class GeneratorFieldDict implements GeneratorField
+{
+    /**
+     * @param \Closure(list<string>): V $generate
+     */
+    public function __construct(
+        public \Closure $generate,
+    ) {
+    }
+}
+
+interface Generator
+{
+    /**
+     * @template T
+     * @param list<string> $path
+     * @param GeneratorField<T> $field
+     * @return T
+     */
+    public function generate(array $path, GeneratorField $field): mixed;
+}

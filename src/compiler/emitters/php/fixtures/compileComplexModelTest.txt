@@ -1,0 +1,393 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<string>
+ */
+final readonly class Email implements Wirespec\Refined
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (\preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/', $this->value) === 1);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<string>
+ */
+final readonly class PhoneNumber implements Wirespec\Refined
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (\preg_match('/^\\+[1-9]\\d{1,14}$/', $this->value) === 1);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<string>
+ */
+final readonly class Tag implements Wirespec\Refined
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (\preg_match('/^[a-z][a-z0-9-]{0,19}$/', $this->value) === 1);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<int>
+ */
+final readonly class EmployeeAge implements Wirespec\Refined
+{
+    public function __construct(
+        public int $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (18 <= $this->value && $this->value <= 65);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class ContactInfo implements Wirespec\Shape
+{
+    public function __construct(
+        public Email $email,
+        public ?PhoneNumber $phone,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [...(!$this->email->validate() ? ['email'] : []), ...($this->phone !== null ? (!$this->phone->validate() ? ['phone'] : []) : [])];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Employee implements Wirespec\Shape
+{
+    /**
+     * @param list<Tag> $tags
+     */
+    public function __construct(
+        public string $name,
+        public EmployeeAge $age,
+        public ContactInfo $contactInfo,
+        public array $tags,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [...(!$this->age->validate() ? ['age'] : []), ...\array_map(fn ($e) => ('contactInfo.' . $e), $this->contactInfo->validate()), ...\array_merge(...\array_map(fn ($i, $el) => (!$el->validate() ? [('tags[' . $i . ']')] : []), \array_keys($this->tags), $this->tags))];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Department implements Wirespec\Shape
+{
+    /**
+     * @param list<Employee> $employees
+     */
+    public function __construct(
+        public string $name,
+        public array $employees,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return \array_merge(...\array_map(fn ($i, $el) => \array_map(fn ($e) => ('employees[' . $i . '].' . $e), $el->validate()), \array_keys($this->employees), $this->employees));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Company implements Wirespec\Shape
+{
+    /**
+     * @param list<Department> $departments
+     */
+    public function __construct(
+        public string $name,
+        public array $departments,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return \array_merge(...\array_map(fn ($i, $el) => \array_map(fn ($e) => ('departments[' . $i . '].' . $e), $el->validate()), \array_keys($this->departments), $this->departments));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Email;
+
+final class EmailGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Email
+    {
+        return new Email(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldString(regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\PhoneNumber;
+
+final class PhoneNumberGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): PhoneNumber
+    {
+        return new PhoneNumber(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldString(regex: '^\\+[1-9]\\d{1,14}$', annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Tag;
+
+final class TagGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Tag
+    {
+        return new Tag(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldString(regex: '^[a-z][a-z0-9-]{0,19}$', annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\EmployeeAge;
+
+final class EmployeeAgeGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): EmployeeAge
+    {
+        return new EmployeeAge(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldInteger64(min: 18, max: 65, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\ContactInfo;
+use Community\Flock\Wirespec\Generated\Model\Email;
+use Community\Flock\Wirespec\Generated\Model\PhoneNumber;
+
+final class ContactInfoGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): ContactInfo
+    {
+        return new ContactInfo(email: $generator->generate([...$path, ...['email']], new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p0) => EmailGenerator::generate($generator, $p0), type: Email::class)), phone: $generator->generate([...$path, ...['phone']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p1) => PhoneNumberGenerator::generate($generator, $p1), type: PhoneNumber::class)))));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Employee;
+use Community\Flock\Wirespec\Generated\Model\EmployeeAge;
+use Community\Flock\Wirespec\Generated\Model\ContactInfo;
+use Community\Flock\Wirespec\Generated\Model\Tag;
+
+final class EmployeeGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Employee
+    {
+        return new Employee(name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), age: $generator->generate([...$path, ...['age']], new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p0) => EmployeeAgeGenerator::generate($generator, $p0), type: EmployeeAge::class)), contactInfo: $generator->generate([...$path, ...['contactInfo']], new Wirespec\GeneratorFieldShape(annotations: ['email' => [], 'phone' => []], generate: fn (array $p0) => ContactInfoGenerator::generate($generator, $p0), type: ContactInfo::class)), tags: $generator->generate([...$path, ...['tags']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p1) => TagGenerator::generate($generator, $p1), type: Tag::class)))));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Department;
+use Community\Flock\Wirespec\Generated\Model\Employee;
+
+final class DepartmentGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Department
+    {
+        return new Department(name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), employees: $generator->generate([...$path, ...['employees']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: ['name' => [], 'age' => [], 'contactInfo' => [], 'tags' => []], generate: fn (array $p1) => EmployeeGenerator::generate($generator, $p1), type: Employee::class)))));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Company;
+use Community\Flock\Wirespec\Generated\Model\Department;
+
+final class CompanyGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Company
+    {
+        return new Company(name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), departments: $generator->generate([...$path, ...['departments']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: ['name' => [], 'employees' => []], generate: fn (array $p1) => DepartmentGenerator::generate($generator, $p1), type: Department::class)))));
+    }
+}

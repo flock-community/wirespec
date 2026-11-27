@@ -19,7 +19,7 @@ The `Compile` operation transforms Wirespec source code into emitted output file
   [Gradle](./plugins-gradle.md#wirespec-files-from-the-classpath). The files of a directory are compiled in the order
   of their paths, so the output is the same on every machine.
 - **output:** Path to the output directory where the generated code will be placed.
-- **language:** The target language for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`, `AsyncAPI`). A run generates one language: run the plugin once per language to generate several.
+- **language:** The target language for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Php`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`, `AsyncAPI`). A run generates one language: run the plugin once per language to generate several.
 - **package name:** The package name for the generated code.
 - **share:** A flag to indicate whether shared code should be emitted.
 - **spec title and version:** The title and version of the document, instead of the ones the spec declares, see
@@ -48,15 +48,15 @@ The `Convert` operation facilitates integration with other API specification lan
 ## Default values
 
 Wirespec fields can have [default values](../language/types.mdx#default-values). Kotlin, Wirespec, Avro and OpenAPI
-can write them, while Java, TypeScript, Python, Rust and Scala cannot yet. How a plugin deals with defaults depends on
+can write them, while Java, TypeScript, Python, PHP, Rust and Scala cannot yet. How a plugin deals with defaults depends on
 the operation and on the target language.
 
-| Situation                                                                | Compile                                  | Convert                                  |
-|--------------------------------------------------------------------------|------------------------------------------|------------------------------------------|
-| Target supports defaults (Kotlin, Wirespec, Avro, OpenAPI)               | Defaults are generated                   | Defaults are generated                   |
-| Target does not support defaults (Java, TypeScript, Python, Rust, Scala) | **Error**, unless ignore defaults is on  | Defaults are left out, no error          |
-| Invalid default                                                          | **Error**, also with ignore defaults     | The default is dropped, no error         |
-| Ignore defaults is on                                                    | Defaults are left out for every language | Defaults are left out for every language |
+| Situation                                                                     | Compile                                  | Convert                                  |
+|-------------------------------------------------------------------------------|------------------------------------------|------------------------------------------|
+| Target supports defaults (Kotlin, Wirespec, Avro, OpenAPI)                    | Defaults are generated                   | Defaults are generated                   |
+| Target does not support defaults (Java, TypeScript, Python, PHP, Rust, Scala) | **Error**, unless ignore defaults is on  | Defaults are left out, no error          |
+| Invalid default                                                               | **Error**, also with ignore defaults     | The default is dropped, no error         |
+| Ignore defaults is on                                                         | Defaults are left out for every language | Defaults are left out for every language |
 
 ### Compile
 

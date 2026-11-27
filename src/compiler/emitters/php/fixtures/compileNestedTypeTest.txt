@@ -1,0 +1,145 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<string>
+ */
+final readonly class DutchPostalCode implements Wirespec\Refined
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (\preg_match('/^([0-9]{4}[A-Z]{2})$/', $this->value) === 1);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Address implements Wirespec\Shape
+{
+    public function __construct(
+        public string $street,
+        public int $houseNumber,
+        public DutchPostalCode $postalCode,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return (!$this->postalCode->validate() ? ['postalCode'] : []);
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Person implements Wirespec\Shape
+{
+    /**
+     * @param list<string> $tags
+     */
+    public function __construct(
+        public string $name,
+        public Address $address,
+        public array $tags,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return \array_map(fn ($e) => ('address.' . $e), $this->address->validate());
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\DutchPostalCode;
+
+final class DutchPostalCodeGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): DutchPostalCode
+    {
+        return new DutchPostalCode(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldString(regex: '^([0-9]{4}[A-Z]{2})$', annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Address;
+use Community\Flock\Wirespec\Generated\Model\DutchPostalCode;
+
+final class AddressGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Address
+    {
+        return new Address(street: $generator->generate([...$path, ...['street']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), houseNumber: $generator->generate([...$path, ...['houseNumber']], new Wirespec\GeneratorFieldInteger64(min: null, max: null, annotations: [])), postalCode: $generator->generate([...$path, ...['postalCode']], new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p0) => DutchPostalCodeGenerator::generate($generator, $p0), type: DutchPostalCode::class)));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Person;
+use Community\Flock\Wirespec\Generated\Model\Address;
+
+final class PersonGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Person
+    {
+        return new Person(name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldString(regex: null, annotations: [])), address: $generator->generate([...$path, ...['address']], new Wirespec\GeneratorFieldShape(annotations: ['street' => [], 'houseNumber' => [], 'postalCode' => []], generate: fn (array $p0) => AddressGenerator::generate($generator, $p0), type: Address::class)), tags: $generator->generate([...$path, ...['tags']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: null, annotations: [])))));
+    }
+}

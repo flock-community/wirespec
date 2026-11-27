@@ -1,0 +1,263 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<string>
+ */
+final readonly class Tag implements Wirespec\Refined
+{
+    public function __construct(
+        public string $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (\preg_match('/^[a-z]+$/', $this->value) === 1);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+/**
+ * @implements Wirespec\Refined<int>
+ */
+final readonly class Score implements Wirespec\Refined
+{
+    public function __construct(
+        public int $value,
+    ) {
+    }
+
+    public function validate(): bool
+    {
+        return (0 <= $this->value && $this->value <= 100);
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->value;
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Label implements Wirespec\Shape
+{
+    /**
+     * @param list<string> $aliases
+     */
+    public function __construct(
+        public Tag $name,
+        public string $code,
+        public array $aliases,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [...(!$this->name->validate() ? ['name'] : []), ...((\preg_match('/^[A-Z]{3}$/', $this->code) === 1) ? [] : ['code']), ...\array_merge(...\array_map(fn ($i, $el) => ((\preg_match('/^[a-z]+$/', $el) === 1) ? [] : [('aliases[' . $i . ']')]), \array_keys($this->aliases), $this->aliases))];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class Board implements Wirespec\Shape
+{
+    /**
+     * @param list<Tag>|null $tags
+     * @param list<?Tag>|null $slots
+     * @param list<list<Score>> $grid
+     * @param array<string, Tag> $tagsByKey
+     * @param array<string, list<Score>> $scoresByKey
+     * @param list<list<Label>> $labels
+     * @param array<string, Label> $labelsByKey
+     * @param list<float> $ratios
+     */
+    public function __construct(
+        public ?Tag $owner,
+        public ?array $tags,
+        public ?array $slots,
+        public array $grid,
+        public array $tagsByKey,
+        public array $scoresByKey,
+        public ?Label $label,
+        public array $labels,
+        public array $labelsByKey,
+        public int $limit,
+        public array $ratios,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [...($this->owner !== null ? (!$this->owner->validate() ? ['owner'] : []) : []), ...($this->tags !== null ? \array_merge(...\array_map(fn ($i1, $el1) => (!$el1->validate() ? [('tags[' . $i1 . ']')] : []), \array_keys($this->tags), $this->tags)) : []), ...($this->slots !== null ? \array_merge(...\array_map(fn ($i1, $el1) => ($el1 !== null ? (!$el1->validate() ? [('slots[' . $i1 . ']')] : []) : []), \array_keys($this->slots), $this->slots)) : []), ...\array_merge(...\array_map(fn ($i, $el) => \array_merge(...\array_map(fn ($i1, $el1) => (!$el1->validate() ? [('grid[' . $i . '][' . $i1 . ']')] : []), \array_keys($el), $el)), \array_keys($this->grid), $this->grid)), ...\array_merge(...\array_map(fn ($k, $v) => (!$v->validate() ? [('tagsByKey[' . $k . ']')] : []), \array_keys($this->tagsByKey), \array_values($this->tagsByKey))), ...\array_merge(...\array_map(fn ($k, $v) => \array_merge(...\array_map(fn ($i1, $el1) => (!$el1->validate() ? [('scoresByKey[' . $k . '][' . $i1 . ']')] : []), \array_keys($v), $v)), \array_keys($this->scoresByKey), \array_values($this->scoresByKey))), ...($this->label !== null ? \array_map(fn ($e) => ('label.' . $e), $this->label->validate()) : []), ...\array_merge(...\array_map(fn ($i, $el) => \array_merge(...\array_map(fn ($i1, $el1) => \array_map(fn ($e) => ('labels[' . $i . '][' . $i1 . '].' . $e), $el1->validate()), \array_keys($el), $el)), \array_keys($this->labels), $this->labels)), ...\array_merge(...\array_map(fn ($k, $v) => \array_map(fn ($e) => ('labelsByKey[' . $k . '].' . $e), $v->validate()), \array_keys($this->labelsByKey), \array_values($this->labelsByKey))), ...((1 <= $this->limit && $this->limit <= 10) ? [] : ['limit']), ...\array_merge(...\array_map(fn ($i, $el) => ((0.0 <= $el && $el <= 1.0) ? [] : [('ratios[' . $i . ']')]), \array_keys($this->ratios), $this->ratios))];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+final readonly class TreeNode implements Wirespec\Shape
+{
+    /**
+     * @param list<TreeNode> $children
+     */
+    public function __construct(
+        public Tag $tag,
+        public array $children,
+    ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function validate(): array
+    {
+        return [...(!$this->tag->validate() ? ['tag'] : []), ...\array_merge(...\array_map(fn ($i, $el) => \array_map(fn ($e) => ('children[' . $i . '].' . $e), $el->validate()), \array_keys($this->children), $this->children))];
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Tag;
+
+final class TagGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Tag
+    {
+        return new Tag(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldString(regex: '^[a-z]+$', annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Score;
+
+final class ScoreGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Score
+    {
+        return new Score(value: $generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldInteger64(min: 0, max: 100, annotations: [])));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Label;
+use Community\Flock\Wirespec\Generated\Model\Tag;
+
+final class LabelGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Label
+    {
+        return new Label(name: $generator->generate([...$path, ...['name']], new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p0) => TagGenerator::generate($generator, $p0), type: Tag::class)), code: $generator->generate([...$path, ...['code']], new Wirespec\GeneratorFieldString(regex: '^[A-Z]{3}$', annotations: [])), aliases: $generator->generate([...$path, ...['aliases']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldString(regex: '^[a-z]+$', annotations: [])))));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\Board;
+use Community\Flock\Wirespec\Generated\Model\Tag;
+use Community\Flock\Wirespec\Generated\Model\Score;
+use Community\Flock\Wirespec\Generated\Model\Label;
+
+final class BoardGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): Board
+    {
+        return new Board(owner: $generator->generate([...$path, ...['owner']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p1) => TagGenerator::generate($generator, $p1), type: Tag::class)))), tags: $generator->generate([...$path, ...['tags']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldArray(generate: fn (array $p1) => $generator->generate($p1, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p2) => TagGenerator::generate($generator, $p2), type: Tag::class)))))), slots: $generator->generate([...$path, ...['slots']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldArray(generate: fn (array $p1) => $generator->generate($p1, new Wirespec\GeneratorFieldNullable(generate: fn (array $p2) => $generator->generate($p2, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p3) => TagGenerator::generate($generator, $p3), type: Tag::class)))))))), grid: $generator->generate([...$path, ...['grid']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldArray(generate: fn (array $p1) => $generator->generate($p1, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p2) => ScoreGenerator::generate($generator, $p2), type: Score::class)))))), tagsByKey: $generator->generate([...$path, ...['tagsByKey']], new Wirespec\GeneratorFieldDict(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p1) => TagGenerator::generate($generator, $p1), type: Tag::class)))), scoresByKey: $generator->generate([...$path, ...['scoresByKey']], new Wirespec\GeneratorFieldDict(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldArray(generate: fn (array $p1) => $generator->generate($p1, new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p2) => ScoreGenerator::generate($generator, $p2), type: Score::class)))))), label: $generator->generate([...$path, ...['label']], new Wirespec\GeneratorFieldNullable(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: ['name' => [], 'code' => [], 'aliases' => []], generate: fn (array $p1) => LabelGenerator::generate($generator, $p1), type: Label::class)))), labels: $generator->generate([...$path, ...['labels']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldArray(generate: fn (array $p1) => $generator->generate($p1, new Wirespec\GeneratorFieldShape(annotations: ['name' => [], 'code' => [], 'aliases' => []], generate: fn (array $p2) => LabelGenerator::generate($generator, $p2), type: Label::class)))))), labelsByKey: $generator->generate([...$path, ...['labelsByKey']], new Wirespec\GeneratorFieldDict(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: ['name' => [], 'code' => [], 'aliases' => []], generate: fn (array $p1) => LabelGenerator::generate($generator, $p1), type: Label::class)))), limit: $generator->generate([...$path, ...['limit']], new Wirespec\GeneratorFieldInteger64(min: 1, max: 10, annotations: [])), ratios: $generator->generate([...$path, ...['ratios']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldNumber64(min: 0.0, max: 1.0, annotations: [])))));
+    }
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\TreeNode;
+use Community\Flock\Wirespec\Generated\Model\Tag;
+
+final class TreeNodeGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): TreeNode
+    {
+        return new TreeNode(tag: $generator->generate([...$path, ...['tag']], new Wirespec\GeneratorFieldShape(annotations: [], generate: fn (array $p0) => TagGenerator::generate($generator, $p0), type: Tag::class)), children: $generator->generate([...$path, ...['children']], new Wirespec\GeneratorFieldArray(generate: fn (array $p0) => $generator->generate($p0, new Wirespec\GeneratorFieldShape(annotations: ['tag' => [], 'children' => []], generate: fn (array $p1) => TreeNodeGenerator::generate($generator, $p1), type: TreeNode::class)))));
+    }
+}

@@ -29,6 +29,7 @@ include(
     "src:compiler:emitters:java",
     "src:compiler:emitters:typescript",
     "src:compiler:emitters:python",
+    "src:compiler:emitters:php",
     "src:compiler:emitters:rust",
     "src:compiler:emitters:scala",
     "src:compiler:emitters:wirespec",

@@ -7,6 +7,7 @@ public enum class FileExtension(override val value: String) : Value<String> {
     Kotlin("kt"),
     TypeScript("ts"),
     Python("py"),
+    Php("php"),
     Rust("rs"),
     Scala("scala"),
     Wirespec("ws"),

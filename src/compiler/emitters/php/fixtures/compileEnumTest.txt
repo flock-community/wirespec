@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Model;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+
+enum MyAwesomeEnum: string implements Wirespec\Enum
+{
+    case ONE = 'ONE';
+    case Two = 'Two';
+    case THREE_MORE = 'THREE_MORE';
+    case UnitedKingdom = 'UnitedKingdom';
+    case _1 = '-1';
+    case _0 = '0';
+    case _10 = '10';
+    case _999 = '-999';
+    case _88 = '88';
+}
+
+<?php
+
+declare(strict_types=1);
+
+namespace Community\Flock\Wirespec\Generated\Generator;
+
+use Community\Flock\Wirespec\Generated\Wirespec;
+use Community\Flock\Wirespec\Generated\Model\MyAwesomeEnum;
+
+final class MyAwesomeEnumGenerator
+{
+    /**
+     * @param list<string> $path
+     */
+    public static function generate(Wirespec\Generator $generator, array $path): MyAwesomeEnum
+    {
+        return MyAwesomeEnum::from($generator->generate([...$path, ...['value']], new Wirespec\GeneratorFieldEnum(values: ['ONE', 'Two', 'THREE_MORE', 'UnitedKingdom', '-1', '0', '10', '-999', '88'], annotations: [], type: MyAwesomeEnum::class)));
+    }
+}
