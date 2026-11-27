@@ -149,6 +149,22 @@ describe("endpoints", () => {
     ]);
   });
 
+  it("highlights every unreserved character of RFC 3986 as the path", () => {
+    expectTypes("endpoint E GET /v1.0/~me/photo_2-large.jpg -> {}", [
+      ["/v1.0/~me/photo_2-large.jpg", "path/string"],
+      ["->", "operator"],
+    ]);
+  });
+
+  it("highlights the root path and a trailing slash", () => {
+    expectTypes("endpoint E GET / -> {}", [["/", "path/string"]]);
+    expectTypes("endpoint E GET /todos/{id: TodoId}/ -> {}", [
+      ["/todos/", "path/string"],
+      ["TodoId", "path/string > class-name"],
+      ["/", "path/string"],
+    ]);
+  });
+
   it("highlights the responses", () => {
     expectTypes(source, [
       ["@Deprecated", "annotation > annotation-name/attr-name"],

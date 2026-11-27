@@ -110,7 +110,8 @@ public object WirespecSpec : LanguageSpec {
         Regex("@[A-Z][a-zA-Z0-9_]*") to Annotation,
         Regex("[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
         Regex("[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
-        Regex("/[a-zA-Z0-9-_]+") to Path,
+        // A path segment holds the unreserved characters of RFC 3986 only: letters, digits and `-._~`.
+        Regex("/[A-Za-z0-9._~-]+") to Path,
         Regex("//.*\n") to Comment,
         // Both of these are written in the unrolled form that never backtracks. The textbook
         // `(\*(?!/)|[^*])*` shape recurses once per character inside java.util.regex, which

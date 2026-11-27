@@ -77,4 +77,36 @@ class TokenizeEndpointTest {
         Integer, Arrow,
         WirespecType, Brackets, RightCurly, EndOfProgram,
     )
+
+    @Test
+    fun testPathWithEveryUnreservedCharacterOfRfc3986() = testTokenizer(
+        // language=ws
+        """endpoint GetTodos GET /v1.0/~me/a-b_c -> {}""",
+        EndpointDefinition, WirespecType, Method, Path, Path, Path,
+        Arrow, LeftCurly, RightCurly, EndOfProgram,
+    )
+
+    @Test
+    fun testPathEndsAtAReservedCharacter() = testTokenizer(
+        // language=ws
+        """endpoint GetTodos GET /todos:search -> {}""",
+        EndpointDefinition, WirespecType, Method, Path, Colon, DromedaryCaseIdentifier,
+        Arrow, LeftCurly, RightCurly, EndOfProgram,
+    )
+
+    @Test
+    fun testPathEndsAtAPercentSign() = testTokenizer(
+        // language=ws
+        """endpoint GetTodos GET /todos%20 -> {}""",
+        EndpointDefinition, WirespecType, Method, Path, Character, Integer,
+        Arrow, LeftCurly, RightCurly, EndOfProgram,
+    )
+
+    @Test
+    fun testRootPathTokenizer() = testTokenizer(
+        // language=ws
+        """endpoint GetRoot GET / -> {}""",
+        EndpointDefinition, WirespecType, Method, ForwardSlash,
+        Arrow, LeftCurly, RightCurly, EndOfProgram,
+    )
 }

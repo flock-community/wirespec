@@ -15,12 +15,14 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldMatch
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
@@ -81,6 +83,102 @@ class ParseEndpointTest {
                         content = null,
                     ),
                 )
+            }
+    }
+
+    @Test
+    fun testEndpointPathWithEveryUnreservedCharacterOfRfc3986() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetPhoto GET /v1.0/~me/photo_2-large.jpg -> {
+            |    200 -> Unit
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .path shouldBe listOf(Literal("v1.0"), Literal("~me"), Literal("photo_2-large.jpg"))
+    }
+
+    @Test
+    fun testEndpointPathRejectsTheReservedCharactersAndPercentEncoding() {
+        listOf("!", "$", "&", "'", "(", ")", "*", "+", ",", ";", "=", ":", "@", "%").forEach { character ->
+            parser("endpoint GetTodos GET /a${character}b -> { 200 -> Unit }")
+                .shouldBeLeft()
+                .head.message shouldMatch Regex("Path expected, not: \\w+ at line 1 and position 25")
+        }
+    }
+
+    @Test
+    fun testEndpointPathRejectsTheDotSegments() {
+        listOf(
+            "/./todos" to ".",
+            "/../todos" to "..",
+            "/todos/." to ".",
+            "/todos/{id: String}/.." to "..",
+        ).forEach { (path, segment) ->
+            parser("endpoint GetTodos GET $path -> { 200 -> Unit }")
+                .shouldBeLeft()
+                .head.message shouldBe "Wirespec does not allow path traversal, so a path cannot hold the dot-segment $segment"
+        }
+    }
+
+    @Test
+    fun testEndpointPathAllowsDotsInASegment() {
+        parser("endpoint GetTodos GET /.well-known/.../v1.0 -> { 200 -> Unit }")
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .path shouldBe listOf(Literal(".well-known"), Literal("..."), Literal("v1.0"))
+    }
+
+    @Test
+    fun testRootPathParser() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetRoot GET / -> {
+            |    200 -> Unit
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .path shouldBe listOf(Literal(""))
+    }
+
+    @Test
+    fun testTrailingSlashParser() {
+        val source =
+            // language=ws
+            """
+            |endpoint GetTodo GET /todos/{id: String}/ ? {done: Boolean} -> {
+            |    200 -> Unit
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .single()
+            .shouldBeInstanceOf<Endpoint>()
+            .run {
+                path shouldBe listOf(
+                    Literal("todos"),
+                    Endpoint.Segment.Param(
+                        identifier = FieldIdentifier("id"),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(null),
+                            isNullable = false,
+                        ),
+                    ),
+                    Literal(""),
+                )
+                queries.fields.map { it.identifier } shouldBe listOf(FieldIdentifier("done"))
             }
     }
 

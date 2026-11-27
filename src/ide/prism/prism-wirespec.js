@@ -4,7 +4,8 @@
 })(function wirespec(Prism) {
   const methods = /\b(?:GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\b/;
   const field = /`[\w-]+`|\b[a-z][\w-]*/;
-  const segment = /\/(?:[\w-]+|\{[^{}\n]*\})/;
+  // A segment holds the unreserved characters of RFC 3986, or is empty, as in `/` and `/todos/`.
+  const segment = /\/(?:[\w.~-]+|\{[^{}\n]*\})?/;
 
   const string = { pattern: /"(?:\\.|[^"\\])*"/, greedy: true };
   const regex = {

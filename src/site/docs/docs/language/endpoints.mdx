@@ -53,6 +53,38 @@ type Todo {
 }
 ```
 
+## Path
+
+Every segment of a path starts with a `/`. A literal segment holds only the _unreserved_ characters of
+[RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3): letters, digits, `-`, `.`, `_` and `~`. A
+segment may also be empty, so `/` is the root path and `/todos/` ends with a slash:
+
+```wirespec
+endpoint GetRoot GET / -> {
+    200 -> Unit
+}
+
+endpoint GetPhoto GET /v1.0/~me/photo.jpg -> {
+    200 -> Bytes
+}
+```
+
+Two slashes in a row open a line comment, so an empty segment can only end the path.
+
+A segment cannot be `.` or `..`. These dot-segments point to the current and the parent path, so `/./todos` and
+`/../todos` would let a path traverse, and Wirespec does not allow path traversal. Any other segment with a dot, such
+as `/.well-known` or `/v1.0`, is fine.
+
+:::info[Why only unreserved characters]
+RFC 3986 allows more in a path segment: the sub-delimiters `!$&'()*+,;=`, `:`, `@`, and percent-encoded octets such as
+`%20`. Wirespec rejects them on purpose. An unreserved character means the same whether or not it is percent-encoded,
+so a literal segment reads the same in the spec, in the generated code and on the wire, and no emitter or framework has
+to escape or decode it. The other characters are reserved: a server or framework may give them a meaning, such as `;`
+for matrix parameters or `*` for a wildcard in a route, and some start a comment or a string template, such as `/*` in
+Wirespec or `$` in Kotlin. A value that needs them belongs in a [path parameter](#path-parameters), which the transport
+encodes.
+:::
+
 ## Path parameters
 
 Endpoint parameters are defined using Pascal notation - **name: type.** Path parameters can simply be embedded in the
