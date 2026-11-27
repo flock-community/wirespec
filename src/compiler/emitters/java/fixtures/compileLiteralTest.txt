@@ -1,0 +1,33 @@
+package community.flock.wirespec.generated.model;
+
+import community.flock.wirespec.java.Wirespec;
+
+public record Dog (
+  String kind,
+  String name
+) implements Wirespec.Shape {
+  public Dog(String name) {
+    this("dog", name);
+  }
+  @Override
+  public java.util.List<String> validate() {
+    return ((kind().equals("dog")) ? java.util.List.<String>of() : java.util.List.<String>of("kind"));
+  }
+};
+
+package community.flock.wirespec.generated.generator;
+
+import community.flock.wirespec.java.Wirespec;
+import community.flock.wirespec.generated.model.Dog;
+
+public interface DogGenerator {
+  public static Dog generate(Wirespec.Generator generator, java.util.List<String> path) {
+    return new Dog(
+      "dog",
+      generator.generate(java.util.stream.Stream.of(path, java.util.List.<String>of("name")).flatMap(java.util.Collection::stream).toList(), new Wirespec.GeneratorFieldString(
+        java.util.Optional.empty(),
+        java.util.List.<java.util.Map<String, Object>>of()
+      ))
+    );
+  }
+}

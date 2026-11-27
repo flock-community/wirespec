@@ -194,6 +194,7 @@ private class JavaAvroSource(private val packageName: PackageName) : AvroSource 
         is Reference.Unit -> "void"
         is Reference.Any -> "Object"
         is Reference.Custom -> value
+        is Reference.Literal -> "String"
         is Reference.Primitive -> when (val t = type) {
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Integer -> when (t.precision) {
@@ -302,6 +303,7 @@ private class KotlinAvroSource(private val packageName: PackageName) : AvroSourc
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
         is Reference.Custom -> value
+        is Reference.Literal -> "String"
         is Reference.Primitive -> when (val t = type) {
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Integer -> when (t.precision) {

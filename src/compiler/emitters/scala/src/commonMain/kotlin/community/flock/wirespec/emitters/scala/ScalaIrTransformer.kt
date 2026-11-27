@@ -121,6 +121,7 @@ private fun Reference.toScalaTypeName(): String {
             Reference.Primitive.Type.Boolean -> "Boolean"
             Reference.Primitive.Type.Bytes -> "Array[Byte]"
         }
+        is Reference.Literal -> "String"
         is Reference.Custom -> value
         is Reference.Iterable -> "List[${reference.toScalaTypeName()}]"
         is Reference.Dict -> "Map[String, ${reference.toScalaTypeName()}]"

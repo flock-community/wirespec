@@ -43,6 +43,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.SanitizationConfig
 import community.flock.wirespec.compiler.core.ir.transformer.injectEnumLabelField
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.toGetterAccessors
+import community.flock.wirespec.compiler.core.ir.transformer.withLiteralConstructor
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 
 public open class JavaEmitter(
@@ -158,6 +159,8 @@ public open class JavaEmitter(
     override fun emit(type: AstType, module: Module): File =
         type.convert()
             .sanitizeNames(sanitizationConfig)
+            // The canonical constructor of the record stays next to it: the serialization builds the record with it.
+            .withLiteralConstructor()
 
     override fun emit(enum: Enum, module: Module): File = enum
         .convert()

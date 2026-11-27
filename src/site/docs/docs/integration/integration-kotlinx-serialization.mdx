@@ -153,3 +153,6 @@ kotlinx.serialization picks up for every `@Serializable` model:
 ```kotlin
 val json = Json { encodeDefaults = true }
 ```
+
+A field of a [string literal type](../language/types.mdx#string-literal-types) is the exception: its literal is always
+written, with any `Json` instance.

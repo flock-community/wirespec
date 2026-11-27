@@ -12,6 +12,7 @@ public sealed interface Reference : Value<String> {
         is Custom -> copy(isNullable = isNullable ?: this.isNullable)
         is Dict -> copy(isNullable = isNullable ?: this.isNullable)
         is Iterable -> copy(isNullable = isNullable ?: this.isNullable)
+        is Literal -> copy(isNullable = isNullable ?: this.isNullable)
         is Primitive -> copy(isNullable = isNullable ?: this.isNullable)
         is Unit -> copy(isNullable = isNullable ?: this.isNullable)
     }
@@ -43,6 +44,15 @@ public sealed interface Reference : Value<String> {
     }
 
     public data class Custom(
+        override val value: String,
+        override val isNullable: Boolean,
+    ) : Reference
+
+    /**
+     * A string literal type, such as `"cat"`: the only value it admits is [value]. It is the whole type of a field of a
+     * type, so the parser never makes it nullable.
+     */
+    public data class Literal(
         override val value: String,
         override val isNullable: Boolean,
     ) : Reference

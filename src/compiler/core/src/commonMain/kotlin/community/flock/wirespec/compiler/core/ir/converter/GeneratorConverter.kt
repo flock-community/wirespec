@@ -358,6 +358,7 @@ private fun buildLeafExpr(
             ),
         ),
     )
+    is ReferenceWirespec.Literal -> Literal(ref.value, Type.String)
     is ReferenceWirespec.Unit -> NullLiteral
 }
 

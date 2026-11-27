@@ -72,7 +72,7 @@ internal object EndpointParser {
             is QuestionMark -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false).bind() }
+                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false, allowLiteralTypes = false).bind() }
                     else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }
@@ -194,7 +194,7 @@ internal object EndpointParser {
             is Hash -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false).bind() }
+                    is LeftCurly -> with(TypeParser) { parseTypeShape(allowFieldDefaults = false, allowLiteralTypes = false).bind() }
                     else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }

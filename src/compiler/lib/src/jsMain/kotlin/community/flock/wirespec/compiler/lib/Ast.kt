@@ -200,6 +200,11 @@ private fun WsReference.consume(): Reference = when (this) {
         isNullable = isNullable,
     )
 
+    is WsStringLiteral -> Reference.Literal(
+        value = value,
+        isNullable = isNullable,
+    )
+
     is WsPrimitive -> Reference.Primitive(
         type = consumeType(),
         isNullable = isNullable,
@@ -352,6 +357,7 @@ private fun Reference.produce(): WsReference = when (this) {
     is Reference.Any -> WsAny(isNullable)
     is Reference.Unit -> WsUnit(isNullable)
     is Reference.Custom -> WsCustom(value, isNullable)
+    is Reference.Literal -> WsStringLiteral(value, isNullable)
     is Reference.Primitive -> WsPrimitive(type.produce(), isNullable, type.produceConstraint())
     is Reference.Dict -> WsDict(reference.produce(), isNullable)
     is Reference.Iterable -> WsIterable(reference.produce(), isNullable)
@@ -569,6 +575,12 @@ public class WsDict(public val reference: WsReference, override val isNullable: 
 
 @JsExport
 public class WsCustom(
+    public val value: String,
+    override val isNullable: Boolean,
+) : WsReference
+
+@JsExport
+public class WsStringLiteral(
     public val value: String,
     override val isNullable: Boolean,
 ) : WsReference

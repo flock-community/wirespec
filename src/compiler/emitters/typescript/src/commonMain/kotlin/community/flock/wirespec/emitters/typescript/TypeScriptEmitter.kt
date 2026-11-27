@@ -417,6 +417,7 @@ public open class TypeScriptEmitter : IrEmitter {
         is Reference.Unit -> "undefined"
         is Reference.Any -> "any"
         is Reference.Custom -> ref.value.sanitizeSymbol()
+        is Reference.Literal -> "\"${ref.value}\""
         is Reference.Primitive -> when (ref.type) {
             is Reference.Primitive.Type.String -> "string"
             is Reference.Primitive.Type.Integer -> "number"

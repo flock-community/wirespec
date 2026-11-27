@@ -286,10 +286,11 @@
       ]
     },
     "field": {
-      "match": "(`[A-Za-z0-9_-]+`|(?<![\\w`-])[a-z][A-Za-z0-9_-]*)\\s*(:)",
+      "match": "(`[A-Za-z0-9_-]+`|(?<![\\w`-])[a-z][A-Za-z0-9_-]*)\\s*(:)(?:\\s*(\"(?:[^\"\\\\]|\\\\.)*\"))?",
       "captures": {
         "1": { "name": "variable.other.property.wirespec" },
-        "2": { "name": "punctuation.separator.key-value.wirespec" }
+        "2": { "name": "punctuation.separator.key-value.wirespec" },
+        "3": { "name": "string.quoted.double.wirespec", "patterns": [{ "include": "#string-escape" }] }
       }
     },
     "field-default": {

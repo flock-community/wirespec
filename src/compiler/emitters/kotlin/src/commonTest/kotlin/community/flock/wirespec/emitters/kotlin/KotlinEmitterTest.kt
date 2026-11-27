@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.test.CompileDefaultValueTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileLiteralTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileNestedValidationTest
@@ -219,6 +220,11 @@ class KotlinEmitterTest {
         val kotlin = EmitterFixtures.compileNestedValidationTest
 
         CompileNestedValidationTest.compiler { KotlinEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
+    fun compileLiteralTest() {
+        CompileLiteralTest.compiler { KotlinEmitter() } shouldBeRight EmitterFixtures.compileLiteralTest
     }
 
     @Test

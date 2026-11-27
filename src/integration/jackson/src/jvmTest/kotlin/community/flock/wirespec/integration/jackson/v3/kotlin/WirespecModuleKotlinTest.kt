@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.jackson.v3.kotlin
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.PropertyAccessor
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.Dog
 import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedLowerAndUpper
 import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedLowerBound
 import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedNoBound
@@ -87,6 +88,16 @@ class WirespecModuleKotlinTest {
                 .withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
         }
+    }
+
+    @Test
+    fun serializeLiteral() {
+        objectMapper.writeValueAsString(Dog(name = "Rex")) shouldEqualJson """{"kind":"dog","name":"Rex"}"""
+    }
+
+    @Test
+    fun deserializeLiteral() {
+        objectMapper.readValue<Dog>("""{"kind":"dog","name":"Rex"}""") shouldBe Dog(name = "Rex")
     }
 
     @Test

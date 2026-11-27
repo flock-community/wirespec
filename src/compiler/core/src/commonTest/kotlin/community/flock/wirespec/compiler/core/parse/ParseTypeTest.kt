@@ -474,4 +474,63 @@ class ParseTypeTest {
             .shouldBeLeft()
             .head.message shouldBe "Default values are only allowed on the fields of a type and the parameters of an rpc, not on: limit"
     }
+
+    @Test
+    fun testStringLiteralType() {
+        val source =
+            // language=ws
+            """
+            |type Dog {
+            |    kind: "dog",
+            |    sound: "Woof_woof-2" = "Woof_woof-2"
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .shape.fields
+            .map { it.reference } shouldBe listOf(
+            Reference.Literal("dog", isNullable = false),
+            Reference.Literal("Woof_woof-2", isNullable = false),
+        )
+    }
+
+    @Test
+    fun testStringLiteralTypeIsOnlyAPlainFieldOfAType() {
+        listOf(
+            "type Foo { kind: \"cat\"? }" to "A string literal type cannot be optional or a list: kind",
+            "type Foo { kind: \"cat\"[] }" to "A string literal type cannot be optional or a list: kind",
+            "part Foo { kind: \"cat\" }" to "A string literal type is only allowed on the fields of a type, not on: kind",
+            "endpoint GetFoo GET /foo ? {kind: \"cat\"} -> { 200 -> String }" to "A string literal type is only allowed on the fields of a type, not on: kind",
+            "endpoint GetFoo GET /foo # {kind: \"cat\"} -> { 200 -> String }" to "A string literal type is only allowed on the fields of a type, not on: kind",
+            "rpc GetFoo { kind: \"cat\" } -> String" to "A string literal type is only allowed on the fields of a type, not on: kind",
+        ).forEach { (source, message) ->
+            parser(source).shouldBeLeft().head.message shouldBe message
+        }
+        listOf(
+            "type Foo { kinds: {\"cat\"} }",
+            "endpoint GetFoo GET /foo -> { 200 -> \"cat\" }",
+            "endpoint PostFoo POST \"cat\" /foo -> { 200 -> String }",
+            "channel Foo -> \"cat\"",
+            "type Foo = \"cat\"",
+        ).forEach { source -> parser(source).shouldBeLeft() }
+    }
+
+    @Test
+    fun testStringLiteralTypeOnlyHasLettersDigitsDashAndUnderscore() {
+        listOf("good boy", "", "caf\u00e9", "a.b", "a/b", "\\\"cat\\\"").forEach { value ->
+            parser("type Foo { kind: \"$value\" }")
+                .shouldBeLeft()
+                .head.message shouldBe "A string literal type can only have letters, digits, - and _: \"$value\""
+        }
+    }
+
+    @Test
+    fun testStringLiteralTypeOnlyTakesItselfAsDefault() {
+        parser("type Foo { kind: \"cat\" = \"dog\" }")
+            .shouldBeLeft()
+            .head.message shouldBe "Invalid default value \"dog\" for field kind of type \"cat\""
+    }
 }

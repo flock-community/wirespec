@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.test.CompileDefaultValueTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFieldNameSanitizationTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileLiteralTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileNestedTypeTest
 import community.flock.wirespec.compiler.test.CompileNestedValidationTest
@@ -125,6 +126,11 @@ class TypeScriptEmitterTest {
         val typescript = EmitterFixtures.compileNestedValidationTest
 
         CompileNestedValidationTest.compiler { TypeScriptEmitter() } shouldBeRight typescript
+    }
+
+    @Test
+    fun compileLiteralTest() {
+        CompileLiteralTest.compiler { TypeScriptEmitter() } shouldBeRight EmitterFixtures.compileLiteralTest
     }
 
     @Test

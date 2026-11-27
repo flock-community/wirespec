@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.jackson.v2.kotlin
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.Dog
 import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedLowerAndUpper
 import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedLowerBound
 import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedNoBound
@@ -76,6 +77,16 @@ class WirespecModuleKotlinTest {
     private val objectMapper: ObjectMapper = ObjectMapper()
         .registerKotlinModule()
         .registerModules(WirespecModuleKotlin())
+
+    @Test
+    fun serializeLiteral() {
+        objectMapper.writeValueAsString(Dog(name = "Rex")) shouldEqualJson """{"kind":"dog","name":"Rex"}"""
+    }
+
+    @Test
+    fun deserializeLiteral() {
+        objectMapper.readValue<Dog>("""{"kind":"dog","name":"Rex"}""") shouldBe Dog(name = "Rex")
+    }
 
     @Test
     fun serializeRefined() {

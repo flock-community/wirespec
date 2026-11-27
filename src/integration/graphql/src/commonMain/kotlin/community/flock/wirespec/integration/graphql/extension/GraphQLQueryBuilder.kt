@@ -110,7 +110,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     fun resultType(reference: Reference): Type = when (reference) {
         is Reference.Iterable -> Type.Array(resultType(reference.reference))
         is Reference.Custom -> operations.composite(reference)?.let { Type.Custom(it.result()) } ?: reference.copy(isNullable = false).convert()
-        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> reference.copy(isNullable = false).convert()
+        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive, is Reference.Literal -> reference.copy(isNullable = false).convert()
     }.let { if (reference.isNullable) Type.Nullable(it) else it }
 
     private fun Definition.resultFields(): List<Pair<String, Reference>> = when (this) {
@@ -128,7 +128,7 @@ internal class GraphQLQueryBuilder(private val operations: GraphQLOperations, pr
     private fun Reference.model(): String? = when (this) {
         is Reference.Iterable -> reference.model()
         is Reference.Custom -> value.takeIf { operations.composite(this) == null }?.let { Name.of(it).pascalCase() }
-        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> null
+        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive, is Reference.Literal -> null
     }
 
     /** The block that selects the fields of the result of [reference], or null for a scalar or enum. */

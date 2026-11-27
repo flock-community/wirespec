@@ -55,6 +55,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.markMembersAsOverri
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumDefaults
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
+import community.flock.wirespec.compiler.core.ir.transformer.withLiteralDefaults
 import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
 import community.flock.wirespec.compiler.core.ir.File as LanguageFile
 import community.flock.wirespec.compiler.core.ir.Function as LanguageFunction
@@ -221,6 +222,7 @@ public open class KotlinEmitter(
         type.convert()
             .sanitizeNames(modelSanitizationConfig)
             .sanitizeEnumDefaults { it.sanitizeEnum() }
+            .withLiteralDefaults()
             .ensureEmptyStructHasConstructor()
 
     override fun emit(enum: Enum, module: Module): File = enum

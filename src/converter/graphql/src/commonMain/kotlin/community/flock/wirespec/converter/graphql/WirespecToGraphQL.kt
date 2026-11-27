@@ -456,6 +456,8 @@ internal class WirespecToGraphQL(ast: AST) {
                 is Reference.Primitive.Type.Boolean -> "Boolean"
             },
         )
+        // GraphQL has no literal types, so a string literal type goes as a String.
+        is Reference.Literal -> TypeRef.Named("String")
         // GraphQL has no void, a field without a result conventionally returns a Boolean.
         is Reference.Unit -> TypeRef.Named("Boolean")
         is Reference.Any, is Reference.Dict -> TypeRef.Named(JSON)
@@ -476,13 +478,13 @@ internal class WirespecToGraphQL(ast: AST) {
         fun Reference.customName(): String? = when (this) {
             is Reference.Iterable -> reference.customName()
             is Reference.Custom -> value
-            is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> null
+            is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive, is Reference.Literal -> null
         }
 
         fun Reference.isJson(): Boolean = when (this) {
             is Reference.Iterable -> reference.isJson()
             is Reference.Any, is Reference.Dict -> true
-            is Reference.Unit, is Reference.Custom, is Reference.Primitive -> false
+            is Reference.Unit, is Reference.Custom, is Reference.Primitive, is Reference.Literal -> false
         }
 
         fun List<Annotation>.named(name: String): List<Annotation> = filter { it.name == name }

@@ -6,6 +6,9 @@ import arrow.core.raise.ensure
 import community.flock.wirespec.compiler.core.exceptions.AnnotatedSpreadException
 import community.flock.wirespec.compiler.core.exceptions.DefaultValueNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.InvalidDefaultValueException
+import community.flock.wirespec.compiler.core.exceptions.InvalidLiteralTypeException
+import community.flock.wirespec.compiler.core.exceptions.LiteralTypeModifierException
+import community.flock.wirespec.compiler.core.exceptions.LiteralTypeNotAllowedException
 import community.flock.wirespec.compiler.core.exceptions.NullableRefinedReferenceException
 import community.flock.wirespec.compiler.core.exceptions.UnknownStringFormatException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -73,28 +76,28 @@ internal object TypeParser {
         }
     }
 
-    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean): Either<WirespecException, Shape> = parseToken {
-        (if (token.type is RightCurly) emptyList() else parseShapeEntries(allowFieldDefaults).bind())
+    fun TokenProvider.parseTypeShape(allowFieldDefaults: Boolean, allowLiteralTypes: Boolean): Either<WirespecException, Shape> = parseToken {
+        (if (token.type is RightCurly) emptyList() else parseShapeEntries(allowFieldDefaults, allowLiteralTypes).bind())
             .also {
                 expect<RightCurly>().bind()
             }
             .let(::Shape)
     }
 
-    private fun TokenProvider.parseShapeEntries(allowFieldDefaults: Boolean): Either<WirespecException, List<ShapeEntry>> = either {
+    private fun TokenProvider.parseShapeEntries(allowFieldDefaults: Boolean, allowLiteralTypes: Boolean): Either<WirespecException, List<ShapeEntry>> = either {
         buildList {
-            add(parseShapeEntry(allowFieldDefaults).bind())
+            add(parseShapeEntry(allowFieldDefaults, allowLiteralTypes).bind())
             while (token.type is Comma) {
                 eatToken().bind()
-                add(parseShapeEntry(allowFieldDefaults).bind())
+                add(parseShapeEntry(allowFieldDefaults, allowLiteralTypes).bind())
             }
         }
     }
 
-    private fun TokenProvider.parseShapeEntry(allowFieldDefaults: Boolean): Either<WirespecException, ShapeEntry> = either {
+    private fun TokenProvider.parseShapeEntry(allowFieldDefaults: Boolean, allowLiteralTypes: Boolean): Either<WirespecException, ShapeEntry> = either {
         val annotations = parseAnnotations().bind()
         when (token.type) {
-            is WirespecIdentifier -> parseField(FieldIdentifier(token.value), annotations, allowFieldDefaults).bind()
+            is WirespecIdentifier -> parseField(FieldIdentifier(token.value), annotations, allowFieldDefaults, allowLiteralTypes).bind()
             is Ellipsis -> parseSpread(annotations).bind()
             else -> raiseWrongToken<WirespecIdentifier>().bind()
         }
@@ -170,7 +173,7 @@ private fun TokenProvider.parseTypeDefinition(comment: Comment?, annotations: Li
             comment = comment,
             annotations = annotations,
             identifier = typeName,
-            shape = parseTypeShape(allowFieldDefaults = true).bind(),
+            shape = parseTypeShape(allowFieldDefaults = true, allowLiteralTypes = true).bind(),
             extends = emptyList(),
         )
 
@@ -332,12 +335,13 @@ private fun TokenProvider.parseSpread(annotations: List<Annotation>) = parseToke
     }
 }
 
-private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowFieldDefaults: Boolean) = parseToken {
+private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>, allowFieldDefaults: Boolean, allowLiteralTypes: Boolean) = parseToken {
     expect<Colon>().bind()
 
     val reference = when (token.type) {
         is LeftCurly -> parseDict().bind()
         is WirespecType -> parseType().bind()
+        is LiteralString -> parseLiteralType(identifier, allowLiteralTypes).bind()
         else -> raiseWrongToken<WirespecType>().bind()
     }
 
@@ -352,6 +356,21 @@ private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: L
     )
 }
 
+/**
+ * A string literal type is the whole type of a field of a type: it takes no `?` and no `[]`. Its value is made of
+ * letters, digits, `-` and `_`, so every target can write it as it is.
+ */
+private fun TokenProvider.parseLiteralType(identifier: FieldIdentifier, allowLiteralTypes: Boolean) = parseToken { literal ->
+    ensure(allowLiteralTypes) { LiteralTypeNotAllowedException(fileUri, identifier.value, literal.coordinates) }
+    ensure(literal.literal().matches(literalTypeValue)) { InvalidLiteralTypeException(fileUri, literal.value, literal.coordinates) }
+    when (token.type) {
+        is QuestionMark, is Brackets -> raise(LiteralTypeModifierException(fileUri, identifier.value, token.coordinates))
+        else -> Reference.Literal(value = literal.literal(), isNullable = false)
+    }
+}
+
+private val literalTypeValue = Regex("[A-Za-z0-9_-]+")
+
 private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, reference: Reference, allowFieldDefaults: Boolean) = parseToken { equals ->
     if (!allowFieldDefaults) raise(DefaultValueNotAllowedException(fileUri, identifier.value, equals.coordinates))
     eatToken().bind().let { valueToken ->
@@ -361,7 +380,7 @@ private fun TokenProvider.parseDefaultValue(identifier: FieldIdentifier, referen
 }
 
 private fun Token.toDefaultValue(): DefaultValue? = when (type) {
-    is LiteralString -> DefaultValue.StringValue(value.removeSurrounding("\"").unescape())
+    is LiteralString -> DefaultValue.StringValue(literal())
     is Integer -> DefaultValue.IntegerValue(value)
     is Number -> DefaultValue.NumberValue(value)
     is WirespecType -> DefaultValue.EnumValue(value)
@@ -376,6 +395,9 @@ private fun Token.toDefaultValue(): DefaultValue? = when (type) {
 
     else -> null
 }
+
+/** The text of a [LiteralString] token: without its quotes, and with its escapes read. */
+private fun Token.literal(): String = value.removeSurrounding("\"").unescape()
 
 private fun String.unescape(): String = Regex("\\\\(.)").replace(this) { match ->
     when (val escaped = match.groupValues[1]) {

@@ -126,7 +126,7 @@ public class GraphQLOperations(ast: AST) {
         is Reference.Iterable -> composite(reference.reference)
         is Reference.Custom -> models[reference.value]
             ?.takeIf { it is Union || (it is Type && it.annotations.none { annotation -> annotation.name == GraphQLAnnotations.ENUM }) }
-        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive -> null
+        is Reference.Any, is Reference.Unit, is Reference.Dict, is Reference.Primitive, is Reference.Literal -> null
     }
 
     /** The types whose fields selecting this reference selects right away: a type, or a union and its members. */

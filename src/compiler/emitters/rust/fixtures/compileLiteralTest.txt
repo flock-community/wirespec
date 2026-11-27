@@ -1,0 +1,38 @@
+use super::super::wirespec::*;
+use regex;
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Dog {
+    pub kind: String,
+    pub name: String,
+}
+impl Dog {
+    pub fn new(name: String) -> Self {
+        Dog {
+            kind: String::from("dog"),
+            name: name
+        }
+    }
+}
+impl Dog {
+    pub fn validate(&self) -> Vec<String> {
+        return if (self.kind == String::from("dog")) { Vec::<String>::new() } else { vec![String::from("kind")] };
+    }
+}
+
+use super::super::wirespec::*;
+use regex;
+use super::super::model::dog::Dog;
+
+pub struct DogGenerator;
+impl DogGenerator {
+    pub fn generate(generator: &impl Generator, path: Vec<String>) -> Dog {
+        return Dog { kind: String::from("dog"), name: generator.generate(vec![path.as_slice(), vec![String::from("name")].as_slice()].concat(), GeneratorFieldString { regex: None, annotations: Vec::<std::collections::HashMap<String, Box<dyn std::any::Any>>>::new() }) };
+    }
+}
+
+#![allow(warnings)]
+pub mod model;
+pub mod endpoint;
+pub mod generator;
+pub mod wirespec;

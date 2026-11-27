@@ -364,7 +364,7 @@ public class GraphQLClientExtension(
         /** GraphQL has no void, so a field without a result returns a Boolean. */
         private fun Reference.dataType(): Type = when (this) {
             is Reference.Unit -> Type.Boolean
-            is Reference.Any, is Reference.Custom, is Reference.Dict, is Reference.Iterable, is Reference.Primitive -> copy(isNullable = false).convert()
+            is Reference.Any, is Reference.Custom, is Reference.Dict, is Reference.Iterable, is Reference.Primitive, is Reference.Literal -> copy(isNullable = false).convert()
         }
 
         /** The errors of a response, for an rpc without an error type of its own. */

@@ -85,6 +85,7 @@ internal class JsonSchemaWriter(
         is Reference.Custom -> inlineDefinition(value)?.takeIf { value !in inlining }?.schema(inlining + value)
             ?: ref("#/components/schemas/${componentKey(value).escapePointer()}")
         is Reference.Primitive -> type.schema()
+        is Reference.Literal -> jsonObjectOf("type" to JsonPrimitive("string"), "const" to JsonPrimitive(value))
         is Reference.Iterable -> jsonObjectOf("type" to JsonPrimitive("array"), "items" to reference.schema(inlining))
         is Reference.Dict -> jsonObjectOf("type" to JsonPrimitive("object"), "additionalProperties" to reference.schema(inlining))
         is Reference.Any -> JsonObject(emptyMap())

@@ -27,7 +27,7 @@ internal object PartParser {
             is LeftCurly -> Part(
                 comment = comment,
                 identifier = identifier,
-                shape = parseTypeShape(allowFieldDefaults = false).bind(),
+                shape = parseTypeShape(allowFieldDefaults = false, allowLiteralTypes = false).bind(),
             )
 
             else -> raiseWrongToken<LeftCurly>().bind()

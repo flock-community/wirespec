@@ -18,10 +18,12 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Identifier
 import community.flock.wirespec.compiler.core.parse.ast.Model
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.compiler.core.parse.ast.Rpc
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
+import community.flock.wirespec.compiler.core.parse.ast.fields
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.ir.converter.convert
 import community.flock.wirespec.compiler.core.ir.converter.convertToGenerator
@@ -45,6 +47,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.sortKey
+import community.flock.wirespec.compiler.core.ir.transformer.withLiteralDefaults
 
 public open class PythonEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -194,11 +197,15 @@ public open class PythonEmitter(
     }
 
     override fun emit(type: Type, module: Module): File {
-        val typeImports = type.importReferences().distinctBy { it.value }
+        // A member of a union subclasses it, so it imports the union next to the types of its fields.
+        val typeImports = (type.importReferences() + type.extends.filterIsInstance<Reference.Custom>()).distinctBy { it.value }
             .map { import(".${it.value}", it.value) }
+        // The default of a dataclass field is written with `field`.
+        val fieldImport = listOf(import("dataclasses", "field")).filter { type.shape.fields.any { it.reference is Reference.Literal } }
         return type.convert()
             .sanitizeNames(sanitizationConfig)
-            .prependImports(typeImports.takeIf { it.isNotEmpty() })
+            .withLiteralDefaults()
+            .prependImports((fieldImport + typeImports).takeIf { it.isNotEmpty() })
     }
 
     override fun emit(enum: Enum, module: Module): File = enum

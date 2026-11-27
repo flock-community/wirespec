@@ -51,6 +51,7 @@ import community.flock.wirespec.compiler.core.ir.transformer.sanitizeEnumEntries
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeFieldName
 import community.flock.wirespec.compiler.core.ir.transformer.sanitizeNames
 import community.flock.wirespec.compiler.core.ir.transformer.sortKey
+import community.flock.wirespec.compiler.core.ir.transformer.withLiteralConstructor
 import community.flock.wirespec.compiler.core.ir.Enum as LanguageEnum
 import community.flock.wirespec.compiler.core.ir.Type as LanguageType
 import community.flock.wirespec.compiler.core.ir.Union as LanguageUnion
@@ -204,6 +205,7 @@ public open class RustEmitter(
 
     override fun emit(type: Type, module: Module): File = type.convert()
         .sanitizeNames(sanitizationConfig)
+        .withLiteralConstructor()
         .withImports(type.importReferences().toImports("super::"))
 
     override fun emit(enum: Enum, module: Module): File = enum

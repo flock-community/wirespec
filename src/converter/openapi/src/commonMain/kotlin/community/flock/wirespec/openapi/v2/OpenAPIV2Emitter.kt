@@ -390,6 +390,12 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
             pattern = emitPattern(),
         )
 
+        // OpenAPI 2 has no `const`, so a string literal type is a string with one value.
+        is Reference.Literal -> OpenAPIV20Schema(
+            type = OpenAPIV20Type.STRING,
+            enum = listOf(JsonPrimitive(value)),
+        )
+
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
@@ -406,6 +412,7 @@ public object OpenAPIV2Emitter : SpecInfoEmitter {
         is Reference.Dict -> OpenAPIV20Type.OBJECT
         is Reference.Iterable -> OpenAPIV20Type.ARRAY
         is Reference.Primitive -> type.emitType()
+        is Reference.Literal -> OpenAPIV20Type.STRING
         is Reference.Custom -> OpenAPIV20Type.OBJECT
         is Reference.Any -> OpenAPIV20Type.OBJECT
         is Reference.Unit -> OpenAPIV20Type.OBJECT

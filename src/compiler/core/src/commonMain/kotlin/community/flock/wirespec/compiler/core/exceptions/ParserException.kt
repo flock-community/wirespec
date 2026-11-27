@@ -72,12 +72,39 @@ internal class DefaultValueNotAllowedException(fileUri: FileUri, fieldName: Stri
         message = "Default values are only allowed on the fields of a type and the parameters of an rpc, not on: $fieldName",
     )
 
+internal class LiteralTypeNotAllowedException(fileUri: FileUri, fieldName: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A string literal type is only allowed on the fields of a type, not on: $fieldName",
+    )
+
+internal class InvalidLiteralTypeException(fileUri: FileUri, literal: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A string literal type can only have letters, digits, - and _: $literal",
+    )
+
+internal class LiteralTypeModifierException(fileUri: FileUri, fieldName: String, coordinates: Token.Coordinates) :
+    ParserException(
+        fileUri,
+        coordinates = coordinates,
+        message = "A string literal type cannot be optional or a list: $fieldName",
+    )
+
 internal class InvalidDefaultValueException(fileUri: FileUri, fieldName: String, value: String, reference: Reference, coordinates: Token.Coordinates) :
     ParserException(
         fileUri,
         coordinates = coordinates,
-        message = "Invalid default value $value for field $fieldName of type ${reference.value}${if (reference.isNullable) "?" else ""}",
+        message = "Invalid default value $value for field $fieldName of type ${reference.label()}",
     )
+
+/** How a type reads in a message: a string literal type between its quotes, and a nullable type with its `?`. */
+private fun Reference.label(): String = when (this) {
+    is Reference.Literal -> "\"$value\""
+    is Reference.Any, is Reference.Custom, is Reference.Dict, is Reference.Iterable, is Reference.Primitive, is Reference.Unit -> value
+} + if (isNullable) "?" else ""
 
 internal sealed class NullTokenException(fileUri: FileUri, message: String, coordinates: Token.Coordinates) :
     EatTokenException(

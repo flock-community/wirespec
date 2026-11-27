@@ -345,7 +345,7 @@ public object OpenAPIV3Emitter : SpecInfoEmitter {
         is Reference.Dict -> OpenAPIV30Reference(ref = Ref("#/components/headers/$value"))
         is Reference.Iterable -> OpenAPIV30Reference(ref = Ref("#/components/headers/$value"))
         is Reference.Custom -> OpenAPIV30Reference(ref = Ref("#/components/headers/$value"))
-        is Reference.Primitive -> OpenAPIV30Header(schema = emitSchema(), description = description)
+        is Reference.Primitive, is Reference.Literal -> OpenAPIV30Header(schema = emitSchema(), description = description)
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
@@ -370,6 +370,12 @@ public object OpenAPIV3Emitter : SpecInfoEmitter {
             pattern = emitPattern(),
             minimum = emitMinimum(),
             maximum = emitMaximum(),
+        )
+
+        // OpenAPI 3.0 has no `const`, so a string literal type is a string with one value.
+        is Reference.Literal -> OpenAPIV30Schema(
+            type = OpenAPIV30Type.STRING.asTypeDefinition(),
+            enum = listOf(JsonPrimitive(value)),
         )
 
         is Reference.Any -> error("Cannot map Any")

@@ -910,6 +910,7 @@ public fun ReferenceWirespec.convert(): Type = when (this) {
     is ReferenceWirespec.Custom -> Type.Custom(Name.of(value).pascalCase())
     is ReferenceWirespec.Dict -> Type.Dict(Type.String, reference.convert())
     is ReferenceWirespec.Iterable -> Type.Array(reference.convert())
+    is ReferenceWirespec.Literal -> Type.StringLiteral(value)
     is ReferenceWirespec.Primitive -> when (val t = type) {
         ReferenceWirespec.Primitive.Type.Boolean -> Type.Boolean
         ReferenceWirespec.Primitive.Type.Bytes -> Type.Bytes

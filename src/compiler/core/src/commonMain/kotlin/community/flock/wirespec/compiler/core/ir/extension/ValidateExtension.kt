@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.ir.extension
 
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.ir.BinaryOp
 import community.flock.wirespec.compiler.core.ir.Element
 import community.flock.wirespec.compiler.core.ir.Expression
 import community.flock.wirespec.compiler.core.ir.FieldCall
@@ -38,7 +39,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type as Model
 
 /**
  * Gives every model a `validate` function that returns the path of each value breaking its
- * constraint: a refined type or a constrained primitive, at any depth inside models, lists,
+ * constraint: a refined type, a constrained primitive or a string literal type, at any depth inside models, lists,
  * dicts and nullables, such as `departments[0].employees[2].tags[1]` or `labelsByKey[home].code`.
  *
  * Every [community.flock.wirespec.compiler.core.ir.emit.IrEmitter] applies it before any other
@@ -134,6 +135,8 @@ public class ValidateExtension(language: FileExtension) : IrExtension {
                     ?.convertConstraint(checked(subject))
                     ?.let { IfExpression(it, NO_ERRORS, path.errors()) }
 
+                is Reference.Literal -> IfExpression(BinaryOp(subject, BinaryOp.Operator.EQUALS, Literal(value, Type.String)), NO_ERRORS, path.errors())
+
                 is Reference.Iterable -> (variable("i", depth) to variable("el", depth)).let { (index, element) ->
                     reference.errors(VariableReference(element), path.index(index), depth + 1)
                         ?.let { FlatMapIndexed(receiver = subject, indexVar = index, elementVar = element, body = it) }
@@ -178,7 +181,7 @@ public class ValidateExtension(language: FileExtension) : IrExtension {
             is Reference.Custom -> listOfNotNull(definitions[value])
             is Reference.Iterable -> reference.validated()
             is Reference.Dict -> reference.validated()
-            is Reference.Primitive, is Reference.Any, is Reference.Unit -> emptyList()
+            is Reference.Primitive, is Reference.Literal, is Reference.Any, is Reference.Unit -> emptyList()
         }
     }
 

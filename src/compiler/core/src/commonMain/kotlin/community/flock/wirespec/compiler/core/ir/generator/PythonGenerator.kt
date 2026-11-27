@@ -246,7 +246,11 @@ public object PythonGenerator :
         return "def __init__(\n$selfParam$paramLines,\n$closeParen$content\n".indentCode(indent)
     }
 
-    private fun Field.emit(indent: Int, qualifier: ((String) -> String)? = null): String = "${name.value()}: ${type.emit(qualifier)}\n".indentCode(indent)
+    private fun Field.emit(indent: Int, qualifier: ((String) -> String)? = null): String = "${name.value()}: ${type.emit(qualifier)}${emitDefault()}\n".indentCode(indent)
+
+    // A dataclass field with a default cannot come before one without. A keyword-only field moves behind the others in
+    // the constructor, so a default can stay where its field is declared.
+    private fun Field.emitDefault(): String = initializer?.let { " = field(default=${it.emit()}, kw_only=True)" }.orEmpty()
 
     private fun AstFunction.emit(indent: Int, isInClass: Boolean = false, isStaticScope: Boolean = false, isInInterface: Boolean = false, qualifier: ((String) -> String)? = null): String {
         val params = parameters.joinToString(", ") {

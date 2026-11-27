@@ -92,6 +92,7 @@ public object AvroIdlEmitter : Emitter {
     }
 
     // IDL has no aliases, so a refined type is written as the primitive it refines.
+    // It has no literal types either, so a string literal type is written as a string.
     private fun Module.renderReference(reference: Reference): String = when (reference) {
         is Reference.Primitive -> wrapNullable(renderPrimitive(reference.type), reference.isNullable)
         is Reference.Custom -> wrapNullable(
@@ -100,6 +101,7 @@ public object AvroIdlEmitter : Emitter {
         )
         is Reference.Iterable -> wrapNullable("array<${renderReference(reference.reference.copy(isNullable = false))}>", reference.isNullable)
         is Reference.Dict -> wrapNullable("map<${renderReference(reference.reference.copy(isNullable = false))}>", reference.isNullable)
+        is Reference.Literal -> wrapNullable("string", reference.isNullable)
         is Reference.Any -> wrapNullable("bytes", reference.isNullable)
         is Reference.Unit -> "null"
     }
